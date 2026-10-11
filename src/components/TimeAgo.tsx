@@ -42,6 +42,6 @@ export function NewBadge({ iso }: { iso: string }) {
   );
   if (!fresh) return null;
   return (
-    <span className="rounded bg-fresh/15 px-1.5 py-0.5 text-[10px] font-bold text-fresh">Yeni</span>
+    <span className="rounded-full bg-fresh/15 px-1.5 py-px text-[10px] font-bold tracking-wide text-fresh uppercase">Yeni</span>
   );
 }

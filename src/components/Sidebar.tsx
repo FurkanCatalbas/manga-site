@@ -7,13 +7,12 @@ export function PopularList({ data }: { data: Record<Period, PopularEntry[]> }) 
   const slim = Object.fromEntries(
     Object.entries(data).map(([period, entries]) => [
       period,
-      entries.map(({ series: s, views, trend }) => ({
+      entries.map(({ series: s, views }) => ({
         slug: s.slug,
         title: s.title,
         cover: s.cover,
         genres: s.genres,
         views,
-        trend,
       })),
     ]),
   ) as Record<Period, PopularItem[]>;
@@ -22,14 +21,14 @@ export function PopularList({ data }: { data: Record<Period, PopularEntry[]> }) 
 
 export function GenreList({ genres }: { genres: string[] }) {
   return (
-    <section className="rounded-2xl border border-line bg-surface p-4">
+    <section className="panel p-4 sm:p-5">
       <h2 className="mb-3 text-lg font-bold">Türler</h2>
       <div className="flex flex-wrap gap-2">
         {genres.map((g) => (
           <Link
             key={g}
             href={`/ara?tur=${encodeURIComponent(g)}`}
-            className="rounded-full border border-line bg-surface-2 px-3 py-1 text-sm hover:border-accent hover:text-accent"
+            className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm transition-colors hover:border-accent/50 hover:text-accent"
           >
             {g}
           </Link>

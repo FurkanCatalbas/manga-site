@@ -138,7 +138,7 @@ export function Reader(props: Props) {
     <div className="bg-bg">
       {/* Gizlenince yalnızca alttaki ilerleme çizgisi (3px) ekranın üstünde kalır */}
       <div
-        className="sticky top-16 z-20 bg-surface/95 backdrop-blur transition-transform duration-300"
+        className="glass sticky top-[calc(4rem+env(safe-area-inset-top))] z-20 transition-transform duration-300"
         style={hidden ? { transform: "translateY(calc(-4rem - 100% + 3px))" } : undefined}
       >
         <div className="mx-auto max-w-3xl px-4 py-2.5">
@@ -163,7 +163,7 @@ export function Reader(props: Props) {
           aria-label="Bölüm seç"
           value={chapter}
           onChange={(e) => router.push(chapterUrl(Number(e.target.value)))}
-          className="rounded-lg border border-line bg-surface px-3 py-2 text-sm"
+          className="rounded-xl border border-white/[0.08] bg-surface-2 px-3 py-2 text-sm"
         >
           {chapterNumbers.map((n) => (
             <option key={n} value={n}>
@@ -340,7 +340,7 @@ function PullToNext({ href }: { href: string }) {
       {fill > 0 && (
         <div
           role="status"
-          className="fixed inset-x-0 bottom-8 z-40 mx-auto flex w-fit items-center gap-3 rounded-full border border-line bg-surface/95 px-4 py-2.5 text-sm font-semibold shadow-lg backdrop-blur"
+          className="fixed inset-x-0 bottom-8 z-40 mx-auto flex w-fit items-center gap-3 glass rounded-full border border-white/10 px-4 py-2.5 text-sm font-semibold shadow-lg"
         >
           <svg viewBox="0 0 24 24" className={`size-6 -rotate-90 ${fill >= 1 ? "animate-spin" : ""}`} aria-hidden>
             <circle cx="12" cy="12" r="10" fill="none" strokeWidth="3" className="stroke-line" />
@@ -372,7 +372,7 @@ function ResumeNotice({ page, onRestart, onClose }: { page: number; onRestart: (
   return (
     <div
       role="status"
-      className="fixed inset-x-0 bottom-8 z-40 mx-auto flex w-fit items-center gap-3 rounded-full border border-line bg-surface/95 py-2 pl-4 pr-2 text-sm shadow-lg backdrop-blur"
+      className="fixed inset-x-0 bottom-8 z-40 mx-auto flex w-fit items-center gap-3 glass rounded-full border border-white/10 py-2 pl-4 pr-2 text-sm shadow-lg"
     >
       <span>{page}. sayfadan devam ediyorsun</span>
       <button onClick={onRestart} className="rounded-full bg-surface-2 px-3 py-1 font-semibold hover:bg-accent hover:text-white">
@@ -383,10 +383,9 @@ function ResumeNotice({ page, onRestart, onClose }: { page: number; onRestart: (
 }
 
 function NavButton({ href, children }: { href: string | null; children: React.ReactNode }) {
-  const cls = "rounded-lg px-4 py-2 text-sm font-semibold";
-  if (!href) return <span className={`${cls} bg-surface text-muted/50`}>{children}</span>;
+  if (!href) return <span className="btn-ghost !px-4 !py-2 text-sm text-muted/50">{children}</span>;
   return (
-    <Link href={href} className={`${cls} bg-surface-2 hover:bg-accent hover:text-white`}>
+    <Link href={href} className="btn-ghost !px-4 !py-2 text-sm hover:!bg-accent hover:text-white">
       {children}
     </Link>
   );

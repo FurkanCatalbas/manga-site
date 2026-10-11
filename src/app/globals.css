@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
-/* Koyu manga portalı paleti */
+/* Koyu manga portalı paleti: katmanlı yüzeyler, pembe → mor vurgu */
 :root {
-  --bg: #101118;
-  --surface: #181a23;
-  --surface-2: #21242f;
-  --line: #2b2e3b;
-  --fg: #e9eaf0;
-  --muted: #9296a8;
+  --bg: #0a0b10;
+  --surface: #12141c;
+  --surface-2: #1a1d28;
+  --line: #252936;
+  --fg: #eef0f6;
+  --muted: #9095a9;
   --accent: #ff4f8b;
+  --accent-2: #8b5cf6;
   --fresh: #3ddbb4;
 }
 
@@ -20,6 +21,7 @@
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
   --color-fresh: var(--fresh);
   --font-sans: var(--font-onest);
   --font-display: var(--font-dela);
@@ -27,11 +29,85 @@
 
 html {
   color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--bg);
+  /* Sayfanın tepesinde hafif bir renk ışıması */
+  background:
+    radial-gradient(60rem 30rem at 15% -10%, rgb(139 92 246 / 0.12), transparent 70%),
+    radial-gradient(50rem 25rem at 90% -5%, rgb(255 79 139 / 0.08), transparent 70%),
+    var(--bg);
+  background-repeat: no-repeat;
   color: var(--fg);
+}
+
+/* Ortak bileşen sınıfları */
+@layer components {
+  /* Ana eylem düğmesi: vurgu gradyanı ve hafif ışıma */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.875rem;
+    padding: 0.7rem 1.35rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 8px 24px -8px rgb(255 79 139 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.18);
+    transition: transform 150ms, box-shadow 150ms, filter 150ms;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 12px 30px -8px rgb(255 79 139 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  /* İkincil düğme: buzlu cam */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.875rem;
+    padding: 0.7rem 1.35rem;
+    font-weight: 600;
+    background: rgb(255 255 255 / 0.07);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    backdrop-filter: blur(12px);
+    transition: background 150ms, transform 150ms;
+  }
+  .btn-ghost:hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+  .btn-ghost:active {
+    transform: scale(0.98);
+  }
+
+  /* Kart yüzeyi: üstten hafif ışık alan ince kenar */
+  .panel {
+    border-radius: 1.25rem;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.035), transparent 40%), var(--surface);
+    border: 1px solid rgb(255 255 255 / 0.06);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 20px 40px -24px rgb(0 0 0 / 0.6);
+  }
+
+  /* Buzlu cam çubuklar (başlık, alt menü) */
+  .glass {
+    background: rgb(10 11 16 / 0.72);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 :focus-visible {
@@ -64,7 +140,7 @@ body {
   }
 }
 
-/* Popüler sekmesi değişince liste yumuşakça gelir, grafik çizgisi soldan sağa çizilir */
+/* Popüler sekmesi değişince liste yumuşakça gelir */
 @media (prefers-reduced-motion: no-preference) {
   .popular-in > li {
     animation: popular-in 0.35s ease-out both;
@@ -76,12 +152,18 @@ body {
   @keyframes popular-in {
     from { opacity: 0; transform: translateY(6px); }
   }
-  .spark-draw {
-    stroke-dasharray: 1;
-    animation: spark-draw 0.9s ease-out both;
+}
+
+/* Hero: aktif noktada bir sonraki seriye kalan süre (HeroSlider INTERVAL ile aynı) */
+.hero-fill {
+  width: 100%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-fill {
+    animation: hero-fill 6s linear both;
   }
-  @keyframes spark-draw {
-    from { stroke-dashoffset: 1; }
-    to { stroke-dashoffset: 0; }
+  @keyframes hero-fill {
+    from { width: 0; }
+    to { width: 100%; }
   }
 }

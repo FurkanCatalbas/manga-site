@@ -17,6 +17,28 @@ Yeni kod da bu dile ve üsluba uymalı.
 - **Cloudflare R2**: görseller (`src/lib/r2.ts`)
 - **Vercel**: yayın. `main`'e gönderilen her şey canlıya çıkar.
 
+## Ürün hedefleri
+
+- **Mobil öncelikli.** Tasarım önce telefonda düşünülür, sonra genişletilir. İleride mobil uygulama
+  (PWA ya da yerel uygulama) yapılabilir; bu yüzden ekranlar uygulama gibi kurgulanır: alt sekme
+  çubuğu, güvenli alan boşlukları (`env(safe-area-inset-*)`), dokunmatik hareketler.
+- **Topluluk büyüyecek.** Yorumlar, tepkiler, profiller gelecek. Alt menüde Topluluk ve Profil
+  sekmeleri için yer var (`src/components/SiteNav.tsx`).
+- **Premium his.** Sade, katmanlı, cilalı; ucuz görünen süslerden kaçın.
+
+## Tasarım dili
+
+- Renkler `globals.css`'te: koyu katmanlı yüzeyler (`bg`, `surface`, `surface-2`), vurgu
+  pembe (`accent`) → mor (`accent-2`) gradyanı, yeni içerik için `fresh`.
+- Ortak sınıflar (`globals.css` → `@layer components`): `btn-primary` (gradyan ana eylem),
+  `btn-ghost` (buzlu cam ikincil), `panel` (kart yüzeyi), `glass` (başlık ve alt menü), `text-gradient`.
+  Yeni düğme ve kutularda bunları kullan, yeni stil icat etme.
+- İnce kenarlar `ring-white/[0.06–0.15]` ya da `border-white/[0.06–0.08]`, köşeler `rounded-xl`/`2xl`,
+  başlıklar `font-display` (Dela Gothic One) ya da `font-bold tracking-tight`.
+- İkonlar `src/components/icons.tsx` (satır içi SVG, kütüphane yok).
+- Mobilde yatay kayan raflar için `no-scrollbar -mx-4 px-4 overflow-x-auto snap-x`.
+- Popüler listesinde grafik/çizgi istenmiyor (kullanıcı kaldırttı).
+
 ## Çalışma düzeni
 
 - Doğrudan **`main`** üzerinde çalışılıyor; kullanıcı bunu açıkça istedi. Branch ya da PR açma.
@@ -111,6 +133,17 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
   kayıtlı sayfaya kaydırılır ve "Başa dön" bildirimi gösterilir. Kayıt bir kez okunur (ref), çünkü
   StrictMode'da efekt iki kez çalışır ve ikinci okuma kaydedilmiş "sayfa 1"i görür.
 
+### Site iskeleti ve okuma geçmişi
+
+- `layout.tsx`: cam başlık (masaüstünde bağlantılar + arama, mobilde arama ikonu), altbilgi ve
+  `MobileTabBar` (Ana sayfa, Keşfet, Kütüphane; okuyucuda ve panelde gizli).
+- Okuma geçmişi localStorage'da; bileşenler `useAllProgress()` (`src/lib/progress.ts`) ile okur.
+  Kullananlar: ana sayfadaki "Okumaya devam et" rafı ve `/kutuphane` (`Library.tsx`), seri sayfasındaki
+  "Devam et" düğmesi ve okundu işaretli bölüm listesi (`SeriesActions.tsx`). Hesap sistemi gelince
+  bu veri sunucuya taşınmalı.
+- "use client" dosyalarından dışa aktarılan fonksiyonlar sunucuda çağrılamaz; ortak yardımcılar
+  `src/lib/series.ts` gibi istemci işareti olmayan dosyalarda durur (ör. `toLibraryItems`).
+
 ### Yönetim paneli: `/admin`
 
 Tek şifre (`ADMIN_PASSWORD`); çerezde şifreden türetilen HMAC tutulur (`src/lib/auth.ts`).
@@ -141,15 +174,21 @@ Seri ekleme/düzenleme/silme ve bölüm yükleme. İşlemler `src/app/admin/acti
 - Veri katmanı: her sayfa yalnızca gerekeni çeken hedefli sorgular
 - Okunma sayacı: sunucu tarafında IP + bölüm + gün sınırı
 - Görseller: yüklemede WebP'ye çevirme ve küçültme, sayfa boyutlarının kaydı
+- Tasarım yenilemesi: katmanlı koyu tema, gradyan düğmeler, mobil alt sekme çubuğu,
+  sinematik ve kaydırılabilir hero, "Okumaya devam et" rafı, Kütüphane sayfası (`/kutuphane`),
+  seri sayfasında "Devam et" ve okundu işaretli sıralanabilir bölüm listesi, çipli Keşfet filtreleri;
+  popüler listesinden grafikler kaldırıldı
 
 ## Sıradakiler (önerilmiş, henüz yapılmadı)
 
 - R2'ye kendi alan adını bağlamak (CDN). Kod değil, Cloudflare ayarı; `R2_PUBLIC_URL` güncellenir.
 - Okuyucu: genişlik/parlaklık ayarı, tam ekran düğmesi
+- PWA: manifest ve ikonlar (ana ekrana eklenebilir uygulama), ileride mobil uygulama
+- Yükleme iskeletleri (skeleton) ve sayfa geçiş animasyonları
 - Kullanıcı hesapları (Auth.js / Better Auth): kütüphane/takip listesi, yeni bölüm bildirimi,
   cihazlar arası okuma geçmişi, puanlama
 - Topluluk: bölüm yorumları (spoiler gizleme, moderasyon), bölüm sonu tepkileri
 - Keşif: tür sayfaları (`/tur/...`), benzer seriler, arama sıralaması, yayın takvimi, RSS
 - Panel: zamanlanmış yayın, taslak bölümler, ZIP ile toplu yükleme, bölüm bazlı istatistik
-- Altyapı: PWA, hata takibi (Sentry), analitik, Playwright uçtan uca testleri
+- Altyapı: hata takibi (Sentry), analitik, Playwright uçtan uca testleri
 - Yukarıdaki prerendering uyarıları

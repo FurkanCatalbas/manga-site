@@ -151,12 +151,10 @@ export async function getRecentlyUpdated(): Promise<SeriesSummary[]> {
 
 export type Period = "gunluk" | "haftalik" | "aylik";
 const PERIOD_DAYS: Record<Period, number> = { gunluk: 1, haftalik: 7, aylik: 30 };
-export const TREND_DAYS = 14;
 
 export type PopularEntry = {
   series: SeriesSummary;
   views: number; // seçilen dönemdeki okunma
-  trend: { day: string; views: number }[]; // son 14 gün, eskiden yeniye
 };
 
 /** İstanbul saatine göre bugünden `offset` gün önceki tarih, "YYYY-MM-DD". */
@@ -167,7 +165,7 @@ function istanbulDay(offset: number) {
   return d.toISOString().slice(0, 10);
 }
 
-/** Günlük, haftalık ve aylık en çok okunan seriler (son 14 günlük eğriyle). */
+/** Günlük, haftalık ve aylık en çok okunan seriler. */
 export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry[]>> {
   "use cache";
   cacheTag("series", "views");
@@ -188,7 +186,6 @@ export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry
     if (!counts.has(r.slug)) counts.set(r.slug, new Map());
     counts.get(r.slug)!.set(r.day, r.views);
   }
-  const trendDays = Array.from({ length: TREND_DAYS }, (_, i) => istanbulDay(TREND_DAYS - 1 - i));
 
   const result = {} as Record<Period, PopularEntry[]>;
   for (const period of Object.keys(PERIOD_DAYS) as Period[]) {
@@ -199,7 +196,6 @@ export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry
         return {
           series: s,
           views: days.reduce((sum, d) => sum + (c.get(d) ?? 0), 0),
-          trend: trendDays.map((day) => ({ day, views: c.get(day) ?? 0 })),
         };
       })
       .filter((e) => e.views > 0)

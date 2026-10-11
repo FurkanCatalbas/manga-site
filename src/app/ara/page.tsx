@@ -14,7 +14,7 @@ export default async function SearchPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-extrabold">Seriler</h1>
+      <h1 className="mb-6 text-3xl font-extrabold tracking-tight">Keşfet</h1>
       <Suspense>
         <Search series={series} genres={genres} />
       </Suspense>

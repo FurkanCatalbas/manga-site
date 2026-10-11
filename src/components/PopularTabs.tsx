@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { EyeIcon } from "@/components/icons";
 
 export type PopularItem = {
   slug: string;
@@ -9,7 +10,6 @@ export type PopularItem = {
   cover: string;
   genres: string[];
   views: number;
-  trend: { day: string; views: number }[];
 };
 
 const TABS = [
@@ -25,25 +25,22 @@ const EMPTY: Record<Period, string> = {
   aylik: "Bu ay henüz okunma yok.",
 };
 
-const fmtDay = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString("tr-TR", { day: "numeric", month: "short", timeZone: "UTC" });
-
 export function PopularTabs({ data }: { data: Record<Period, PopularItem[]> }) {
   const [period, setPeriod] = useState<Period>("haftalik");
   const items = data[period];
 
   return (
-    <section className="rounded-2xl border border-line bg-surface p-4">
+    <section className="panel p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h2 className="text-lg font-bold">Popüler</h2>
-        <div role="tablist" aria-label="Dönem" className="flex rounded-lg bg-surface-2 p-0.5 text-xs font-semibold">
+        <div role="tablist" aria-label="Dönem" className="flex rounded-full bg-white/[0.05] p-1 text-xs font-semibold">
           {TABS.map((t) => (
             <button
               key={t.id}
               role="tab"
               aria-selected={period === t.id}
               onClick={() => setPeriod(t.id)}
-              className={`rounded-md px-2.5 py-1 transition-colors ${period === t.id ? "bg-accent text-white" : "text-muted hover:text-fg"}`}
+              className={`rounded-full px-3 py-1 transition-colors ${period === t.id ? "bg-white/[0.12] text-fg" : "text-muted hover:text-fg"}`}
             >
               {t.label}
             </button>
@@ -54,72 +51,39 @@ export function PopularTabs({ data }: { data: Record<Period, PopularItem[]> }) {
       {items.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted">{EMPTY[period]}</p>
       ) : (
-        <ol key={period} role="tabpanel" className="popular-in space-y-3">
+        <ol key={period} role="tabpanel" className="popular-in space-y-1">
           {items.map((s, i) => (
-            <li key={s.slug} className="flex items-center gap-3">
-              <span className={`w-5 text-center text-lg font-extrabold ${i < 3 ? "text-accent" : "text-muted"}`}>
-                {i + 1}
-              </span>
-              <Link href={`/seri/${s.slug}`} className="group flex min-w-0 flex-1 items-center gap-3">
+            <li key={s.slug}>
+              <Link
+                href={`/seri/${s.slug}`}
+                className="group -mx-2 flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.04]"
+              >
+                <span
+                  className={`w-6 text-center font-display text-xl ${i < 3 ? "text-gradient" : "text-muted/60"}`}
+                >
+                  {i + 1}
+                </span>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.cover} alt="" className="h-14 w-10 shrink-0 rounded-md object-cover" />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold group-hover:text-accent">{s.title}</span>
-                  <span className="block text-xs text-muted">
-                    <span className="font-semibold text-fg">{s.views.toLocaleString("tr-TR")}</span> okunma
+                <img
+                  src={s.cover}
+                  alt=""
+                  className="h-16 w-12 shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold transition-colors group-hover:text-accent">
+                    {s.title}
+                  </span>
+                  {s.genres[0] && <span className="block truncate text-xs text-muted">{s.genres.slice(0, 2).join(" · ")}</span>}
+                  <span className="mt-1 flex items-center gap-1 text-xs text-muted">
+                    <EyeIcon size={13} />
+                    <span className="font-semibold text-fg/90">{s.views.toLocaleString("tr-TR")}</span> okunma
                   </span>
                 </span>
               </Link>
-              <Sparkline trend={s.trend} />
             </li>
           ))}
         </ol>
       )}
-      <p className="mt-4 text-[11px] text-muted">Grafik: son 14 günün günlük okunması</p>
     </section>
-  );
-}
-
-/** Son 14 günün okunma eğrisi. Her güne gelince o günün sayısı görünür. */
-function Sparkline({ trend }: { trend: PopularItem["trend"] }) {
-  const W = 72;
-  const H = 28;
-  const PAD = 3;
-  const max = Math.max(1, ...trend.map((t) => t.views));
-  const step = (W - PAD * 2) / Math.max(1, trend.length - 1);
-  const pts = trend.map((t, i) => [PAD + i * step, H - PAD - (t.views / max) * (H - PAD * 2)] as const);
-  const line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join("");
-  const area = `${line}L${pts.at(-1)![0].toFixed(1)},${H - PAD}L${PAD},${H - PAD}Z`;
-  const total = trend.reduce((s, t) => s + t.views, 0);
-  const [lx, ly] = pts.at(-1)!;
-
-  return (
-    <svg
-      width={W}
-      height={H}
-      viewBox={`0 0 ${W} ${H}`}
-      role="img"
-      aria-label={`Son 14 günde ${total.toLocaleString("tr-TR")} okunma`}
-      className="shrink-0 overflow-visible"
-    >
-      <path d={area} fill="var(--accent)" opacity={0.12} />
-      <path
-        d={line}
-        pathLength={1}
-        fill="none"
-        stroke="var(--accent)"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="spark-draw"
-      />
-      <circle cx={lx} cy={ly} r={2.5} fill="var(--accent)" stroke="var(--surface)" strokeWidth={1.5} />
-      {/* Fareyle üstüne gelince gün gün değer (işaretten geniş hedefler) */}
-      {trend.map((t, i) => (
-        <rect key={t.day} x={pts[i][0] - step / 2} y={0} width={step} height={H} fill="transparent">
-          <title>{`${fmtDay(t.day)}: ${t.views.toLocaleString("tr-TR")} okunma`}</title>
-        </rect>
-      ))}
-    </svg>
   );
 }

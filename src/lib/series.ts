@@ -35,6 +35,12 @@ export type SeriesSummary = SeriesBase & {
 /** Seri sayfası için: tüm bölümlerin listesi, eskiden yeniye. */
 export type Series = SeriesBase & { chapters: ChapterInfo[] };
 
+/** Okuma geçmişi bileşenlerinin (raf, kütüphane) ihtiyaç duyduğu seri bilgisi. */
+export type LibraryItem = { slug: string; title: string; cover: string; latest: number | null };
+
+export const toLibraryItems = (list: SeriesSummary[]): LibraryItem[] =>
+  list.map((s) => ({ slug: s.slug, title: s.title, cover: s.cover, latest: s.latestChapters[0]?.number ?? null }));
+
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR", {
     day: "numeric",

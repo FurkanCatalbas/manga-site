@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ContinueReading } from "@/components/ContinueReading";
 import { GenreList, PopularList } from "@/components/Sidebar";
-import { NewBadge, TimeAgo } from "@/components/TimeAgo";
+import { EyeIcon, LayersIcon } from "@/components/icons";
+import { ChapterList, ReadButtons } from "@/components/SeriesActions";
 import { JsonLd } from "@/components/JsonLd";
 import { getAllGenres, getPopular, getSeries, getSeriesList } from "@/lib/data";
 import { absoluteUrl, SITE_NAME } from "@/lib/site";
@@ -38,7 +38,6 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
 
   const first = series.chapters[0];
   const latest = series.chapters.at(-1);
-  const chaptersDesc = [...series.chapters].reverse();
 
   const url = absoluteUrl(`/seri/${series.slug}`);
   const jsonLd = {
@@ -77,99 +76,68 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
     <div>
       <JsonLd data={jsonLd} />
       {/* Bulanık kapak arka planlı başlık alanı */}
-      <div className="relative overflow-hidden border-b border-line">
+      <div className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={series.cover} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-2xl" />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/40" />
+        <img src={series.cover} alt="" className="absolute inset-0 h-full w-full scale-125 object-cover opacity-40 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-bg/40 via-bg/80 to-bg" />
 
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:gap-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={series.cover}
-            alt={`${series.title} kapağı`}
-            className="mx-auto w-48 shrink-0 self-start rounded-xl shadow-2xl shadow-black/50 sm:mx-0 sm:w-56"
-          />
-          <div className="min-w-0">
-            <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">{series.title}</h1>
-            <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
-              {[
-                ["Yazar", series.author],
-                ["Durum", series.status],
-                ["Bölüm", String(series.chapters.length)],
-                ["Okunma", series.views.toLocaleString("tr-TR")],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <dt className="text-muted">{k}</dt>
-                  <dd className="font-semibold">{v}</dd>
-                </div>
-              ))}
-            </dl>
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-8 pb-10 sm:flex-row sm:gap-10 sm:pt-12">
+          <div className="flex gap-4 sm:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={series.cover}
+              alt={`${series.title} kapağı`}
+              className="w-32 shrink-0 self-start rounded-2xl shadow-2xl ring-1 shadow-black/60 ring-white/15 sm:w-56 lg:w-64"
+            />
+            {/* Mobilde başlık kapağın yanında */}
+            <div className="min-w-0 self-end sm:hidden">
+              <h1 className="font-display text-2xl leading-tight tracking-tight">{series.title}</h1>
+              <p className="mt-1 text-sm text-muted">{series.author}</p>
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="hidden font-display text-4xl leading-[1.05] tracking-tight sm:block lg:text-5xl">
+              {series.title}
+            </h1>
+            <p className="mt-2 hidden text-muted sm:block">{series.author}</p>
+
+            <div className="flex flex-wrap gap-2 text-sm sm:mt-5">
+              <span className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 font-semibold">
+                <span className={`h-2 w-2 rounded-full ${series.status === "Tamamlandı" ? "bg-accent-2" : "bg-fresh"}`} />
+                {series.status}
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 font-semibold">
+                <LayersIcon size={15} className="text-muted" />
+                {series.chapters.length} bölüm
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 font-semibold">
+                <EyeIcon size={15} className="text-muted" />
+                {series.views.toLocaleString("tr-TR")} okunma
+              </span>
+            </div>
+
             <div className="mt-4 flex flex-wrap gap-2">
               {series.genres.map((g) => (
                 <Link
                   key={g}
                   href={`/ara?tur=${encodeURIComponent(g)}`}
-                  className="rounded-full bg-white/10 px-3 py-1 text-sm hover:bg-accent hover:text-white"
+                  className="rounded-full border border-white/10 px-3 py-1 text-sm text-fg/85 transition-colors hover:border-accent/50 hover:text-accent"
                 >
                   {g}
                 </Link>
               ))}
             </div>
-            <p className="mt-5 max-w-prose leading-relaxed text-fg/85">{series.description}</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              {first && (
-                <Link
-                  href={`/seri/${series.slug}/bolum/${first.number}`}
-                  className="rounded-lg bg-accent px-5 py-2.5 font-semibold text-white hover:brightness-110"
-                >
-                  İlk bölümü oku
-                </Link>
-              )}
-              {latest && latest !== first && (
-                <Link
-                  href={`/seri/${series.slug}/bolum/${latest.number}`}
-                  className="rounded-lg bg-white/10 px-5 py-2.5 font-semibold hover:bg-white/20"
-                >
-                  Son bölüm: {latest.number}
-                </Link>
-              )}
-              <ContinueReading slug={series.slug} />
+            <p className="mt-5 max-w-prose leading-relaxed text-fg/80">{series.description}</p>
+            <div className="mt-6">
+              <ReadButtons slug={series.slug} first={first?.number ?? null} latest={latest?.number ?? null} />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-7xl gap-10 px-4 lg:grid-cols-[1fr_300px]">
+      <div className="mx-auto mt-4 grid max-w-7xl gap-10 px-4 lg:grid-cols-[1fr_320px]">
         <section className="min-w-0">
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="text-xl font-bold">Bölümler</h2>
-            <span className="text-sm text-muted">{series.chapters.length} bölüm</span>
-          </div>
-          {chaptersDesc.length === 0 ? (
-            <p className="rounded-xl border border-line bg-surface p-6 text-muted">
-              Bu serinin ilk bölümü yakında eklenecek.
-            </p>
-          ) : (
-            <ol className="grid gap-2 sm:grid-cols-2">
-              {chaptersDesc.map((c) => (
-                <li key={c.number}>
-                  <Link
-                    href={`/seri/${series.slug}/bolum/${c.number}`}
-                    className="flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 hover:border-accent"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2 font-semibold">
-                        Bölüm {c.number}
-                        <NewBadge iso={c.publishedAt} />
-                      </span>
-                      <span className="block truncate text-sm text-muted">{c.title}</span>
-                    </span>
-                    <TimeAgo iso={c.publishedAt} className="shrink-0 text-xs text-muted" />
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          )}
+          <ChapterList slug={series.slug} chapters={series.chapters} />
         </section>
 
         <aside className="space-y-6">
