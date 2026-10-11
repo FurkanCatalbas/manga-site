@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "samples": "node scripts/generate-samples.mjs",
+    "icons": "tsx scripts/generate-icons.ts",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
     "db:backfill-sizes": "tsx scripts/backfill-page-sizes.ts",

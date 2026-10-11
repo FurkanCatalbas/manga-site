@@ -35,6 +35,11 @@ Yeni kod da bu dile ve üsluba uymalı.
   Yeni düğme ve kutularda bunları kullan, yeni stil icat etme.
 - İnce kenarlar `ring-white/[0.06–0.15]` ya da `border-white/[0.06–0.08]`, köşeler `rounded-xl`/`2xl`,
   başlıklar `font-display` (Dela Gothic One) ya da `font-bold tracking-tight`.
+- **Marka:** yazı logosu `webto` + gradyanlı **`oku`** ("webtoon oku"); işaret gözlük (okumak).
+  Tek kaynak `src/lib/brand.ts` (`MARK_VARIANT`: halka/dolu/harf, şu an "halka"). Site logosu
+  `src/components/Brand.tsx`; sekme/uygulama ikonları ve manifest ikonları `npm run icons` ile üretilir
+  (`src/app/icon.svg`, `favicon.ico`, `apple-icon.png`, `public/icons/*`). Paylaşım görseli
+  `src/app/opengraph-image.tsx`, yazı tipleri `assets/fonts` (OFL).
 - İkonlar `src/components/icons.tsx` (satır içi SVG, kütüphane yok).
 - Mobilde yatay kayan raflar için `no-scrollbar -mx-4 px-4 overflow-x-auto snap-x`.
 - Popüler listesinde grafik/çizgi istenmiyor (kullanıcı kaldırttı).
@@ -55,6 +60,7 @@ Yeni kod da bu dile ve üsluba uymalı.
 | `npm run lint` | ESLint |
 | `npm run db:push` | Şemayı (`src/db/schema.ts`) veritabanına uygular. Şema her değiştiğinde yayından **önce** çalıştırılmalı. |
 | `npm run db:seed` | Örnek serileri ekler (görseller `public/sample`) |
+| `npm run icons` | Marka işaretinden sekme, iPhone ve uygulama ikonlarını üretir |
 | `npm run samples` | `public/sample` altındaki örnek SVG'leri üretir |
 | `npm run db:backfill-sizes` | Sayfa boyutu kayıtlı olmayan eski bölümlerin boyutlarını okuyup kaydeder |
 | `npm run db:studio` | Drizzle Studio |
@@ -183,12 +189,14 @@ Seri ekleme/düzenleme/silme ve bölüm yükleme. İşlemler `src/app/admin/acti
   sinematik ve kaydırılabilir hero, "Okumaya devam et" rafı, Kütüphane sayfası (`/kutuphane`),
   seri sayfasında "Devam et" ve okundu işaretli sıralanabilir bölüm listesi, çipli Keşfet filtreleri;
   popüler listesinden grafikler kaldırıldı
+- Marka: "webto**oku**" yazı logosu, gözlük işareti, favicon/iPhone/Android ikonları, uygulama
+  manifesti, yeni paylaşım görseli
 
 ## Sıradakiler (önerilmiş, henüz yapılmadı)
 
 - R2'ye kendi alan adını bağlamak (CDN). Kod değil, Cloudflare ayarı; `R2_PUBLIC_URL` güncellenir.
 - Okuyucu: genişlik/parlaklık ayarı, tam ekran düğmesi
-- PWA: manifest ve ikonlar (ana ekrana eklenebilir uygulama), ileride mobil uygulama
+- PWA: manifest ve ikonlar hazır; çevrimdışı çalışma (service worker) ve yükleme istemi eksik
 - Yükleme iskeletleri (skeleton) ve sayfa geçiş animasyonları
 - Kullanıcı hesapları (Auth.js / Better Auth): kütüphane/takip listesi, yeni bölüm bildirimi,
   cihazlar arası okuma geçmişi, puanlama

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Dela_Gothic_One, Onest } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Logo } from "@/components/Brand";
 import { SearchIcon } from "@/components/icons";
 import { DesktopNav, DesktopNavLinks, MobileTabBar, MobileTabBarView } from "@/components/SiteNav";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -33,14 +34,6 @@ export const viewport: Viewport = {
   // Çentikli ekranlarda içerik kenarlara kadar uzanır; boşluklar env(safe-area-inset-*) ile verilir
   viewportFit: "cover",
 };
-
-function Logo() {
-  return (
-    <Link href="/" className="font-display text-xl leading-none tracking-tight">
-      webtoo<span className="text-accent">ku</span>
-    </Link>
-  );
-}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -78,7 +71,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="mt-20 border-t border-white/[0.06]">
           <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <Logo />
+              <Logo id="logo-footer" />
               <p className="mt-2 max-w-xs text-sm text-muted">{SITE_DESCRIPTION}</p>
             </div>
             <div className="flex flex-col gap-3 text-sm text-muted sm:items-end">
