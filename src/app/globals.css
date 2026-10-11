@@ -1,26 +1,95 @@
 @import "tailwindcss";
 
+/* Risograf baskı paleti: gazete kağıdı, mürekkep, iki riso rengi */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #eceef1;
+  --paper-deep: #dfe2e7;
+  --ink: #191a21;
+  --tone: #c9ccd3;
+  --pink: #ff48b0;
+  --blue: #0078bf;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-tone: var(--tone);
+  --color-pink: var(--pink);
+  --color-blue: var(--blue);
+  --font-sans: var(--font-onest);
+  --font-display: var(--font-dela);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Tram noktaları (screentone) */
+.tone {
+  background-image: radial-gradient(var(--tone) 1.2px, transparent 1.3px);
+  background-size: 7px 7px;
+}
+.tone-pink {
+  background-image: radial-gradient(color-mix(in srgb, var(--pink) 55%, transparent) 1.6px, transparent 1.7px);
+  background-size: 9px 9px;
+}
+
+/* Kayık riso baskısı: pembe ve mavi katman hafif kaymış */
+.riso {
+  color: var(--ink);
+  text-shadow:
+    0.05em 0.045em 0 var(--pink),
+    -0.035em -0.03em 0 color-mix(in srgb, var(--blue) 85%, transparent);
+}
+
+/* Konuşma balonu */
+.balloon {
+  position: relative;
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  border-radius: 1.5rem;
+}
+.balloon::after {
+  content: "";
+  position: absolute;
+  left: 2.25rem;
+  bottom: -14px;
+  width: 22px;
+  height: 14px;
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  border-top: 0;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.balloon::before {
+  /* balon kuyruğunun üst kenarındaki çizgiyi gizle */
+  content: "";
+  position: absolute;
+  left: 2.4rem;
+  bottom: -2px;
+  width: 18px;
+  height: 4px;
+  background: #fff;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel-in {
+    animation: panel-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes panel-in {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
 }

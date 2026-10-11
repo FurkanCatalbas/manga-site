@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1100" viewBox="0 0 800 1100">
+  <rect width="800" height="1100" fill="#fff"/>
+  <rect x="20" y="20" width="760" height="340" rx="6" fill="hsl(265 30% 92%)" stroke="#111" stroke-width="4"/>
+  <rect x="20" y="380" width="760" height="340" rx="6" fill="hsl(265 30% 86%)" stroke="#111" stroke-width="4"/>
+  <rect x="20" y="740" width="760" height="340" rx="6" fill="hsl(265 30% 80%)" stroke="#111" stroke-width="4"/>
+  <text x="400" y="540" font-family="sans-serif" font-size="44" font-weight="700" fill="#222" text-anchor="middle">Gölge Avcısı</text>
+  <text x="400" y="600" font-family="sans-serif" font-size="30" fill="#555" text-anchor="middle">Bölüm 2 · Sayfa 6</text>
+</svg>

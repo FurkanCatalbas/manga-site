@@ -1,69 +1,110 @@
-import Image from "next/image";
+import Link from "next/link";
+import { SeriesCard } from "@/components/SeriesCard";
+import { formatDate, getAllSeries, getRecentlyUpdated, latestChapter } from "@/lib/data";
 
-export default function Home() {
+export default async function Home() {
+  const [recent, all] = await Promise.all([getRecentlyUpdated(), getAllSeries()]);
+  const featured = recent[0];
+  const featuredLatest = featured && latestChapter(featured);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="mx-auto max-w-6xl px-4 py-8 md:py-12">
+      {featured && (
+        // Giriş: bir manga sayfası gibi panellere bölünmüş öne çıkan seri
+        <section aria-label="Öne çıkan seri" className="grid gap-3 md:grid-cols-12 md:grid-rows-[auto_auto]">
+          <div className="tone border-[3px] border-ink bg-white p-6 md:col-span-8 md:p-10">
+            <p className="text-sm font-semibold text-ink/70">Bu haftanın serisi</p>
+            <h1 className="riso mt-3 font-display text-5xl leading-[0.95] sm:text-6xl lg:text-7xl">
+              {featured.title}
+            </h1>
+            <p className="mt-4 text-sm font-semibold">{featured.genres.join(", ")}</p>
+            <p className="balloon mt-6 max-w-md px-5 py-4 leading-relaxed">{featured.description}</p>
+          </div>
+
+          <Link
+            href={`/seri/${featured.slug}`}
+            className="panel-in block border-[3px] border-ink bg-ink md:col-span-4 md:row-span-2"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={featured.cover}
+              alt={`${featured.title} kapağı`}
+              className="aspect-[2/3] h-full w-full object-cover md:aspect-auto"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+
+          <Link
+            href={`/seri/${featured.slug}/bolum/${featured.chapters[0]?.number ?? 1}`}
+            className="tone-pink group flex items-end border-[3px] border-ink bg-white p-6 md:col-span-4"
           >
-            Documentation
-          </a>
+            <span className="font-display text-2xl leading-tight group-hover:underline group-hover:decoration-4 group-hover:underline-offset-4">
+              Baştan okumaya başla
+            </span>
+          </Link>
+
+          {featuredLatest && (
+            <Link
+              href={`/seri/${featured.slug}/bolum/${featuredLatest.number}`}
+              className="group flex flex-col justify-between gap-4 border-[3px] border-ink bg-blue p-6 text-white md:col-span-4"
+            >
+              <span className="text-sm text-white/80">Son eklenen, {formatDate(featuredLatest.publishedAt)}</span>
+              <span className="font-display text-2xl leading-tight group-hover:underline group-hover:decoration-4 group-hover:underline-offset-4">
+                {featuredLatest.number}. bölüm: {featuredLatest.title}
+              </span>
+            </Link>
+          )}
+        </section>
+      )}
+
+      <section className="mt-16">
+        <h2 className="font-display text-3xl">Son güncellenenler</h2>
+        <ul className="mt-5 border-y-[3px] border-ink">
+          {recent.map((s) => (
+            <li key={s.slug} className="flex items-center gap-4 border-b-2 border-ink/15 py-3 last:border-b-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={s.cover} alt="" className="h-20 w-14 shrink-0 border-2 border-ink object-cover" />
+              <div className="min-w-0 flex-1">
+                <Link href={`/seri/${s.slug}`} className="font-display text-lg hover:text-blue">
+                  {s.title}
+                </Link>
+                <p className="text-sm text-ink/60">{s.genres.join(", ")}</p>
+              </div>
+              <div className="hidden gap-2 sm:flex">
+                {s.chapters.slice(-2).reverse().map((c) => (
+                  <Link
+                    key={c.number}
+                    href={`/seri/${s.slug}/bolum/${c.number}`}
+                    className="border-2 border-ink bg-white px-3 py-1.5 text-sm hover:bg-ink hover:text-paper"
+                  >
+                    <span className="font-semibold">{c.number}. bölüm</span>
+                    <span className="ml-2 text-xs opacity-60">{formatDate(c.publishedAt)}</span>
+                  </Link>
+                ))}
+              </div>
+              {latestChapter(s) && (
+                <Link
+                  href={`/seri/${s.slug}/bolum/${latestChapter(s)!.number}`}
+                  className="border-2 border-ink bg-white px-3 py-1.5 text-sm font-semibold sm:hidden"
+                >
+                  {latestChapter(s)!.number}. bölüm
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mt-16">
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-display text-3xl">Tüm seriler</h2>
+          <span className="text-sm text-ink/60">{all.length} seri</span>
         </div>
-      </main>
+        <div className="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {all.map((s) => (
+            <SeriesCard key={s.slug} series={s} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
