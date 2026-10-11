@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { createSeries, updateSeries, type SeriesInput } from "@/app/admin/actions";
 import { slugify } from "@/lib/slug";
 import { field, label, primaryBtn } from "./ui";
-import { MAX_UPLOAD_BYTES, uploadImage } from "./upload";
+import { ACCEPT_IMAGES, isImageFile, MAX_UPLOAD_BYTES, uploadImage } from "./upload";
 
 type Props = { initial?: SeriesInput };
 
@@ -70,11 +70,13 @@ export function SeriesForm({ initial }: Props) {
           )}
           <input
             type="file"
-            accept="image/webp,image/jpeg,image/png,image/avif"
+            accept={ACCEPT_IMAGES}
             className="sr-only"
             onChange={(e) => {
               const f = e.target.files?.[0];
+              if (f && !isImageFile(f)) return setMessage({ error: `${f.name} bir görsel değil.` });
               if (f && f.size > MAX_UPLOAD_BYTES) return setMessage({ error: "Kapak 4 MB'tan büyük olamaz." });
+              setMessage(undefined);
               setCoverFile(f ?? null);
             }}
           />

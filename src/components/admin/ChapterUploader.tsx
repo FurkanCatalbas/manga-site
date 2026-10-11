@@ -3,10 +3,9 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createChapter } from "@/app/admin/actions";
 import { field, label, primaryBtn, secondaryBtn } from "./ui";
-import { MAX_UPLOAD_BYTES, sortByName, uploadImage } from "./upload";
+import { ACCEPT_IMAGES, isImageFile, MAX_UPLOAD_BYTES, sortByName, uploadImage } from "./upload";
 
 const CONCURRENCY = 3;
-const ACCEPT = ["image/webp", "image/jpeg", "image/png", "image/avif", "image/gif"];
 
 export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber: number }) {
   const [number, setNumber] = useState(nextNumber);
@@ -23,13 +22,15 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
 
   function addFiles(list: FileList | null) {
     if (!list) return;
-    const incoming = [...list].filter((f) => ACCEPT.includes(f.type));
+    const all = [...list];
+    const incoming = all.filter(isImageFile);
+    const notImage = all.filter((f) => !isImageFile(f));
     const tooBig = incoming.filter((f) => f.size > MAX_UPLOAD_BYTES);
-    if (tooBig.length) {
-      setMessage({ error: `4 MB'tan büyük dosyalar eklenmedi: ${tooBig.map((f) => f.name).join(", ")}` });
-    } else {
-      setMessage(undefined);
-    }
+    const problems = [
+      notImage.length && `Görsel olmadığı için eklenmedi: ${notImage.map((f) => f.name).join(", ")}`,
+      tooBig.length && `4 MB'tan büyük olduğu için eklenmedi: ${tooBig.map((f) => f.name).join(", ")}`,
+    ].filter(Boolean);
+    setMessage(problems.length ? { error: problems.join(" ") } : undefined);
     const ok = incoming.filter((f) => f.size <= MAX_UPLOAD_BYTES);
     setFiles((prev) => sortByName([...prev, ...ok]));
   }
@@ -116,7 +117,7 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
         <input
           type="file"
           multiple
-          accept={ACCEPT.join(",")}
+          accept={ACCEPT_IMAGES}
           className="sr-only"
           onChange={(e) => {
             addFiles(e.target.files);
