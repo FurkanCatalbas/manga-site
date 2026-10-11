@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# webtooku
 
-## Getting Started
+Türkçe webtoon ve manga okuma sitesi. Next.js 16, Neon Postgres (Drizzle), Cloudflare R2 ve Vercel.
 
-First, run the development server:
+## Özellikler
+
+- Dikey (webtoon) okuyucu: kaydırınca gizlenen barlar, kaldığın sayfadan devam,
+  sonraki bölümü önceden yükleme, en altta çekerek sonraki bölüme geçiş
+- Ana sayfa, seri sayfaları, arama ve tür/durum filtresi
+- Popüler listesi: günlük, haftalık, aylık ve 14 günlük okunma grafiği
+- Yönetim paneli (`/admin`): seri ve bölüm ekleme; yüklenen görseller otomatik
+  küçültülüp WebP'ye çevrilir
+- Teknik SEO: sitemap, robots, canonical, Open Graph, yapısal veri
+
+## Kurulum
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Proje kökünde `.env.local` oluştur:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+DATABASE_URL=postgres://...          # Neon bağlantı adresi
+ADMIN_PASSWORD=en-az-12-karakter     # Yönetim paneli şifresi
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+R2_ACCOUNT_ID=...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET=...
+R2_PUBLIC_URL=https://cdn.ornek.com  # Bucket'ın herkese açık adresi
 
-## Learn More
+# İsteğe bağlı
+SITE_URL=https://ornek.com           # Yoksa Vercel üretim adresi kullanılır
+VIEW_SALT=rastgele-bir-deger         # Okunma sayacındaki IP özetlerinin tuzu
+```
 
-To learn more about Next.js, take a look at the following resources:
+Veritabanını hazırla ve çalıştır:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run db:push     # Tabloları oluşturur / günceller
+npm run db:seed     # İsteğe bağlı: örnek seriler
+npm run dev         # http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Komutlar
 
-## Deploy on Vercel
+| Komut | Ne yapar |
+|---|---|
+| `npm run dev` | Geliştirme sunucusu |
+| `npm run build` / `npm start` | Üretim derlemesi / sunucusu |
+| `npm run lint` | ESLint |
+| `npm run db:push` | Şemayı veritabanına uygular |
+| `npm run db:seed` | Örnek serileri ekler |
+| `npm run db:backfill-sizes` | Eski bölümlerin sayfa boyutlarını kaydeder (sayfa kaymasını önler) |
+| `npm run db:studio` | Veritabanını tarayıcıda görüntüler |
+| `npm run samples` | Örnek SVG görsellerini üretir |
+| `npx tsx scripts/r2-check.ts` | R2 bağlantısını test eder |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Yayınlama
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`main` dalına gönderilen her değişiklik Vercel'de otomatik yayınlanır.
+
+- **Şema değiştiyse** (`src/db/schema.ts`) yayından önce `npm run db:push` çalıştır.
+  Yoksa yeni kod, veritabanında olmayan tablo ya da sütunları arar ve hata verir.
+- Vercel'de yukarıdaki ortam değişkenlerinin hepsi tanımlı olmalı.
+- **CDN:** `R2_PUBLIC_URL` için `r2.dev` adresi yerine bucket'a bağlanmış kendi alan adını kullan
+  (Cloudflare panelinde R2 → bucket → Settings → Custom Domains). `r2.dev` adresleri hız
+  sınırlıdır ve Cloudflare önbelleğinden geçmez.
+  Görsel adresleri veritabanına tam adres olarak yazıldığı için, adres değişince eski kayıtları da güncelle
+  (eski ve yeni adresi kendine göre değiştir; sonunda `/` olmasın):
+
+  ```sql
+  update series set cover = replace(cover, 'https://pub-xxx.r2.dev', 'https://cdn.ornek.com');
+  update chapters set pages = array(select replace(p, 'https://pub-xxx.r2.dev', 'https://cdn.ornek.com') from unnest(pages) p);
+  ```
+
+## Proje yapısı
+
+```
+src/
+  app/                 Sayfalar ve API (seri/, ara/, admin/, api/)
+  components/          Okuyucu, kartlar, panel bileşenleri
+  db/                  Drizzle şeması ve bağlantı
+  lib/                 Veri katmanı (data.ts), görsel işleme, R2, oturum
+scripts/               Seed, örnek görseller, bakım betikleri
+```
+
+Ayrıntılı mimari notları ve kurallar için: [CLAUDE.md](CLAUDE.md)
