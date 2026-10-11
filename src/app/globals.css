@@ -39,6 +39,14 @@ body {
   outline-offset: 2px;
 }
 
+/* Okuyucuda aşağı kaydırırken site başlığı gizlenir (bkz. Reader içindeki useHideOnScroll) */
+.site-header {
+  transition: transform 300ms;
+}
+[data-chrome="hidden"] .site-header {
+  transform: translateY(-100%);
+}
+
 /* Yatay kaydırma çubuğunu gizle (mobil raflar) */
 .no-scrollbar {
   scrollbar-width: none;

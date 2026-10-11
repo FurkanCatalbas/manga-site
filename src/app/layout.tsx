@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="tr" className={`${dela.variable} ${onest.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur-md">
+        <header className="site-header sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur-md">
           <nav className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4">
             <Logo />
             <div className="hidden gap-5 text-sm font-medium text-muted sm:flex">

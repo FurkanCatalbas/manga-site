@@ -42,6 +42,7 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
   const { series, chapter } = found;
   const numbers = series.chapters.map((c) => c.number);
   const idx = numbers.indexOf(chapter.number);
+  const nextChapter = series.chapters[idx + 1];
 
   const seriesUrl = absoluteUrl(`/seri/${series.slug}`);
   const url = absoluteUrl(`/seri/${series.slug}/bolum/${chapter.number}`);
@@ -82,7 +83,8 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
       pages={chapter.pages}
       chapterNumbers={numbers}
       prev={numbers[idx - 1] ?? null}
-      next={numbers[idx + 1] ?? null}
+      next={nextChapter?.number ?? null}
+      nextPages={nextChapter?.pages.slice(0, 3) ?? []}
     />
     </>
   );

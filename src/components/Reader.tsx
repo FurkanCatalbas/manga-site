@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { saveProgress } from "@/lib/progress";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
+import { getProgress, saveProgress, type Progress } from "@/lib/progress";
 
 /** Bölüm açılışını sayaca bildirir; aynı tarayıcıdan aynı bölüm günde bir kez sayılır. */
 function useCountView(slug: string, chapter: number) {
@@ -24,24 +25,38 @@ function useCountView(slug: string, chapter: number) {
   }, [slug, chapter]);
 }
 
-type Mode = "dikey" | "sayfa";
-const MODE_KEY = "mangaoku:mode";
-const modeListeners = new Set<() => void>();
+/**
+ * Aşağı kaydırırken üst barları gizler, yukarı kaydırınca geri getirir.
+ * Sitenin başlığı layout'ta olduğu için <html data-chrome="hidden"> ile CSS üzerinden gizlenir.
+ */
+function useHideOnScroll() {
+  const [hidden, setHidden] = useState(false);
 
-function useReaderMode() {
-  const mode = useSyncExternalStore<Mode>(
-    (cb) => {
-      modeListeners.add(cb);
-      return () => modeListeners.delete(cb);
-    },
-    () => (localStorage.getItem(MODE_KEY) === "sayfa" ? "sayfa" : "dikey"),
-    () => "dikey",
-  );
-  const setMode = (m: Mode) => {
-    localStorage.setItem(MODE_KEY, m);
-    modeListeners.forEach((cb) => cb());
-  };
-  return [mode, setMode] as const;
+  useEffect(() => {
+    // iOS'ta en alttaki esneme yukarı kaydırma gibi görünmesin diye konum sınırlanır
+    const scrollY = () =>
+      Math.min(Math.max(window.scrollY, 0), document.documentElement.scrollHeight - window.innerHeight);
+    let lastY = scrollY();
+    const onScroll = () => {
+      const y = scrollY();
+      if (Math.abs(y - lastY) < 8) return;
+      setHidden(y > lastY && y > 120);
+      lastY = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (hidden) root.dataset.chrome = "hidden";
+    else delete root.dataset.chrome;
+    return () => {
+      delete root.dataset.chrome;
+    };
+  }, [hidden]);
+
+  return hidden;
 }
 
 type Props = {
@@ -53,128 +68,137 @@ type Props = {
   chapterNumbers: number[];
   prev: number | null;
   next: number | null;
+  /** Sonraki bölümün ilk sayfaları, bölüm sonuna yaklaşınca önceden yüklenir */
+  nextPages: string[];
 };
 
 export function Reader(props: Props) {
-  const { slug, seriesTitle, chapter, chapterTitle, pages, chapterNumbers, prev, next } = props;
+  const { slug, seriesTitle, chapter, chapterTitle, pages, chapterNumbers, prev, next, nextPages } = props;
   const router = useRouter();
-  const [mode, setMode] = useReaderMode();
   const [page, setPage] = useState(0); // 0 tabanlı
+  const [resumedFrom, setResumedFrom] = useState<number | null>(null);
+  const imgRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const hidden = useHideOnScroll();
   useCountView(slug, chapter);
   const chapterUrl = (n: number) => `/seri/${slug}/bolum/${n}`;
+  const nextUrl = next !== null ? chapterUrl(next) : null;
+  const closeResume = useCallback(() => setResumedFrom(null), []);
+
+  // Kaldığın sayfaya kaydır. Kayıt, aşağıdaki saveProgress üzerine yazmadan önce okunmalı.
+  // Kayıt bir kez okunur: StrictMode efekti iki kez çalıştırdığında ikinci okuma ezilmiş kaydı görürdü.
+  const savedRef = useRef<Progress | null | undefined>(undefined);
+  useEffect(() => {
+    if (savedRef.current === undefined) savedRef.current = getProgress(slug) ?? null;
+    const saved = savedRef.current;
+    if (saved?.chapter !== chapter || saved.page <= 1 || saved.page > pages.length) return;
+    const target = saved.page - 1;
+    const imgs = imgRefs.current.slice(0, target + 1).filter((el) => el !== null);
+    let cancelled = false;
+
+    // Hedefin üstündeki sayfaların yüksekliği bilinmeden doğru yere kaydırılamaz: önce onları yükle
+    Promise.all(
+      imgs.map((img) => {
+        img.loading = "eager";
+        return img.complete
+          ? null
+          : new Promise((resolve) => {
+              img.addEventListener("load", resolve, { once: true });
+              img.addEventListener("error", resolve, { once: true });
+            });
+      }),
+    ).then(() => {
+      // Bu arada okuyucu kendisi kaydırmaya başladıysa karışma
+      if (cancelled || window.scrollY > 50) return;
+      const el = imgRefs.current[target];
+      if (!el) return;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY });
+      setResumedFrom(saved.page);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, chapter, pages.length]);
 
   useEffect(() => {
     saveProgress(slug, chapter, page + 1);
   }, [slug, chapter, page]);
 
-  const goNext = useCallback(() => {
-    if (page < pages.length - 1) setPage(page + 1);
-    else if (next !== null) router.push(chapterUrl(next));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pages.length, next, router]);
-
-  const goPrev = useCallback(() => {
-    if (page > 0) setPage(page - 1);
-    else if (prev !== null) router.push(chapterUrl(prev));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, prev, router]);
-
-  // Sayfa modunda klavye ile gezinme
+  // Bölüm sonuna yaklaşınca sonraki bölümü ve ilk sayfalarını önceden yükle
+  const nearEnd = page >= pages.length - 3;
   useEffect(() => {
-    if (mode !== "sayfa") return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === "d") goNext();
-      if (e.key === "ArrowLeft" || e.key === "a") goPrev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [mode, goNext, goPrev]);
-
-  // Sayfa modunda sayfa değişince başa kaydır
-  useEffect(() => {
-    if (mode === "sayfa") window.scrollTo({ top: 0 });
-  }, [mode, page]);
+    if (!nearEnd || !nextUrl) return;
+    router.prefetch(nextUrl);
+    nextPages.forEach((src) => preload(src, { as: "image" }));
+  }, [nearEnd, nextUrl, nextPages, router]);
 
   const progress = ((page + 1) / pages.length) * 100;
 
-  const chapterNav = (
-    <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-6">
-      <NavButton href={prev !== null ? chapterUrl(prev) : null}>Önceki bölüm</NavButton>
-      <select
-        aria-label="Bölüm seç"
-        value={chapter}
-        onChange={(e) => router.push(chapterUrl(Number(e.target.value)))}
-        className="rounded-lg border border-line bg-surface px-3 py-2 text-sm"
-      >
-        {chapterNumbers.map((n) => (
-          <option key={n} value={n}>
-            {n}. bölüm
-          </option>
-        ))}
-      </select>
-      <NavButton href={next !== null ? chapterUrl(next) : null}>Sonraki bölüm</NavButton>
-    </div>
-  );
-
   return (
     <div className="bg-bg">
-      <div className="sticky top-16 z-20 border-b border-line bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
-          <div className="min-w-0">
-            <Link href={`/seri/${slug}`} className="block truncate font-semibold hover:text-accent">
-              {seriesTitle}
-            </Link>
-            <p className="truncate text-xs text-muted">
-              {chapter}. bölüm: {chapterTitle}
-            </p>
-          </div>
-          <div role="group" aria-label="Okuma modu" className="flex shrink-0 overflow-hidden rounded-lg border border-line text-xs">
-            {(["dikey", "sayfa"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                aria-pressed={mode === m}
-                className={`px-3 py-1.5 font-semibold ${mode === m ? "bg-accent text-white" : "text-muted hover:text-fg"}`}
-              >
-                {m === "dikey" ? "Dikey" : "Sayfa sayfa"}
-              </button>
-            ))}
-          </div>
+      {/* Gizlenince yalnızca alttaki ilerleme çizgisi (3px) ekranın üstünde kalır */}
+      <div
+        className="sticky top-16 z-20 bg-surface/95 backdrop-blur transition-transform duration-300"
+        style={hidden ? { transform: "translateY(calc(-4rem - 100% + 3px))" } : undefined}
+      >
+        <div className="mx-auto max-w-3xl px-4 py-2.5">
+          <Link href={`/seri/${slug}`} className="block truncate font-semibold hover:text-accent">
+            {seriesTitle}
+          </Link>
+          <p className="truncate text-xs text-muted">
+            {chapter}. bölüm: {chapterTitle}
+          </p>
         </div>
         {/* Bölüm içindeki ilerleme */}
-        <div className="h-0.5 bg-line" aria-hidden>
+        <div className="h-[3px] bg-line" aria-hidden>
           <div className="h-full bg-accent transition-[width]" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
-      {mode === "dikey" ? (
-        <VerticalPages pages={pages} onVisible={setPage} />
-      ) : (
-        <div className="mx-auto max-w-3xl px-2 pt-4">
-          <div className="relative select-none">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={pages[page]} alt={`Sayfa ${page + 1}`} className="mx-auto w-full" />
-            {/* Sol üçte bire tıklayınca geri, kalanına tıklayınca ileri */}
-            <button aria-label="Önceki sayfa" onClick={goPrev} className="absolute inset-y-0 left-0 w-1/3" />
-            <button aria-label="Sonraki sayfa" onClick={goNext} className="absolute inset-y-0 right-0 w-2/3" />
-          </div>
-          {/* Sonraki sayfayı önceden yükle */}
-          {pages[page + 1] && <link rel="preload" as="image" href={pages[page + 1]} />}
-          <p className="py-3 text-center text-sm text-muted">
-            Sayfa {page + 1} / {pages.length}. Ok tuşlarıyla da gezinebilirsin.
-          </p>
-        </div>
-      )}
+      <VerticalPages pages={pages} imgRefs={imgRefs} onVisible={setPage} />
 
-      {chapterNav}
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-6">
+        <NavButton href={prev !== null ? chapterUrl(prev) : null}>Önceki bölüm</NavButton>
+        <select
+          aria-label="Bölüm seç"
+          value={chapter}
+          onChange={(e) => router.push(chapterUrl(Number(e.target.value)))}
+          className="rounded-lg border border-line bg-surface px-3 py-2 text-sm"
+        >
+          {chapterNumbers.map((n) => (
+            <option key={n} value={n}>
+              {n}. bölüm
+            </option>
+          ))}
+        </select>
+        <NavButton href={nextUrl}>Sonraki bölüm</NavButton>
+      </div>
+
+      {nextUrl && <PullToNext href={nextUrl} />}
+
+      {resumedFrom !== null && (
+        <ResumeNotice
+          page={resumedFrom}
+          onRestart={() => {
+            window.scrollTo({ top: 0 });
+            setResumedFrom(null);
+          }}
+          onClose={closeResume}
+        />
+      )}
     </div>
   );
 }
 
-function VerticalPages({ pages, onVisible }: { pages: string[]; onVisible: (i: number) => void }) {
-  const refs = useRef<(HTMLImageElement | null)[]>([]);
-
-  // Ekranda görünen sayfayı okuma geçmişine yaz
+function VerticalPages({
+  pages,
+  imgRefs,
+  onVisible,
+}: {
+  pages: string[];
+  imgRefs: React.RefObject<(HTMLImageElement | null)[]>;
+  onVisible: (i: number) => void;
+}) {
+  // Ekranın ortasındaki sayfayı okuma geçmişine yaz
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -184,9 +208,9 @@ function VerticalPages({ pages, onVisible }: { pages: string[]; onVisible: (i: n
       },
       { rootMargin: "-50% 0px -50% 0px" },
     );
-    refs.current.forEach((el) => el && observer.observe(el));
+    imgRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
-  }, [pages, onVisible]);
+  }, [pages, imgRefs, onVisible]);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col">
@@ -195,7 +219,7 @@ function VerticalPages({ pages, onVisible }: { pages: string[]; onVisible: (i: n
         <img
           key={src}
           ref={(el) => {
-            refs.current[i] = el;
+            imgRefs.current[i] = el;
           }}
           data-index={i}
           src={src}
@@ -204,6 +228,151 @@ function VerticalPages({ pages, onVisible }: { pages: string[]; onVisible: (i: n
           className="w-full"
         />
       ))}
+    </div>
+  );
+}
+
+const PULL_MS = 2000;
+const RING = 2 * Math.PI * 10;
+
+/**
+ * Sayfanın en altında çekmeye devam edilirse (dokunmatikte parmakla yukarı sürükleme,
+ * masaüstünde tekerleği aşağı çevirme) 2 saniyelik bir halka dolar; dolana kadar
+ * bırakılmazsa sonraki bölüme geçilir.
+ */
+function PullToNext({ href }: { href: string }) {
+  const router = useRouter();
+  const [fill, setFill] = useState(0); // 0..1
+
+  useEffect(() => {
+    let holding = false;
+    let done = false;
+    let start = 0;
+    let raf = 0;
+    let wheelTimer: ReturnType<typeof setTimeout> | undefined;
+    let touchY: number | null = null;
+
+    const atBottom = () =>
+      window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+
+    const tick = (now: number) => {
+      if (!holding) return;
+      const p = Math.min((now - start) / PULL_MS, 1);
+      setFill(p);
+      if (p < 1) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      holding = false;
+      done = true;
+      router.push(href);
+    };
+    const hold = () => {
+      if (holding || done) return;
+      holding = true;
+      start = performance.now();
+      raf = requestAnimationFrame(tick);
+    };
+    const release = () => {
+      if (!holding) return;
+      holding = false;
+      cancelAnimationFrame(raf);
+      setFill(0);
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0].clientY;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchY === null) return;
+      const y = e.touches[0].clientY;
+      // En alta varılana kadar başlangıç noktası parmakla birlikte kayar,
+      // böylece yalnızca dipte yapılan çekme sayılır
+      if (!atBottom()) {
+        touchY = y;
+        release();
+        return;
+      }
+      const pulled = touchY - y;
+      if (pulled > 40) hold();
+      else if (pulled < 0) release();
+    };
+    const onTouchEnd = () => {
+      touchY = null;
+      release();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY > 0 && atBottom()) {
+        hold();
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(release, 300);
+      } else if (e.deltaY < 0) {
+        release();
+      }
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd);
+    window.addEventListener("touchcancel", onTouchEnd);
+    window.addEventListener("wheel", onWheel, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(wheelTimer);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [href, router]);
+
+  return (
+    <>
+      <p className="px-4 pb-4 text-center text-xs text-muted">
+        Sonraki bölüme geçmek için en altta çekmeye devam et.
+      </p>
+      {fill > 0 && (
+        <div
+          role="status"
+          className="fixed inset-x-0 bottom-8 z-40 mx-auto flex w-fit items-center gap-3 rounded-full border border-line bg-surface/95 px-4 py-2.5 text-sm font-semibold shadow-lg backdrop-blur"
+        >
+          <svg viewBox="0 0 24 24" className={`size-6 -rotate-90 ${fill >= 1 ? "animate-spin" : ""}`} aria-hidden>
+            <circle cx="12" cy="12" r="10" fill="none" strokeWidth="3" className="stroke-line" />
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              fill="none"
+              strokeWidth="3"
+              strokeLinecap="round"
+              className="stroke-accent"
+              strokeDasharray={RING}
+              strokeDashoffset={fill >= 1 ? RING * 0.75 : RING * (1 - fill)}
+            />
+          </svg>
+          {fill >= 1 ? "Sonraki bölüm yükleniyor…" : "Sonraki bölüm için çekili tut"}
+        </div>
+      )}
+    </>
+  );
+}
+
+function ResumeNotice({ page, onRestart, onClose }: { page: number; onRestart: () => void; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 5000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  return (
+    <div
+      role="status"
+      className="fixed inset-x-0 bottom-8 z-40 mx-auto flex w-fit items-center gap-3 rounded-full border border-line bg-surface/95 py-2 pl-4 pr-2 text-sm shadow-lg backdrop-blur"
+    >
+      <span>{page}. sayfadan devam ediyorsun</span>
+      <button onClick={onRestart} className="rounded-full bg-surface-2 px-3 py-1 font-semibold hover:bg-accent hover:text-white">
+        Başa dön
+      </button>
     </div>
   );
 }
