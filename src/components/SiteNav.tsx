@@ -2,6 +2,9 @@
 
 // Masaüstünde başlıktaki bağlantılar, mobilde uygulama gibi alt sekme çubuğu.
 // İleride Topluluk ve Profil sekmeleri buraya eklenecek.
+//
+// Etkin sekmeyi bulmak için adres (usePathname) okunur. cacheComponents açıkken bu ancak
+// <Suspense> içinde yapılabilir; layout önce `pathname={null}` ile işaretsiz hâlini gösterir.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CompassIcon, HomeIcon, LibraryIcon } from "@/components/icons";
@@ -12,11 +15,10 @@ const TABS = [
   { href: "/kutuphane", label: "Kütüphane", Icon: LibraryIcon },
 ];
 
-const isActive = (pathname: string, href: string) =>
-  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+const isActive = (pathname: string | null, href: string) =>
+  pathname !== null && (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
 
-export function DesktopNav() {
-  const pathname = usePathname();
+export function DesktopNavLinks({ pathname }: { pathname: string | null }) {
   return (
     <div className="hidden items-center gap-1 text-sm font-medium md:flex">
       {TABS.map(({ href, label }) => {
@@ -36,18 +38,22 @@ export function DesktopNav() {
   );
 }
 
-/** Okuyucu ve yönetim panelinde gösterilmez: okuyucu tam ekran kalır. */
-export function MobileTabBar() {
-  const pathname = usePathname();
-  if (/^\/seri\/[^/]+\/bolum\//.test(pathname) || pathname.startsWith("/admin")) return null;
+export function DesktopNav() {
+  return <DesktopNavLinks pathname={usePathname()} />;
+}
 
+/**
+ * Okuyucu ve yönetim panelinde gösterilmez (okuyucu tam ekran kalır). Bu, adres okunmadan önce de
+ * geçerli olsun diye CSS ile yapılır: o sayfalar köklerine `data-hide-tabbar` koyar (bkz. globals.css).
+ */
+export function MobileTabBarView({ pathname }: { pathname: string | null }) {
   return (
-    <>
+    <div className="mobile-tabbar md:hidden">
       {/* Sabit çubuğun altında içerik kalmasın diye yer tutucu */}
-      <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))] md:hidden" />
+      <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))]" />
       <nav
         aria-label="Ana menü"
-        className="glass fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.06] pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="glass fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.06] pb-[env(safe-area-inset-bottom)]"
       >
         <ul className="mx-auto flex h-16 max-w-md items-stretch justify-around">
           {TABS.map(({ href, label, Icon }) => {
@@ -69,6 +75,10 @@ export function MobileTabBar() {
           })}
         </ul>
       </nav>
-    </>
+    </div>
   );
+}
+
+export function MobileTabBar() {
+  return <MobileTabBarView pathname={usePathname()} />;
 }

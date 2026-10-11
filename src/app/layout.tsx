@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Dela_Gothic_One, Onest } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
 import { SearchIcon } from "@/components/icons";
-import { DesktopNav, MobileTabBar } from "@/components/SiteNav";
+import { DesktopNav, DesktopNavLinks, MobileTabBar, MobileTabBarView } from "@/components/SiteNav";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -48,7 +49,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <header className="site-header glass sticky top-0 z-30 border-b border-white/[0.06] pt-[env(safe-area-inset-top)]">
           <nav className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:gap-8">
             <Logo />
-            <DesktopNav />
+            <Suspense fallback={<DesktopNavLinks pathname={null} />}>
+              <DesktopNav />
+            </Suspense>
             <form action="/ara" className="ml-auto hidden w-full max-w-xs md:block">
               <label htmlFor="site-search" className="sr-only">Seri ara</label>
               <div className="relative">
@@ -87,7 +90,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </div>
           </div>
         </footer>
-        <MobileTabBar />
+        <Suspense fallback={<MobileTabBarView pathname={null} />}>
+          <MobileTabBar />
+        </Suspense>
       </body>
     </html>
   );

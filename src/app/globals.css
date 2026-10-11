@@ -123,6 +123,11 @@ body {
   transform: translateY(-100%);
 }
 
+/* Okuyucu ve yönetim panelinde mobil alt menü gizlenir (bkz. SiteNav) */
+body:has([data-hide-tabbar]) .mobile-tabbar {
+  display: none;
+}
+
 /* Yatay kaydırma çubuğunu gizle (mobil raflar) */
 .no-scrollbar {
   scrollbar-width: none;

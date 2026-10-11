@@ -159,7 +159,12 @@ Seri ekleme/düzenleme/silme ve bölüm yükleme. İşlemler `src/app/admin/acti
 - Tarayıcı testi: Playwright, `executablePath: "/opt/pw-browsers/chromium"` (`playwright-core`'u scratchpad'e kur).
 - `pkill -f "next dev ..."` aynı komut satırındaki kabuğu da öldürür (desen kendi komutuyla eşleşir).
   Önce `pgrep` ile PID bul, sonra ayrı komutla `kill`.
-- `next build` veritabanı ister (`generateStaticParams`); veritabanı yoksa burada çalıştırılamaz.
+- `next build` veritabanı ister (`generateStaticParams`). Yukarıdaki yerel Postgres düzeneğiyle
+  `ADMIN_PASSWORD=... npx next build` çalıştırılabilir; **arayüzde önemli değişiklikten sonra mutlaka
+  build al**, çünkü `cacheComponents` hatalarını `tsc`, lint ve `next dev` yakalamaz.
+- `cacheComponents` kuralı: `usePathname`, `useSearchParams`, `cookies()`, `params` gibi istek/adres
+  verisi okuyan her şey `<Suspense>` içinde olmalı. Root layout'taki menüler bu yüzden Suspense içinde,
+  `pathname={null}` yedeğiyle (`SiteNav.tsx`).
 - Geliştirme logundaki `Route "/seri/[slug]": Next.js encountered URL data during prerendering`
   uyarıları bu değişikliklerden önce de vardı; henüz ele alınmadı.
 

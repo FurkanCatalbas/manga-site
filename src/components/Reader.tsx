@@ -135,7 +135,7 @@ export function Reader(props: Props) {
   const progress = ((page + 1) / pages.length) * 100;
 
   return (
-    <div className="bg-bg">
+    <div data-hide-tabbar className="bg-bg">
       {/* Gizlenince yalnızca alttaki ilerleme çizgisi (3px) ekranın üstünde kalır */}
       <div
         className="glass sticky top-[calc(4rem+env(safe-area-inset-top))] z-20 transition-transform duration-300"
