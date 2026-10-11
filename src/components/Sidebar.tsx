@@ -1,32 +1,23 @@
 import Link from "next/link";
-import type { Series } from "@/lib/series";
+import { PopularTabs, type PopularItem } from "@/components/PopularTabs";
+import type { Period, PopularEntry } from "@/lib/data";
 
-export function PopularList({ items }: { items: Series[] }) {
-  return (
-    <section className="rounded-2xl border border-line bg-surface p-4">
-      <h2 className="mb-3 text-lg font-bold">Popüler</h2>
-      <ol className="space-y-3">
-        {items.map((s, i) => (
-          <li key={s.slug}>
-            <Link href={`/seri/${s.slug}`} className="group flex items-center gap-3">
-              <span className={`w-5 text-center text-lg font-extrabold ${i < 3 ? "text-accent" : "text-muted"}`}>
-                {i + 1}
-              </span>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={s.cover} alt="" className="h-16 w-12 shrink-0 rounded-md object-cover" />
-              <span className="min-w-0">
-                <span className="block truncate font-semibold group-hover:text-accent">{s.title}</span>
-                <span className="block truncate text-xs text-muted">{s.genres.join(", ")}</span>
-                <span className="block text-xs text-muted">
-                  {s.views.toLocaleString("tr-TR")} okunma
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
+/** Popüler verisini istemciye sadece gereken alanlarla aktarır. */
+export function PopularList({ data }: { data: Record<Period, PopularEntry[]> }) {
+  const slim = Object.fromEntries(
+    Object.entries(data).map(([period, entries]) => [
+      period,
+      entries.map(({ series: s, views, trend }) => ({
+        slug: s.slug,
+        title: s.title,
+        cover: s.cover,
+        genres: s.genres,
+        views,
+        trend,
+      })),
+    ]),
+  ) as Record<Period, PopularItem[]>;
+  return <PopularTabs data={slim} />;
 }
 
 export function GenreList({ genres }: { genres: string[] }) {

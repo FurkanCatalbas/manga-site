@@ -41,7 +41,7 @@ export function HeroSlider({ items }: { items: Series[] }) {
             key={s.slug}
             aria-hidden={!active}
             inert={!active}
-            className={`transition-opacity duration-700 ${active ? "relative opacity-100" : "absolute inset-0 opacity-0"}`}
+            className={`transition-opacity ${active ? "relative opacity-100 delay-150 duration-500" : "absolute inset-0 opacity-0 duration-150"}`}
           >
             {/* Bulanık kapak arka planı */}
             {/* eslint-disable-next-line @next/next/no-img-element */}

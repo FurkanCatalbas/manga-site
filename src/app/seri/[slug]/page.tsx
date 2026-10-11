@@ -124,7 +124,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
         </section>
 
         <aside className="space-y-6">
-          <PopularList items={popular} />
+          <PopularList data={popular} />
           <GenreList genres={genres} />
         </aside>
       </div>

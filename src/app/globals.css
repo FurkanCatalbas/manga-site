@@ -55,3 +55,25 @@ body {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Popüler sekmesi değişince liste yumuşakça gelir, grafik çizgisi soldan sağa çizilir */
+@media (prefers-reduced-motion: no-preference) {
+  .popular-in > li {
+    animation: popular-in 0.35s ease-out both;
+  }
+  .popular-in > li:nth-child(2) { animation-delay: 40ms; }
+  .popular-in > li:nth-child(3) { animation-delay: 80ms; }
+  .popular-in > li:nth-child(4) { animation-delay: 120ms; }
+  .popular-in > li:nth-child(5) { animation-delay: 160ms; }
+  @keyframes popular-in {
+    from { opacity: 0; transform: translateY(6px); }
+  }
+  .spark-draw {
+    stroke-dasharray: 1;
+    animation: spark-draw 0.9s ease-out both;
+  }
+  @keyframes spark-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+}

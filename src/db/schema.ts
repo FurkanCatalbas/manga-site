@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { integer, pgTable, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { date, integer, pgTable, primaryKey, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
 
 export const series = pgTable("series", {
   id: serial("id").primaryKey(),
@@ -28,6 +28,19 @@ export const chapters = pgTable(
     pages: text("pages").array().notNull().default([]),
   },
   (t) => [unique().on(t.seriesId, t.number)],
+);
+
+// Gün gün okunma sayıları (Popüler: günlük / haftalık / aylık ve okunma grafiği için)
+export const seriesViewsDaily = pgTable(
+  "series_views_daily",
+  {
+    seriesId: integer("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "cascade" }),
+    day: date("day").notNull(), // İstanbul saatine göre gün
+    views: integer("views").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.seriesId, t.day] })],
 );
 
 export const seriesRelations = relations(series, ({ many }) => ({
