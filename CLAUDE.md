@@ -43,6 +43,7 @@ Yeni kod da bu dile ve üsluba uymalı.
 - `DATABASE_URL`: Neon bağlantısı (zorunlu; yoksa `src/db/index.ts` hata atar)
 - `ADMIN_PASSWORD`: yönetim paneli şifresi, en az 12 karakter
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`
+  - R2 için kendi alan adı: `https://cdn.webtooku.com.tr` (`R2_PUBLIC_URL` bu olmalı; eski `r2.dev` adresinden geçiş yapıldı)
 - `SITE_URL`: isteğe bağlı; yoksa Vercel üretim adresi, o da yoksa localhost
 - `VIEW_SALT`: isteğe bağlı; okunma sayacındaki IP özetlerinin tuzu
 
