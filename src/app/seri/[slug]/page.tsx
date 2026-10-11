@@ -5,11 +5,11 @@ import { ContinueReading } from "@/components/ContinueReading";
 import { GenreList, PopularList } from "@/components/Sidebar";
 import { NewBadge, TimeAgo } from "@/components/TimeAgo";
 import { JsonLd } from "@/components/JsonLd";
-import { getAllGenres, getAllSeries, getPopular, getSeries } from "@/lib/data";
+import { getAllGenres, getPopular, getSeries, getSeriesList } from "@/lib/data";
 import { absoluteUrl, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
-  return (await getAllSeries()).map((s) => ({ slug: s.slug }));
+  return (await getSeriesList()).map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata(props: PageProps<"/seri/[slug]">): Promise<Metadata> {

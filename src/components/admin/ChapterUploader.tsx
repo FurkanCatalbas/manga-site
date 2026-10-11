@@ -51,18 +51,24 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
     startTransition(async () => {
       try {
         // Sayfaları sırayı koruyarak, aynı anda en fazla 3 dosya olacak şekilde yükle
-        const urls: string[] = new Array(files.length);
+        const uploaded: Awaited<ReturnType<typeof uploadImage>>[] = new Array(files.length);
         let cursor = 0;
         const worker = async () => {
           while (cursor < files.length) {
             const i = cursor++;
-            urls[i] = await uploadImage(files[i], { slug, kind: "page", chapter: number, index: i + 1 });
+            uploaded[i] = await uploadImage(files[i], { slug, kind: "page", chapter: number, index: i + 1 });
             setDone((d) => d + 1);
           }
         };
         await Promise.all(Array.from({ length: Math.min(CONCURRENCY, files.length) }, worker));
 
-        const result = await createChapter({ slug, number, title, pages: urls });
+        const result = await createChapter({
+          slug,
+          number,
+          title,
+          pages: uploaded.map((u) => u.url),
+          pageSizes: uploaded.map((u) => [u.width, u.height]),
+        });
         setMessage(result);
         if (result?.ok) {
           setFiles([]);

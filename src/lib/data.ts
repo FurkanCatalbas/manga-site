@@ -1,55 +1,151 @@
 // Veri katmanı: Neon (Postgres) üzerinden okur, sonuçlar Next.js önbelleğinde tutulur.
-// Yönetim paneli veri değiştirdiğinde revalidateTag("series") ile önbellek yenilenecek.
-import { asc, eq, gte } from "drizzle-orm";
+// Yönetim paneli veri değiştirdiğinde updateTag("series") ile önbellek yenilenir.
+//
+// Her sayfa yalnızca ihtiyacı kadarını çeker: liste sayfaları seri bilgisi ve son 3 bölümü,
+// seri sayfası o serinin bölüm listesini, bölüm sayfası da yalnızca o bölümün sayfalarını.
+import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/db";
 import { chapters as chaptersTable, series as seriesTable, seriesViewsDaily } from "@/db/schema";
-import { latestChapter, type Series } from "@/lib/series";
+import type { Chapter, ChapterInfo, Page, Series, SeriesSummary } from "@/lib/series";
 
 export * from "@/lib/series";
 
-export async function getAllSeries(): Promise<Series[]> {
+const seriesColumns = {
+  slug: seriesTable.slug,
+  title: seriesTable.title,
+  author: seriesTable.author,
+  description: seriesTable.description,
+  genres: seriesTable.genres,
+  status: seriesTable.status,
+  cover: seriesTable.cover,
+  views: seriesTable.views,
+};
+
+// Alt sorgudan gelen zaman damgası sürücüye göre Date ya da metin olabilir
+const iso = (d: Date | string) => new Date(d).toISOString();
+
+/** Tüm seriler, liste sayfaları için: sayfa adresleri ve eski bölümler olmadan. Ada göre sıralı. */
+export async function getSeriesList(): Promise<SeriesSummary[]> {
   "use cache";
   cacheTag("series");
   cacheLife("hours");
 
-  const rows = await db.query.series.findMany({
-    orderBy: asc(seriesTable.title),
-    with: { chapters: { orderBy: asc(chaptersTable.number) } },
+  // Her serinin en yeni 3 bölümü, bölüm sayısı ve ilk bölümü tek sorguda
+  const ranked = db
+    .select({
+      seriesId: chaptersTable.seriesId,
+      number: chaptersTable.number,
+      title: chaptersTable.title,
+      publishedAt: chaptersTable.publishedAt,
+      rank: sql<number>`row_number() over (partition by ${chaptersTable.seriesId} order by ${chaptersTable.number} desc)`.as("rank"),
+      total: sql<number>`(count(*) over (partition by ${chaptersTable.seriesId}))::int`.as("total"),
+      first: sql<number>`min(${chaptersTable.number}) over (partition by ${chaptersTable.seriesId})`.as("first"),
+    })
+    .from(chaptersTable)
+    .as("ranked");
+
+  const [rows, latest] = await Promise.all([
+    db.select({ id: seriesTable.id, ...seriesColumns }).from(seriesTable).orderBy(asc(seriesTable.title)),
+    db.select().from(ranked).where(lte(ranked.rank, 3)).orderBy(asc(ranked.seriesId), asc(ranked.rank)),
+  ]);
+
+  const bySeries = new Map<number, typeof latest>();
+  for (const c of latest) {
+    if (!bySeries.has(c.seriesId)) bySeries.set(c.seriesId, []);
+    bySeries.get(c.seriesId)!.push(c);
+  }
+
+  return rows.map(({ id, ...s }) => {
+    const cs = bySeries.get(id) ?? [];
+    return {
+      ...s,
+      chapterCount: cs[0]?.total ?? 0,
+      firstChapter: cs[0]?.first ?? null,
+      latestChapters: cs.map((c) => ({ number: c.number, title: c.title, publishedAt: iso(c.publishedAt) })),
+    };
   });
-  return rows.map(({ chapters, ...s }) => ({
-    slug: s.slug,
-    title: s.title,
-    author: s.author,
-    description: s.description,
-    genres: s.genres,
-    status: s.status,
-    cover: s.cover,
-    views: s.views,
-    chapters: chapters.map((c) => ({
-      number: c.number,
-      title: c.title,
-      publishedAt: c.publishedAt.toISOString(),
-      pages: c.pages,
-    })),
-  }));
 }
 
+/** Tek bir seri ve tüm bölümlerinin listesi (sayfalar hariç), eskiden yeniye. */
 export async function getSeries(slug: string): Promise<Series | undefined> {
-  return (await getAllSeries()).find((s) => s.slug === slug);
+  "use cache";
+  cacheTag("series");
+  cacheLife("hours");
+
+  const row = await db.query.series.findFirst({
+    columns: { id: false, createdAt: false },
+    where: eq(seriesTable.slug, slug),
+    with: {
+      chapters: {
+        columns: { number: true, title: true, publishedAt: true },
+        orderBy: asc(chaptersTable.number),
+      },
+    },
+  });
+  if (!row) return undefined;
+  return {
+    ...row,
+    chapters: row.chapters.map((c) => ({ ...c, publishedAt: iso(c.publishedAt) })),
+  };
 }
 
-export async function getChapter(slug: string, number: number) {
+function toPages(row: { pages: string[]; pageSizes: [number, number][] }): Page[] {
+  return row.pages.map((src, i) => {
+    const size = row.pageSizes[i];
+    return size ? { src, width: size[0], height: size[1] } : { src };
+  });
+}
+
+/** Okuyucu için bir bölüm; sonraki bölümün ilk sayfalarıyla birlikte (önceden yüklemek için). */
+export async function getChapter(
+  slug: string,
+  number: number,
+): Promise<{ series: Series; chapter: Chapter; nextPages: Page[] } | undefined> {
+  "use cache";
+  cacheTag("series");
+  cacheLife("hours");
+
   const series = await getSeries(slug);
-  const chapter = series?.chapters.find((c) => c.number === number);
-  if (!series || !chapter) return undefined;
-  return { series, chapter };
+  const idx = series?.chapters.findIndex((c) => c.number === number) ?? -1;
+  if (!series || idx < 0) return undefined;
+  const info = series.chapters[idx];
+  const next = series.chapters[idx + 1];
+
+  const rows = await db
+    .select({ number: chaptersTable.number, pages: chaptersTable.pages, pageSizes: chaptersTable.pageSizes })
+    .from(chaptersTable)
+    .innerJoin(seriesTable, eq(seriesTable.id, chaptersTable.seriesId))
+    .where(and(eq(seriesTable.slug, slug), inArray(chaptersTable.number, next ? [number, next.number] : [number])));
+  const current = rows.find((r) => r.number === number);
+  const nextRow = next && rows.find((r) => r.number === next.number);
+  if (!current) return undefined;
+
+  return {
+    series,
+    chapter: { ...info, pages: toPages(current) },
+    nextPages: nextRow ? toPages(nextRow).slice(0, 3) : [],
+  };
+}
+
+/** Tüm bölümlerin adresi ve tarihi: site haritası ve önceden üretilecek sayfalar için. */
+export async function getChapterRefs(): Promise<({ slug: string } & Pick<ChapterInfo, "number" | "publishedAt">)[]> {
+  "use cache";
+  cacheTag("series");
+  cacheLife("hours");
+
+  const rows = await db
+    .select({ slug: seriesTable.slug, number: chaptersTable.number, publishedAt: chaptersTable.publishedAt })
+    .from(chaptersTable)
+    .innerJoin(seriesTable, eq(seriesTable.id, chaptersTable.seriesId))
+    .orderBy(asc(seriesTable.slug), asc(chaptersTable.number));
+  return rows.map((r) => ({ ...r, publishedAt: iso(r.publishedAt) }));
 }
 
 /** Son güncellenen seriler, en yeni bölüme göre sıralı. */
-export async function getRecentlyUpdated(): Promise<Series[]> {
-  return [...(await getAllSeries())].sort((a, b) =>
-    (latestChapter(b)?.publishedAt ?? "").localeCompare(latestChapter(a)?.publishedAt ?? ""),
+export async function getRecentlyUpdated(): Promise<SeriesSummary[]> {
+  return [...(await getSeriesList())].sort((a, b) =>
+    (b.latestChapters[0]?.publishedAt ?? "").localeCompare(a.latestChapters[0]?.publishedAt ?? ""),
   );
 }
 
@@ -58,7 +154,7 @@ const PERIOD_DAYS: Record<Period, number> = { gunluk: 1, haftalik: 7, aylik: 30 
 export const TREND_DAYS = 14;
 
 export type PopularEntry = {
-  series: Series;
+  series: SeriesSummary;
   views: number; // seçilen dönemdeki okunma
   trend: { day: string; views: number }[]; // son 14 gün, eskiden yeniye
 };
@@ -78,7 +174,7 @@ export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry
   cacheLife("minutes");
 
   const [all, rows] = await Promise.all([
-    getAllSeries(),
+    getSeriesList(),
     db
       .select({ slug: seriesTable.slug, day: seriesViewsDaily.day, views: seriesViewsDaily.views })
       .from(seriesViewsDaily)
@@ -114,6 +210,6 @@ export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry
 }
 
 export async function getAllGenres(): Promise<string[]> {
-  const all = await getAllSeries();
+  const all = await getSeriesList();
   return [...new Set(all.flatMap((s) => s.genres))].sort((a, b) => a.localeCompare(b, "tr"));
 }

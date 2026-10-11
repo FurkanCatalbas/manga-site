@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { NewBadge, TimeAgo } from "@/components/TimeAgo";
-import type { Series } from "@/lib/series";
+import type { SeriesSummary } from "@/lib/series";
 
 /** Kapak ve altında son bölümler: portal ızgarasının ana kartı. */
-export function SeriesCard({ series, chapters = 2 }: { series: Series; chapters?: number }) {
-  const latest = series.chapters.slice(-chapters).reverse();
+export function SeriesCard({ series, chapters = 2 }: { series: SeriesSummary; chapters?: number }) {
+  const latest = series.latestChapters.slice(0, chapters);
   return (
     <article className="group">
       <Link href={`/seri/${series.slug}`} className="relative block overflow-hidden rounded-xl bg-surface-2">

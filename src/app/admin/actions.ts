@@ -95,7 +95,16 @@ export async function deleteSeries(slug: string) {
 
 // --- Bölümler ---
 
-export type ChapterInput = { slug: string; number: number; title: string; pages: string[] };
+export type ChapterInput = {
+  slug: string;
+  number: number;
+  title: string;
+  pages: string[];
+  pageSizes: [number, number][]; // pages ile aynı sırada [genişlik, yükseklik]
+};
+
+const isSize = (v: unknown) =>
+  Array.isArray(v) && v.length === 2 && v.every((n) => Number.isInteger(n) && n > 0);
 
 export async function createChapter(input: ChapterInput): Promise<FormState> {
   await requireAdmin();
@@ -112,6 +121,9 @@ export async function createChapter(input: ChapterInput): Promise<FormState> {
       number: input.number,
       title: input.title.trim() || `${input.number}. bölüm`,
       pages: input.pages,
+      // Boyutlar eksik ya da bozuksa hiç kaydetme; okuyucu boyutsuz da çalışır
+      pageSizes:
+        input.pageSizes?.length === input.pages.length && input.pageSizes.every(isSize) ? input.pageSizes : [],
     })
     .onConflictDoNothing()
     .returning({ id: chapters.id });

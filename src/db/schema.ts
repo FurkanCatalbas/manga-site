@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { date, integer, pgTable, primaryKey, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { date, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
 
 export const series = pgTable("series", {
   id: serial("id").primaryKey(),
@@ -26,6 +26,9 @@ export const chapters = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }).notNull().defaultNow(),
     // Sayfa görsellerinin URL'leri, okunma sırasıyla
     pages: text("pages").array().notNull().default([]),
+    // Sayfaların [genişlik, yükseklik] değerleri, pages ile aynı sırada.
+    // Eski bölümlerde boş olabilir; okuyucu o zaman boyutsuz gösterir.
+    pageSizes: jsonb("page_sizes").$type<[number, number][]>().notNull().default([]),
   },
   (t) => [unique().on(t.seriesId, t.number)],
 );
@@ -41,6 +44,20 @@ export const seriesViewsDaily = pgTable(
     views: integer("views").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.seriesId, t.day] })],
+);
+
+// Okunma sayacının tekrar sayımı engellemesi için: aynı ziyaretçi (IP özeti) aynı bölümü
+// aynı gün yalnızca bir kez sayılır. Yalnızca bugün ve dünün kayıtları tutulur.
+export const viewHits = pgTable(
+  "view_hits",
+  {
+    visitor: text("visitor").notNull(), // IP'nin gün ile tuzlanmış SHA-256 özeti, IP'nin kendisi saklanmaz
+    chapterId: integer("chapter_id")
+      .notNull()
+      .references(() => chapters.id, { onDelete: "cascade" }),
+    day: date("day").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.visitor, t.chapterId] })],
 );
 
 export const seriesRelations = relations(series, ({ many }) => ({

@@ -1,7 +1,9 @@
 // Tek bir görseli R2'ye yükler. Panel her sayfayı ayrı istekle gönderir;
 // böylece Vercel'in istek başına ~4,5 MB sınırına takılmayız.
+// Görseller yüklenmeden önce küçültülüp WebP'ye çevrilir (bkz. lib/images); okuyucu için boyutları döndürülür.
 import { randomBytes } from "node:crypto";
 import { isAdmin } from "@/lib/auth";
+import { MAX_WIDTH, optimizeImage } from "@/lib/images";
 import { publicUrl, putObject } from "@/lib/r2";
 import { SLUG_PATTERN } from "@/lib/slug";
 
@@ -32,25 +34,31 @@ export async function POST(request: Request) {
   if (!SLUG_PATTERN.test(slug)) return fail(400, "Geçersiz seri adresi.");
   if (file.size > MAX_BYTES) return fail(400, `${file.name}: 4 MB'tan büyük.`);
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const image = sniffImage(bytes);
-  if (!image) return fail(400, `${file.name}: desteklenmeyen dosya türü (WebP, JPG, PNG, AVIF, GIF).`);
+  const sniffed = sniffImage(bytes);
+  if (!sniffed) return fail(400, `${file.name}: desteklenmeyen dosya türü (WebP, JPG, PNG, AVIF, GIF).`);
+  if (kind !== "cover" && kind !== "page") return fail(400, "Geçersiz yükleme türü.");
+
+  let image: Awaited<ReturnType<typeof optimizeImage>>;
+  try {
+    image = await optimizeImage(bytes, sniffed, MAX_WIDTH[kind]);
+  } catch {
+    return fail(400, `${file.name}: görsel okunamadı, dosya bozuk olabilir.`);
+  }
   const { ext } = image;
 
   const rand = randomBytes(4).toString("hex");
   let key: string;
   if (kind === "cover") {
     key = `series/${slug}/cover-${rand}.${ext}`;
-  } else if (kind === "page") {
+  } else {
     const chapter = Number(form.get("chapter"));
     const index = Number(form.get("index"));
     if (!Number.isInteger(chapter) || chapter < 1 || !Number.isInteger(index) || index < 1) {
       return fail(400, "Geçersiz bölüm veya sayfa numarası.");
     }
     key = `series/${slug}/${chapter}/${String(index).padStart(3, "0")}-${rand}.${ext}`;
-  } else {
-    return fail(400, "Geçersiz yükleme türü.");
   }
 
-  await putObject(key, bytes, image.type);
-  return Response.json({ url: publicUrl(key) });
+  await putObject(key, image.bytes, image.type);
+  return Response.json({ url: publicUrl(key), width: image.width, height: image.height });
 }

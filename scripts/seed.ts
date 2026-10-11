@@ -76,6 +76,7 @@ async function main() {
           { length: PAGES_PER_CHAPTER },
           (_, p) => `/sample/${s.slug}/${i + 1}/${p + 1}.svg`,
         ),
+        pageSizes: Array.from({ length: PAGES_PER_CHAPTER }, () => [800, 1100] as [number, number]),
       })),
     );
     console.log(`Eklendi: ${s.title} (${s.chapterTitles.length} bölüm)`);

@@ -2,14 +2,19 @@
 
 export type SeriesStatus = "Devam Ediyor" | "Tamamlandı";
 
-export type Chapter = {
+/** Bölüm listelerinde gereken bilgiler (sayfalar hariç). */
+export type ChapterInfo = {
   number: number;
   title: string;
   publishedAt: string; // ISO tarih
-  pages: string[]; // görsel URL'leri, sırayla
 };
 
-export type Series = {
+/** Okuyucudaki bir sayfa. Boyutlar biliniyorsa yer önceden ayrılır, sayfa kaymaz. */
+export type Page = { src: string; width?: number; height?: number };
+
+export type Chapter = ChapterInfo & { pages: Page[] };
+
+type SeriesBase = {
   slug: string;
   title: string;
   author: string;
@@ -18,12 +23,17 @@ export type Series = {
   status: SeriesStatus;
   cover: string;
   views: number;
-  chapters: Chapter[];
 };
 
-export function latestChapter(series: Series): Chapter | undefined {
-  return series.chapters.at(-1);
-}
+/** Liste sayfaları (ana sayfa, arama, popüler) için hafif seri bilgisi. */
+export type SeriesSummary = SeriesBase & {
+  chapterCount: number;
+  firstChapter: number | null;
+  latestChapters: ChapterInfo[]; // en yeniden eskiye, en fazla 3
+};
+
+/** Seri sayfası için: tüm bölümlerin listesi, eskiden yeniye. */
+export type Series = SeriesBase & { chapters: ChapterInfo[] };
 
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR", {

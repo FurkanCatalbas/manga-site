@@ -1,4 +1,5 @@
-// Tarayıcıdan /api/admin/upload'a tek dosya gönderir, R2 adresini döner.
+// Tarayıcıdan /api/admin/upload'a tek dosya gönderir; R2 adresini ve sunucuda
+// küçültülmüş görselin boyutlarını döner.
 
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
@@ -14,7 +15,7 @@ export function isImageFile(f: File) {
 export async function uploadImage(
   file: File,
   fields: { slug: string; kind: "cover" } | { slug: string; kind: "page"; chapter: number; index: number },
-): Promise<string> {
+): Promise<{ url: string; width: number; height: number }> {
   const form = new FormData();
   form.set("file", file);
   for (const [k, v] of Object.entries(fields)) form.set(k, String(v));
@@ -22,7 +23,7 @@ export async function uploadImage(
   const res = await fetch("/api/admin/upload", { method: "POST", body: form });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error ?? `${file.name} yüklenemedi (${res.status}).`);
-  return data.url as string;
+  return data;
 }
 
 /** Dosyaları "sayfa 2" < "sayfa 10" olacak şekilde doğal sıraya koyar. */

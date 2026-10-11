@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { preload } from "react-dom";
 import { getProgress, saveProgress, type Progress } from "@/lib/progress";
+import type { Page } from "@/lib/series";
 
 /** Bölüm açılışını sayaca bildirir; aynı tarayıcıdan aynı bölüm günde bir kez sayılır. */
 function useCountView(slug: string, chapter: number) {
@@ -19,7 +20,7 @@ function useCountView(slug: string, chapter: number) {
     fetch("/api/goruntulenme", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug }),
+      body: JSON.stringify({ slug, chapter }),
       keepalive: true,
     }).catch(() => {});
   }, [slug, chapter]);
@@ -64,12 +65,12 @@ type Props = {
   seriesTitle: string;
   chapter: number;
   chapterTitle: string;
-  pages: string[];
+  pages: Page[];
   chapterNumbers: number[];
   prev: number | null;
   next: number | null;
   /** Sonraki bölümün ilk sayfaları, bölüm sonuna yaklaşınca önceden yüklenir */
-  nextPages: string[];
+  nextPages: Page[];
 };
 
 export function Reader(props: Props) {
@@ -128,7 +129,7 @@ export function Reader(props: Props) {
   useEffect(() => {
     if (!nearEnd || !nextUrl) return;
     router.prefetch(nextUrl);
-    nextPages.forEach((src) => preload(src, { as: "image" }));
+    nextPages.forEach((p) => preload(p.src, { as: "image" }));
   }, [nearEnd, nextUrl, nextPages, router]);
 
   const progress = ((page + 1) / pages.length) * 100;
@@ -194,7 +195,7 @@ function VerticalPages({
   imgRefs,
   onVisible,
 }: {
-  pages: string[];
+  pages: Page[];
   imgRefs: React.RefObject<(HTMLImageElement | null)[]>;
   onVisible: (i: number) => void;
 }) {
@@ -214,18 +215,22 @@ function VerticalPages({
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col">
-      {pages.map((src, i) => (
+      {pages.map((p, i) => (
+        // Boyutlar biliniyorsa tarayıcı görsel gelmeden yerini ayırır, sayfa kaymaz.
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          key={src}
+          key={p.src}
           ref={(el) => {
             imgRefs.current[i] = el;
           }}
           data-index={i}
-          src={src}
+          src={p.src}
+          width={p.width}
+          height={p.height}
           alt={`Sayfa ${i + 1}`}
           loading={i < 2 ? "eager" : "lazy"}
-          className="w-full"
+          decoding="async"
+          className="h-auto w-full"
         />
       ))}
     </div>

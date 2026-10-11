@@ -3,11 +3,11 @@
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { SeriesCard } from "@/components/SeriesCard";
-import type { Series, SeriesStatus } from "@/lib/series";
+import type { SeriesStatus, SeriesSummary } from "@/lib/series";
 
 const normalize = (s: string) => s.toLocaleLowerCase("tr");
 
-export function Search({ series, genres }: { series: Series[]; genres: string[] }) {
+export function Search({ series, genres }: { series: SeriesSummary[]; genres: string[] }) {
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get("q") ?? "");
   const [genre, setGenre] = useState(params.get("tur") ?? "");

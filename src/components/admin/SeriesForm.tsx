@@ -36,7 +36,7 @@ export function SeriesForm({ initial }: Props) {
         let coverUrl = cover;
         if (coverFile) {
           if (!slug) throw new Error("Önce seri adresini doldur.");
-          coverUrl = await uploadImage(coverFile, { slug, kind: "cover" });
+          coverUrl = (await uploadImage(coverFile, { slug, kind: "cover" })).url;
           setCover(coverUrl);
           setCoverFile(null);
         }

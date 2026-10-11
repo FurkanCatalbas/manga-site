@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { Series } from "@/lib/series";
+import type { SeriesSummary } from "@/lib/series";
 
 const INTERVAL = 6000;
 
-export function HeroSlider({ items }: { items: Series[] }) {
+export function HeroSlider({ items }: { items: SeriesSummary[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = items.length;
@@ -33,8 +33,8 @@ export function HeroSlider({ items }: { items: Series[] }) {
       className="relative overflow-hidden rounded-2xl border border-line bg-surface"
     >
       {items.map((s, i) => {
-        const first = s.chapters[0];
-        const latest = s.chapters.at(-1);
+        const first = s.firstChapter;
+        const latest = s.latestChapters[0]?.number;
         const active = i === index;
         return (
           <div
@@ -66,20 +66,20 @@ export function HeroSlider({ items }: { items: Series[] }) {
                 <h2 className="mt-3 text-3xl font-extrabold leading-tight sm:text-5xl">{s.title}</h2>
                 <p className="mt-3 line-clamp-3 text-muted sm:text-lg">{s.description}</p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  {first && (
+                  {first !== null && (
                     <Link
-                      href={`/seri/${s.slug}/bolum/${first.number}`}
+                      href={`/seri/${s.slug}/bolum/${first}`}
                       className="rounded-lg bg-accent px-5 py-2.5 font-semibold text-white hover:brightness-110"
                     >
                       Okumaya başla
                     </Link>
                   )}
-                  {latest && latest !== first && (
+                  {latest !== undefined && latest !== first && (
                     <Link
-                      href={`/seri/${s.slug}/bolum/${latest.number}`}
+                      href={`/seri/${s.slug}/bolum/${latest}`}
                       className="rounded-lg bg-white/10 px-5 py-2.5 font-semibold hover:bg-white/20"
                     >
-                      Son bölüm: {latest.number}
+                      Son bölüm: {latest}
                     </Link>
                   )}
                 </div>

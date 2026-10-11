@@ -2,13 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
 import { JsonLd } from "@/components/JsonLd";
-import { getAllSeries, getChapter } from "@/lib/data";
+import { getChapter, getChapterRefs } from "@/lib/data";
 import { absoluteUrl, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
-  return (await getAllSeries()).flatMap((s) =>
-    s.chapters.map((c) => ({ slug: s.slug, no: String(c.number) })),
-  );
+  return (await getChapterRefs()).map((c) => ({ slug: c.slug, no: String(c.number) }));
 }
 
 export async function generateMetadata(
@@ -39,10 +37,9 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
   const found = await getChapter(slug, Number(no));
   if (!found) notFound();
 
-  const { series, chapter } = found;
+  const { series, chapter, nextPages } = found;
   const numbers = series.chapters.map((c) => c.number);
   const idx = numbers.indexOf(chapter.number);
-  const nextChapter = series.chapters[idx + 1];
 
   const seriesUrl = absoluteUrl(`/seri/${series.slug}`);
   const url = absoluteUrl(`/seri/${series.slug}/bolum/${chapter.number}`);
@@ -83,8 +80,8 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
       pages={chapter.pages}
       chapterNumbers={numbers}
       prev={numbers[idx - 1] ?? null}
-      next={nextChapter?.number ?? null}
-      nextPages={nextChapter?.pages.slice(0, 3) ?? []}
+      next={numbers[idx + 1] ?? null}
+      nextPages={nextPages}
     />
     </>
   );

@@ -10,6 +10,7 @@
     "samples": "node scripts/generate-samples.mjs",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
+    "db:backfill-sizes": "tsx scripts/backfill-page-sizes.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -18,7 +19,8 @@
     "drizzle-orm": "^0.45.4",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

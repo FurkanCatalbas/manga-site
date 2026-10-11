@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Search } from "@/components/Search";
-import { getAllGenres, getAllSeries } from "@/lib/data";
+import { getAllGenres, getSeriesList } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Tüm Seriler",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SearchPage() {
-  const [series, genres] = await Promise.all([getAllSeries(), getAllGenres()]);
+  const [series, genres] = await Promise.all([getSeriesList(), getAllGenres()]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
