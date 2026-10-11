@@ -72,7 +72,10 @@ npm run dev         # http://localhost:3000
 
   ```sql
   update series set cover = replace(cover, 'https://pub-xxx.r2.dev', 'https://cdn.ornek.com');
-  update chapters set pages = array(select replace(p, 'https://pub-xxx.r2.dev', 'https://cdn.ornek.com') from unnest(pages) p);
+  update chapters set pages = array(
+    select replace(p, 'https://pub-xxx.r2.dev', 'https://cdn.ornek.com')
+    from unnest(pages) with ordinality as t(p, i) order by i  -- sayfa sırası korunur
+  );
   ```
 
 ## Proje yapısı
