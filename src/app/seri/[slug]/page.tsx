@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { ContinueReading } from "@/components/ContinueReading";
 import { GenreList, PopularList } from "@/components/Sidebar";
 import { NewBadge, TimeAgo } from "@/components/TimeAgo";
+import { JsonLd } from "@/components/JsonLd";
 import { getAllGenres, getAllSeries, getPopular, getSeries } from "@/lib/data";
+import { absoluteUrl, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
   return (await getAllSeries()).map((s) => ({ slug: s.slug }));
@@ -13,7 +15,20 @@ export async function generateStaticParams() {
 export async function generateMetadata(props: PageProps<"/seri/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   const series = await getSeries(slug);
-  return series ? { title: series.title, description: series.description } : {};
+  if (!series) return {};
+  const path = `/seri/${series.slug}`;
+  return {
+    title: `${series.title} Oku`,
+    description: `${series.title}: ${series.description}`.slice(0, 160),
+    alternates: { canonical: path },
+    openGraph: {
+      type: "book",
+      url: path,
+      title: series.title,
+      description: series.description,
+      images: [{ url: absoluteUrl(series.cover), alt: `${series.title} kapağı` }],
+    },
+  };
 }
 
 export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
@@ -25,8 +40,42 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
   const latest = series.chapters.at(-1);
   const chaptersDesc = [...series.chapters].reverse();
 
+  const url = absoluteUrl(`/seri/${series.slug}`);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ComicSeries",
+        "@id": url,
+        url,
+        name: series.title,
+        description: series.description,
+        image: absoluteUrl(series.cover),
+        author: { "@type": "Person", name: series.author },
+        genre: series.genres,
+        inLanguage: "tr",
+        ...(latest && { dateModified: latest.publishedAt }),
+        hasPart: series.chapters.map((c) => ({
+          "@type": "ComicIssue",
+          issueNumber: c.number,
+          name: c.title,
+          url: absoluteUrl(`/seri/${series.slug}/bolum/${c.number}`),
+          datePublished: c.publishedAt,
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: SITE_NAME, item: absoluteUrl("/") },
+          { "@type": "ListItem", position: 2, name: series.title, item: url },
+        ],
+      },
+    ],
+  };
+
   return (
     <div>
+      <JsonLd data={jsonLd} />
       {/* Bulanık kapak arka planlı başlık alanı */}
       <div className="relative overflow-hidden border-b border-line">
         {/* eslint-disable-next-line @next/next/no-img-element */}

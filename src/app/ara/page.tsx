@@ -3,7 +3,11 @@ import { Suspense } from "react";
 import { Search } from "@/components/Search";
 import { getAllGenres, getAllSeries } from "@/lib/data";
 
-export const metadata: Metadata = { title: "Seriler" };
+export const metadata: Metadata = {
+  title: "Tüm Seriler",
+  description: "Tüm webtoon ve manga serileri. Türe ve duruma göre filtrele, adına göre ara.",
+  alternates: { canonical: "/ara" },
+};
 
 export default async function SearchPage() {
   const [series, genres] = await Promise.all([getAllSeries(), getAllGenres()]);

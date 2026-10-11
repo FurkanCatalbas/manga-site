@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Dela_Gothic_One, Onest } from "next/font/google";
 import Link from "next/link";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const dela = Dela_Gothic_One({
@@ -15,8 +16,12 @@ const onest = Onest({
 });
 
 export const metadata: Metadata = {
-  title: { default: "webtooku", template: "%s | webtooku" },
-  description: "Webtoon ve manga okuma sitesi",
+  metadataBase: new URL(SITE_URL),
+  title: { default: `${SITE_NAME}: Webtoon ve Manga Oku`, template: `%s | ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "tr_TR", url: "/" },
+  twitter: { card: "summary_large_image" },
 };
 
 function Logo() {

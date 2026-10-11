@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
+import { JsonLd } from "@/components/JsonLd";
 import { getAllSeries, getChapter } from "@/lib/data";
+import { absoluteUrl, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
   return (await getAllSeries()).flatMap((s) =>
@@ -14,7 +16,22 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug, no } = await props.params;
   const found = await getChapter(slug, Number(no));
-  return found ? { title: `${found.series.title} – Bölüm ${found.chapter.number}` } : {};
+  if (!found) return {};
+  const { series, chapter } = found;
+  const path = `/seri/${series.slug}/bolum/${chapter.number}`;
+  const title = `${series.title} ${chapter.number}. Bölüm Oku`;
+  return {
+    title,
+    description: `${series.title} ${chapter.number}. bölüm "${chapter.title}" ${SITE_NAME} üzerinde. ${chapter.pages.length} sayfa, hızlı ve kesintisiz oku.`,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "article",
+      url: path,
+      title,
+      publishedTime: chapter.publishedAt,
+      images: [{ url: absoluteUrl(series.cover), alt: `${series.title} kapağı` }],
+    },
+  };
 }
 
 export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[no]">) {
@@ -26,7 +43,36 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
   const numbers = series.chapters.map((c) => c.number);
   const idx = numbers.indexOf(chapter.number);
 
+  const seriesUrl = absoluteUrl(`/seri/${series.slug}`);
+  const url = absoluteUrl(`/seri/${series.slug}/bolum/${chapter.number}`);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ComicIssue",
+        "@id": url,
+        url,
+        issueNumber: chapter.number,
+        name: chapter.title,
+        datePublished: chapter.publishedAt,
+        image: absoluteUrl(series.cover),
+        inLanguage: "tr",
+        isPartOf: { "@type": "ComicSeries", "@id": seriesUrl, name: series.title, url: seriesUrl },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: SITE_NAME, item: absoluteUrl("/") },
+          { "@type": "ListItem", position: 2, name: series.title, item: seriesUrl },
+          { "@type": "ListItem", position: 3, name: `${chapter.number}. Bölüm`, item: url },
+        ],
+      },
+    ],
+  };
+
   return (
+    <>
+    <JsonLd data={jsonLd} />
     <Reader
       key={chapter.number}
       slug={series.slug}
@@ -38,5 +84,6 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
       prev={numbers[idx - 1] ?? null}
       next={numbers[idx + 1] ?? null}
     />
+    </>
   );
 }
