@@ -9,7 +9,7 @@ const normalize = (s: string) => s.toLocaleLowerCase("tr");
 
 export function Search({ series, genres }: { series: Series[]; genres: string[] }) {
   const params = useSearchParams();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(params.get("q") ?? "");
   const [genre, setGenre] = useState(params.get("tur") ?? "");
   const [status, setStatus] = useState<SeriesStatus | "">("");
 
@@ -20,7 +20,7 @@ export function Search({ series, genres }: { series: Series[]; genres: string[] 
       (!status || s.status === status),
   );
 
-  const field = "border-2 border-ink bg-white px-3 py-2.5";
+  const field = "rounded-lg border border-line bg-surface px-3 py-2.5 focus:border-accent focus:outline-none";
 
   return (
     <div className="space-y-8">
@@ -50,14 +50,14 @@ export function Search({ series, genres }: { series: Series[]; genres: string[] 
       </div>
 
       {results.length === 0 ? (
-        <div className="tone border-[3px] border-ink bg-white p-8">
-          <p className="font-display text-xl">Bu filtrelere uyan seri yok</p>
-          <p className="mt-2 text-ink/70">Farklı bir isim dene ya da tür ve durum filtrelerini kaldır.</p>
+        <div className="rounded-2xl border border-line bg-surface p-8">
+          <p className="text-lg font-bold">Bu filtrelere uyan seri yok</p>
+          <p className="mt-2 text-muted">Farklı bir isim dene ya da tür ve durum filtrelerini kaldır.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {results.map((s) => (
-            <SeriesCard key={s.slug} series={s} />
+            <SeriesCard key={s.slug} series={s} chapters={1} />
           ))}
         </div>
       )}

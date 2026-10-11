@@ -29,7 +29,7 @@ export function ConfirmButton({
         type="button"
         disabled={pending}
         onClick={() => startTransition(action)}
-        className={`${dangerBtn} bg-pink`}
+        className={`${dangerBtn} border-accent bg-accent text-white`}
       >
         {pending ? "Siliniyor…" : confirmText}
       </button>

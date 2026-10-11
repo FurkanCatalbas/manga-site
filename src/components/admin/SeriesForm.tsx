@@ -61,7 +61,7 @@ export function SeriesForm({ initial }: Props) {
     <form onSubmit={submit} className="grid gap-6 md:grid-cols-[200px_1fr]">
       <div>
         <span className={label}>Kapak</span>
-        <label className="tone flex aspect-[2/3] cursor-pointer items-center justify-center border-2 border-dashed border-ink bg-white text-center text-sm">
+        <label className="flex aspect-[2/3] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-line bg-surface hover:border-accent text-center text-sm">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Kapak önizleme" className="h-full w-full object-cover" />
@@ -79,7 +79,7 @@ export function SeriesForm({ initial }: Props) {
             }}
           />
         </label>
-        {preview && <p className="mt-1 text-xs text-ink/60">Değiştirmek için görsele tıkla.</p>}
+        {preview && <p className="mt-1 text-xs text-muted">Değiştirmek için görsele tıkla.</p>}
       </div>
 
       <div className="grid gap-4">
@@ -98,8 +98,8 @@ export function SeriesForm({ initial }: Props) {
         </div>
         <div>
           <label htmlFor="slug" className={label}>Adres</label>
-          <div className="flex items-center border-2 border-ink bg-white">
-            <span className="pl-3 text-ink/50">/seri/</span>
+          <div className="flex items-center rounded-lg border border-line bg-surface">
+            <span className="pl-3 text-muted">/seri/</span>
             <input
               id="slug"
               required
@@ -109,10 +109,10 @@ export function SeriesForm({ initial }: Props) {
                 setSlugTouched(true);
                 setSlug(slugify(e.target.value));
               }}
-              className="w-full px-1 py-2 outline-none disabled:text-ink/60"
+              className="w-full px-1 py-2 outline-none disabled:text-muted"
             />
           </div>
-          {editing && <p className="mt-1 text-xs text-ink/60">Adres, bağlantılar bozulmasın diye sonradan değiştirilemez.</p>}
+          {editing && <p className="mt-1 text-xs text-muted">Adres, bağlantılar bozulmasın diye sonradan değiştirilemez.</p>}
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -141,7 +141,7 @@ export function SeriesForm({ initial }: Props) {
             placeholder="Aksiyon, Fantastik"
             className={field}
           />
-          <p className="mt-1 text-xs text-ink/60">Virgülle ayır.</p>
+          <p className="mt-1 text-xs text-muted">Virgülle ayır.</p>
         </div>
         <div>
           <label htmlFor="description" className={label}>Açıklama</label>
@@ -159,8 +159,8 @@ export function SeriesForm({ initial }: Props) {
           <button type="submit" disabled={pending} className={primaryBtn}>
             {pending ? "Kaydediliyor…" : editing ? "Değişiklikleri kaydet" : "Seriyi oluştur"}
           </button>
-          {message?.error && <p role="alert" className="font-semibold text-pink">{message.error}</p>}
-          {message?.ok && <p className="font-semibold text-blue">{message.ok}</p>}
+          {message?.error && <p role="alert" className="font-semibold text-accent">{message.error}</p>}
+          {message?.ok && <p className="font-semibold text-fresh">{message.ok}</p>}
         </div>
       </div>
     </form>

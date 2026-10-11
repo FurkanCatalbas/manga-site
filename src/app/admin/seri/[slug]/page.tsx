@@ -36,7 +36,7 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
     <div className="grid gap-14">
       <section>
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="font-display text-3xl">{s.title}</h1>
+          <h1 className="text-3xl font-extrabold">{s.title}</h1>
           <Link href={`/seri/${s.slug}`} className="text-sm font-semibold underline underline-offset-4">
             Sitede gör
           </Link>
@@ -55,23 +55,23 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
       </section>
 
       <section>
-        <h2 className="mb-5 font-display text-2xl">Yeni bölüm ekle</h2>
+        <h2 className="mb-5 text-2xl font-bold">Yeni bölüm ekle</h2>
         <ChapterUploader key={nextNumber} slug={s.slug} nextNumber={nextNumber} />
       </section>
 
       <section>
-        <h2 className="mb-5 font-display text-2xl">Bölümler</h2>
+        <h2 className="mb-5 text-2xl font-bold">Bölümler</h2>
         {s.chapters.length === 0 ? (
           <p>Bu seride henüz bölüm yok.</p>
         ) : (
-          <ol className="border-t-[3px] border-ink">
+          <ol className="border-t border-line">
             {[...s.chapters].reverse().map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center gap-4 border-b-2 border-ink/15 py-3">
-                <span className="w-12 text-right font-display text-2xl text-ink/30">{c.number}</span>
-                <Link href={`/seri/${s.slug}/bolum/${c.number}`} className="flex-1 font-semibold hover:text-blue">
+              <li key={c.id} className="flex flex-wrap items-center gap-4 border-b border-line py-3">
+                <span className="w-12 text-right text-2xl font-bold text-muted">{c.number}</span>
+                <Link href={`/seri/${s.slug}/bolum/${c.number}`} className="flex-1 font-semibold hover:text-accent">
                   {c.title}
                 </Link>
-                <span className="text-sm text-ink/60">
+                <span className="text-sm text-muted">
                   {c.pages.length} sayfa, {formatDate(c.publishedAt.toISOString())}
                 </span>
                 <ConfirmButton action={deleteChapter.bind(null, s.slug, c.number)}>Sil</ConfirmButton>
@@ -81,8 +81,8 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
         )}
       </section>
 
-      <section className="border-[3px] border-ink bg-white p-6">
-        <h2 className="font-display text-xl">Seriyi sil</h2>
+      <section className="rounded-2xl border border-line bg-surface p-6">
+        <h2 className="text-xl font-bold">Seriyi sil</h2>
         <p className="mt-2 max-w-prose text-sm">
           Seri, tüm bölümleri ve R2&apos;deki tüm görselleriyle birlikte kalıcı olarak silinir. Bu işlem geri alınamaz.
         </p>

@@ -5,6 +5,25 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { saveProgress } from "@/lib/progress";
 
+/** Bölüm açılışını sayaca bildirir; aynı tarayıcıdan aynı bölüm günde bir kez sayılır. */
+function useCountView(slug: string, chapter: number) {
+  useEffect(() => {
+    const key = `webtooku:view:${slug}:${chapter}:${new Date().toISOString().slice(0, 10)}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, "1");
+    } catch {
+      return;
+    }
+    fetch("/api/goruntulenme", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+      keepalive: true,
+    }).catch(() => {});
+  }, [slug, chapter]);
+}
+
 type Mode = "dikey" | "sayfa";
 const MODE_KEY = "mangaoku:mode";
 const modeListeners = new Set<() => void>();
@@ -41,6 +60,7 @@ export function Reader(props: Props) {
   const router = useRouter();
   const [mode, setMode] = useReaderMode();
   const [page, setPage] = useState(0); // 0 tabanlı
+  useCountView(slug, chapter);
   const chapterUrl = (n: number) => `/seri/${slug}/bolum/${n}`;
 
   useEffect(() => {
@@ -84,7 +104,7 @@ export function Reader(props: Props) {
         aria-label="Bölüm seç"
         value={chapter}
         onChange={(e) => router.push(chapterUrl(Number(e.target.value)))}
-        className="border-2 border-paper/30 bg-ink px-3 py-2 text-sm text-paper"
+        className="rounded-lg border border-line bg-surface px-3 py-2 text-sm"
       >
         {chapterNumbers.map((n) => (
           <option key={n} value={n}>
@@ -97,24 +117,24 @@ export function Reader(props: Props) {
   );
 
   return (
-    <div className="bg-ink text-paper">
-      <div className="sticky top-0 z-20 border-b-2 border-paper/15 bg-ink/95 backdrop-blur">
+    <div className="bg-bg">
+      <div className="sticky top-16 z-20 border-b border-line bg-surface/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
           <div className="min-w-0">
-            <Link href={`/seri/${slug}`} className="block truncate font-display hover:text-pink">
+            <Link href={`/seri/${slug}`} className="block truncate font-semibold hover:text-accent">
               {seriesTitle}
             </Link>
-            <p className="truncate text-xs text-paper/60">
+            <p className="truncate text-xs text-muted">
               {chapter}. bölüm: {chapterTitle}
             </p>
           </div>
-          <div role="group" aria-label="Okuma modu" className="flex shrink-0 border-2 border-paper/30 text-xs">
+          <div role="group" aria-label="Okuma modu" className="flex shrink-0 overflow-hidden rounded-lg border border-line text-xs">
             {(["dikey", "sayfa"] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 aria-pressed={mode === m}
-                className={`px-3 py-1.5 font-semibold ${mode === m ? "bg-paper text-ink" : "text-paper/70 hover:text-paper"}`}
+                className={`px-3 py-1.5 font-semibold ${mode === m ? "bg-accent text-white" : "text-muted hover:text-fg"}`}
               >
                 {m === "dikey" ? "Dikey" : "Sayfa sayfa"}
               </button>
@@ -122,8 +142,8 @@ export function Reader(props: Props) {
           </div>
         </div>
         {/* Bölüm içindeki ilerleme */}
-        <div className="h-1 bg-paper/10" aria-hidden>
-          <div className="h-full bg-pink transition-[width]" style={{ width: `${progress}%` }} />
+        <div className="h-0.5 bg-line" aria-hidden>
+          <div className="h-full bg-accent transition-[width]" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
@@ -140,7 +160,7 @@ export function Reader(props: Props) {
           </div>
           {/* Sonraki sayfayı önceden yükle */}
           {pages[page + 1] && <link rel="preload" as="image" href={pages[page + 1]} />}
-          <p className="py-3 text-center text-sm text-paper/60">
+          <p className="py-3 text-center text-sm text-muted">
             Sayfa {page + 1} / {pages.length}. Ok tuşlarıyla da gezinebilirsin.
           </p>
         </div>
@@ -189,10 +209,10 @@ function VerticalPages({ pages, onVisible }: { pages: string[]; onVisible: (i: n
 }
 
 function NavButton({ href, children }: { href: string | null; children: React.ReactNode }) {
-  const cls = "border-2 px-4 py-2 text-sm font-semibold";
-  if (!href) return <span className={`${cls} border-paper/15 text-paper/30`}>{children}</span>;
+  const cls = "rounded-lg px-4 py-2 text-sm font-semibold";
+  if (!href) return <span className={`${cls} bg-surface text-muted/50`}>{children}</span>;
   return (
-    <Link href={href} className={`${cls} border-paper bg-paper text-ink hover:border-pink hover:bg-pink`}>
+    <Link href={href} className={`${cls} bg-surface-2 hover:bg-accent hover:text-white`}>
       {children}
     </Link>
   );

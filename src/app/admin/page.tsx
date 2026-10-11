@@ -26,7 +26,7 @@ async function SeriesList() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-3xl">Seriler</h1>
+        <h1 className="text-3xl font-extrabold">Seriler</h1>
         <Link href="/admin/seri/yeni" className={primaryBtn}>
           Yeni seri ekle
         </Link>
@@ -35,17 +35,17 @@ async function SeriesList() {
       {rows.length === 0 ? (
         <p className="mt-8">Henüz seri yok. İlk seriyi ekleyerek başla.</p>
       ) : (
-        <ul className="mt-6 border-t-[3px] border-ink">
+        <ul className="mt-6 border-t border-line">
           {rows.map((s) => (
             <li key={s.id}>
               <Link
                 href={`/admin/seri/${s.slug}`}
-                className="flex items-center gap-4 border-b-2 border-ink/15 py-3 hover:bg-white"
+                className="flex items-center gap-4 border-b border-line py-3 hover:bg-surface"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.cover} alt="" className="h-16 w-11 shrink-0 border-2 border-ink object-cover" />
-                <span className="flex-1 font-display">{s.title}</span>
-                <span className="pr-3 text-sm text-ink/60">
+                <img src={s.cover} alt="" className="h-16 w-11 shrink-0 rounded-md object-cover" />
+                <span className="flex-1 font-semibold">{s.title}</span>
+                <span className="pr-3 text-sm text-muted">
                   {s.chapters.length} bölüm, {s.status.toLocaleLowerCase("tr")}
                 </span>
               </Link>

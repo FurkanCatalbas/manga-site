@@ -18,7 +18,7 @@ export function ContinueReading({ slug }: { slug: string }) {
   return (
     <Link
       href={`/seri/${slug}/bolum/${chapter}`}
-      className="border-[3px] border-ink bg-pink px-5 py-2.5 font-semibold hover:bg-white"
+      className="rounded-lg border border-accent px-5 py-2.5 font-semibold text-accent hover:bg-accent hover:text-white"
     >
       {chapter}. bölümden devam et
     </Link>

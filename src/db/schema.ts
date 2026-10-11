@@ -10,6 +10,7 @@ export const series = pgTable("series", {
   genres: text("genres").array().notNull().default([]),
   status: text("status", { enum: ["Devam Ediyor", "Tamamlandı"] }).notNull(),
   cover: text("cover").notNull(),
+  views: integer("views").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

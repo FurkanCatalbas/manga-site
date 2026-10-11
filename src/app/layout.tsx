@@ -15,32 +15,46 @@ const onest = Onest({
 });
 
 export const metadata: Metadata = {
-  title: { default: "MangaOku", template: "%s | MangaOku" },
-  description: "Manga ve webtoon okuma sitesi",
+  title: { default: "webtooku", template: "%s | webtooku" },
+  description: "Webtoon ve manga okuma sitesi",
 };
+
+function Logo() {
+  return (
+    <Link href="/" className="font-display text-xl leading-none tracking-tight">
+      webtoo<span className="text-accent">ku</span>
+    </Link>
+  );
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="tr" className={`${dela.variable} ${onest.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        <header className="border-b-[3px] border-ink bg-paper">
-          <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-            <Link href="/" className="font-display text-2xl leading-none tracking-tight">
-              manga<span className="ml-0.5 inline-block -rotate-3 bg-ink px-1.5 pb-1 text-paper">oku</span>
-            </Link>
-            <Link
-              href="/ara"
-              className="border-2 border-ink bg-white px-4 py-1.5 text-sm font-semibold hover:bg-ink hover:text-paper"
-            >
-              Seri ara
-            </Link>
+        <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur-md">
+          <nav className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4">
+            <Logo />
+            <div className="hidden gap-5 text-sm font-medium text-muted sm:flex">
+              <Link href="/" className="hover:text-fg">Ana sayfa</Link>
+              <Link href="/ara" className="hover:text-fg">Seriler</Link>
+            </div>
+            <form action="/ara" className="ml-auto w-full max-w-xs">
+              <label htmlFor="site-search" className="sr-only">Seri ara</label>
+              <input
+                id="site-search"
+                name="q"
+                type="search"
+                placeholder="Seri ara…"
+                className="w-full rounded-full border border-line bg-surface px-4 py-2 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+              />
+            </form>
           </nav>
         </header>
         <main className="flex-1">{children}</main>
-        <footer className="border-t-[3px] border-ink">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6 text-sm">
-            <span className="font-display">mangaoku</span>
-            <span className="text-ink/60">Her hafta yeni bölümler</span>
+        <footer className="mt-16 border-t border-line bg-surface">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+            <Logo />
+            <p>Her hafta yeni bölümler.</p>
           </div>
         </footer>
       </body>

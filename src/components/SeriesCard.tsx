@@ -1,20 +1,49 @@
 import Link from "next/link";
-import { latestChapter, type Series } from "@/lib/series";
+import { NewBadge, TimeAgo } from "@/components/TimeAgo";
+import type { Series } from "@/lib/series";
 
-export function SeriesCard({ series }: { series: Series }) {
-  const latest = latestChapter(series);
+/** Kapak ve altında son bölümler: portal ızgarasının ana kartı. */
+export function SeriesCard({ series, chapters = 2 }: { series: Series; chapters?: number }) {
+  const latest = series.chapters.slice(-chapters).reverse();
   return (
-    <Link href={`/seri/${series.slug}`} className="group block">
-      <div className="aspect-[2/3] border-2 border-ink bg-white p-1.5 transition-transform group-hover:-translate-y-1">
+    <article className="group">
+      <Link href={`/seri/${series.slug}`} className="relative block overflow-hidden rounded-xl bg-surface-2">
         {/* eslint-disable-next-line @next/next/no-img-element -- kapaklar CDN'den doğrudan gelecek */}
-        <img src={series.cover} alt="" loading="lazy" className="h-full w-full object-cover" />
-      </div>
-      <h3 className="mt-3 font-display text-base leading-tight group-hover:text-blue">
-        {series.title}
+        <img
+          src={series.cover}
+          alt=""
+          loading="lazy"
+          className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+        />
+        {series.status === "Tamamlandı" && (
+          <span className="absolute top-2 left-2 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-semibold">
+            Tamamlandı
+          </span>
+        )}
+      </Link>
+      <h3 className="mt-2.5 line-clamp-1 font-semibold">
+        <Link href={`/seri/${series.slug}`} className="hover:text-accent">
+          {series.title}
+        </Link>
       </h3>
-      <p className="mt-1 text-sm text-ink/60">
-        {latest ? `${latest.number}. bölüm` : "Yakında"}, {series.status.toLocaleLowerCase("tr")}
-      </p>
-    </Link>
+      {chapters > 0 && (
+        <ul className="mt-1.5 space-y-1">
+          {latest.map((c) => (
+            <li key={c.number}>
+              <Link
+                href={`/seri/${series.slug}/bolum/${c.number}`}
+                className="flex items-center justify-between gap-2 rounded-md bg-surface px-2 py-1 text-xs hover:bg-surface-2"
+              >
+                <span className="flex items-center gap-1.5 font-medium">
+                  Bölüm {c.number}
+                  <NewBadge iso={c.publishedAt} />
+                </span>
+                <TimeAgo iso={c.publishedAt} className="text-muted" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
   );
 }

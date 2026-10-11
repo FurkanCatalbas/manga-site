@@ -107,10 +107,10 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
           setDragging(false);
           addFiles(e.dataTransfer.files);
         }}
-        className={`flex cursor-pointer flex-col items-center justify-center gap-1 border-[3px] border-dashed border-ink px-6 py-10 text-center ${dragging ? "bg-pink/30" : "tone bg-white"}`}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-line px-6 py-10 text-center ${dragging ? "border-accent bg-accent/10" : "bg-surface hover:border-accent"}`}
       >
-        <span className="font-display text-lg">Sayfaları buraya sürükle</span>
-        <span className="text-sm text-ink/70">
+        <span className="text-lg font-semibold">Sayfaları buraya sürükle</span>
+        <span className="text-sm text-muted">
           ya da tıklayıp seç. Dosya adına göre sıralanır (001.webp, 002.webp…). En fazla 4 MB.
         </span>
         <input
@@ -135,10 +135,10 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
           </div>
           <ol className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-7">
             {files.map((f, i) => (
-              <li key={`${f.name}-${f.lastModified}-${i}`} className="border-2 border-ink bg-white text-xs">
+              <li key={`${f.name}-${f.lastModified}-${i}`} className="overflow-hidden rounded-lg border border-line bg-surface text-xs">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previews[i]} alt="" className="aspect-[2/3] w-full object-cover object-top" />
-                <div className="flex items-center justify-between gap-1 border-t-2 border-ink px-1 py-1">
+                <div className="flex items-center justify-between gap-1 border-t border-line px-1 py-1">
                   <button type="button" aria-label="Öne al" onClick={() => move(i, -1)} disabled={pending || i === 0} className="px-1 disabled:opacity-30">
                     ‹
                   </button>
@@ -151,7 +151,7 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
                     aria-label={`${f.name} dosyasını çıkar`}
                     onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
                     disabled={pending}
-                    className="px-1 text-pink disabled:opacity-30"
+                    className="px-1 text-accent disabled:opacity-30"
                   >
                     ✕
                   </button>
@@ -164,8 +164,8 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
 
       {pending && (
         <div aria-live="polite">
-          <div className="h-3 border-2 border-ink bg-white">
-            <div className="h-full bg-pink transition-[width]" style={{ width: `${progress}%` }} />
+          <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+            <div className="h-full bg-accent transition-[width]" style={{ width: `${progress}%` }} />
           </div>
           <p className="mt-1 text-sm">{done} / {files.length} sayfa yüklendi</p>
         </div>
@@ -175,8 +175,8 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
         <button type="button" onClick={publish} disabled={pending || files.length === 0} className={primaryBtn}>
           {pending ? "Yükleniyor…" : `${number}. bölümü yayınla`}
         </button>
-        {message?.error && <p role="alert" className="font-semibold text-pink">{message.error}</p>}
-        {message?.ok && <p className="font-semibold text-blue">{message.ok}</p>}
+        {message?.error && <p role="alert" className="font-semibold text-accent">{message.error}</p>}
+        {message?.ok && <p className="font-semibold text-fresh">{message.ok}</p>}
       </div>
     </div>
   );

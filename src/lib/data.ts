@@ -25,6 +25,7 @@ export async function getAllSeries(): Promise<Series[]> {
     genres: s.genres,
     status: s.status,
     cover: s.cover,
+    views: s.views,
     chapters: chapters.map((c) => ({
       number: c.number,
       title: c.title,
@@ -50,6 +51,11 @@ export async function getRecentlyUpdated(): Promise<Series[]> {
   return [...(await getAllSeries())].sort((a, b) =>
     (latestChapter(b)?.publishedAt ?? "").localeCompare(latestChapter(a)?.publishedAt ?? ""),
   );
+}
+
+/** En çok okunan seriler. */
+export async function getPopular(limit = 5): Promise<Series[]> {
+  return [...(await getAllSeries())].sort((a, b) => b.views - a.views).slice(0, limit);
 }
 
 export async function getAllGenres(): Promise<string[]> {

@@ -17,6 +17,7 @@ export type Series = {
   genres: string[];
   status: SeriesStatus;
   cover: string;
+  views: number;
   chapters: Chapter[];
 };
 
