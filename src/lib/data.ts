@@ -23,6 +23,14 @@ const seriesColumns = {
   views: seriesTable.views,
 };
 
+// Sitede İngilizce ad başlıktır; Türkçe ad yalnızca seri sayfasında altında görünür (titleAlt).
+// İngilizce adı olmayan eski serilerde Türkçe ad başlık olur.
+function withNames<T extends { title: string; titleEn: string }>({ title, titleEn, ...rest }: T) {
+  const en = titleEn.trim();
+  return { ...rest, title: en || title, titleAlt: en ? title : "" };
+}
+const displayTitle = sql`coalesce(nullif(trim(${seriesTable.titleEn}), ''), ${seriesTable.title})`;
+
 // Alt sorgudan gelen zaman damgası sürücüye göre Date ya da metin olabilir
 const iso = (d: Date | string) => new Date(d).toISOString();
 
@@ -47,7 +55,7 @@ export async function getSeriesList(): Promise<SeriesSummary[]> {
     .as("ranked");
 
   const [rows, latest] = await Promise.all([
-    db.select({ id: seriesTable.id, ...seriesColumns, addedAt: seriesTable.createdAt }).from(seriesTable).orderBy(asc(seriesTable.title)),
+    db.select({ id: seriesTable.id, ...seriesColumns, addedAt: seriesTable.createdAt }).from(seriesTable).orderBy(asc(displayTitle)),
     db.select().from(ranked).where(lte(ranked.rank, 3)).orderBy(asc(ranked.seriesId), asc(ranked.rank)),
   ]);
 
@@ -60,7 +68,7 @@ export async function getSeriesList(): Promise<SeriesSummary[]> {
   return rows.map(({ id, addedAt, ...s }) => {
     const cs = bySeries.get(id) ?? [];
     return {
-      ...s,
+      ...withNames(s),
       addedAt: iso(addedAt),
       chapterCount: cs[0]?.total ?? 0,
       firstChapter: cs[0]?.first ?? null,
@@ -87,7 +95,7 @@ export async function getSeries(slug: string): Promise<Series | undefined> {
   });
   if (!row) return undefined;
   return {
-    ...row,
+    ...withNames(row),
     chapters: row.chapters.map((c) => ({ ...c, publishedAt: iso(c.publishedAt) })),
   };
 }

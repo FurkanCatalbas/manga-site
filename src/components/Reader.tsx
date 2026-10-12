@@ -136,6 +136,21 @@ export function Reader(props: Props) {
     nextPages.forEach((p) => preload(p.src, { as: "image", referrerPolicy: "no-referrer" }));
   }, [nearEnd, nextUrl, nextPages, router]);
 
+  // Klavye: → sonraki bölüm, ← önceki bölüm (yazı alanı ya da bölüm seçicideyken değil)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.defaultPrevented) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, select, [contenteditable='true']")) return;
+      const target = e.key === "ArrowRight" ? next : e.key === "ArrowLeft" ? prev : null;
+      if (target === null) return;
+      e.preventDefault();
+      router.push(`/seri/${slug}/bolum/${target}`);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [next, prev, router, slug]);
+
   const progress = ((page + 1) / pages.length) * 100;
 
   return (

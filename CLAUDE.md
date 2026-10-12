@@ -106,8 +106,10 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
 
 ### Şema: `src/db/schema.ts`
 
-- `series`: `views` toplam okunma, `title` Türkçe ad, `title_en` İngilizce ad (boş olabilir; kartta ve seri sayfasında
-  Türkçe adın altında görünür, aramada da eşleşir). Eski `author` (yazar/çizer) alanı kaldırıldı.
+- `series`: `views` toplam okunma, `title` Türkçe ad, `title_en` İngilizce ad (boş olabilir). Sitede İngilizce ad
+  başlıktır (kartlar, listeler, okuyucu, SEO); Türkçe ad yalnızca seri sayfasında başlığın altında görünür.
+  `src/lib/data.ts` → `withNames`: `title` = İngilizce ad ya da Türkçe ad, `titleAlt` = İngilizce ad varsa
+  Türkçe ad. Aramada ikisi de eşleşir. Panel ham alanları (`title`, `titleEn`) kullanır. Eski `author` (yazar/çizer) alanı kaldırıldı.
 - `chapters`: `pages` (text[], URL'ler, okunma sırasıyla) ve `page_sizes` (jsonb, `[genişlik, yükseklik][]`,
   `pages` ile aynı sırada; eski bölümlerde `[]` olabilir, okuyucu boyutsuz da çalışır)
 - `series_views_daily`: seri başına günlük okunma (İstanbul saatine göre gün)
@@ -156,6 +158,8 @@ bugün o bölümü saymadıysa `series.views` ve `series_views_daily` sayaçlar�
 ### Okuyucu: `src/components/Reader.tsx`
 
 Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
+
+- Klavye: → sonraki, ← önceki bölüm (yazı alanı/seçicideyken ve değiştirici tuşla çalışmaz).
 
 - Aşağı kaydırınca site başlığı ve okuyucu barı gizlenir, sadece 3 px ilerleme çizgisi kalır;
   yukarı kaydırınca geri gelir. Site başlığı layout'ta olduğu için `<html data-chrome="hidden">` +

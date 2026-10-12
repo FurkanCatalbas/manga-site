@@ -17,8 +17,8 @@ export type Chapter = ChapterInfo & { pages: Page[] };
 
 type SeriesBase = {
   slug: string;
-  title: string; // Türkçe ad
-  titleEn: string; // İngilizce ad, boş olabilir
+  title: string; // sitede görünen ad: İngilizce ad, yoksa Türkçe ad
+  titleAlt: string; // İngilizce ad varsa Türkçe ad (yalnızca seri sayfasında), yoksa boş
   description: string;
   genres: string[];
   status: SeriesStatus;
