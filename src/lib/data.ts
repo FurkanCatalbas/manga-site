@@ -15,7 +15,7 @@ export * from "@/lib/series";
 const seriesColumns = {
   slug: seriesTable.slug,
   title: seriesTable.title,
-  author: seriesTable.author,
+  titleEn: seriesTable.titleEn,
   description: seriesTable.description,
   genres: seriesTable.genres,
   status: seriesTable.status,

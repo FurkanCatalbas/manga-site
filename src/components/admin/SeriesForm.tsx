@@ -20,7 +20,7 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(editing);
-  const [author, setAuthor] = useState(initial?.author ?? "");
+  const [titleEn, setTitleEn] = useState(initial?.titleEn ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [genres, setGenres] = useState<string[]>(initial?.genres ?? []);
   const [newGenre, setNewGenre] = useState("");
@@ -65,7 +65,7 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
         const input: SeriesInput = {
           slug,
           title,
-          author,
+          titleEn,
           description,
           genres,
           status,
@@ -109,18 +109,24 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
       </div>
 
       <div className="grid gap-4">
-        <div>
-          <label htmlFor="title" className={label}>Seri adı</label>
-          <input
-            id="title"
-            required
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              if (!slugTouched) setSlug(slugify(e.target.value));
-            }}
-            className={field}
-          />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="title" className={label}>Türkçe adı</label>
+            <input
+              id="title"
+              required
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (!slugTouched) setSlug(slugify(e.target.value));
+              }}
+              className={field}
+            />
+          </div>
+          <div>
+            <label htmlFor="title-en" className={label}>İngilizce adı (isteğe bağlı)</label>
+            <input id="title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className={field} />
+          </div>
         </div>
         <div>
           <label htmlFor="slug" className={label}>Adres</label>
@@ -141,10 +147,6 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
           {editing && <p className="mt-1 text-xs text-muted">Adres, bağlantılar bozulmasın diye sonradan değiştirilemez.</p>}
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="author" className={label}>Yazar / çizer</label>
-            <input id="author" required value={author} onChange={(e) => setAuthor(e.target.value)} className={field} />
-          </div>
           <div>
             <label htmlFor="status" className={label}>Durum</label>
             <select

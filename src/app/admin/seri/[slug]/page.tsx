@@ -53,7 +53,7 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
           initial={{
             slug: s.slug,
             title: s.title,
-            author: s.author,
+            titleEn: s.titleEn,
             description: s.description,
             genres: s.genres,
             status: s.status,

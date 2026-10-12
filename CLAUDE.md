@@ -106,7 +106,8 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
 
 ### Şema: `src/db/schema.ts`
 
-- `series`: `views` toplam okunma
+- `series`: `views` toplam okunma, `title` Türkçe ad, `title_en` İngilizce ad (boş olabilir; kartta ve seri sayfasında
+  Türkçe adın altında görünür, aramada da eşleşir). Eski `author` (yazar/çizer) alanı kaldırıldı.
 - `chapters`: `pages` (text[], URL'ler, okunma sırasıyla) ve `page_sizes` (jsonb, `[genişlik, yükseklik][]`,
   `pages` ile aynı sırada; eski bölümlerde `[]` olabilir, okuyucu boyutsuz da çalışır)
 - `series_views_daily`: seri başına günlük okunma (İstanbul saatine göre gün)
@@ -165,7 +166,7 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 - `layout.tsx`: cam başlık (masaüstünde bağlantılar + `GenreMenu` açılır tür menüsü + arama, mobilde
   arama ikonu), türleri ve Keşfet bağlantılarını listeleyen altbilgi ve `MobileTabBar` (Ana sayfa,
   Keşfet, Kütüphane; okuyucuda ve panelde gizli; `/tur` sayfalarında Keşfet etkin görünür).
-- Seri listeleri `SeriesBrowser.tsx`: arama (ad + yazar), tür/durum çipleri, sıralama, sayfa başına 24 seri.
+- Seri listeleri `SeriesBrowser.tsx`: arama (Türkçe + İngilizce ad), tür/durum çipleri, sıralama, sayfa başına 24 seri.
   Süzme tarayıcıda yapılır. `/ara`'da seçimler adrese yazılır (`q`, `tur`, `durum=devam|tamam`,
   `sira=guncel|yeni|populer|az`, `donem=gunluk|haftalik|aylik|tum`, `sayfa`) ve `SeriesBrowserFromUrl`
   ile geri okunur; Suspense yedeği varsayılan liste olduğu için statik HTML'de de seriler var.
@@ -228,8 +229,9 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Panel: tür yönetimi (Türler sayfası, formda çipli tür seçimi)
 - Çeviri kaynağı kutusu: panel → Kaynaklar, seri formunda isteğe bağlı kaynak seçimi
 - Keşif: tür sayfaları (`/tur`, `/tur/<slug>`), başlıkta Türler menüsü, türlü altbilgi; Keşfet'te sıralama
-  (son güncellenen, yeni eklenen, popüler + dönem, A-Z), yazara göre arama, sayfalama; kartlarda yazar;
+  (son güncellenen, yeni eklenen, popüler + dönem, A-Z), sayfalama;
   Popüler'de "Tümü" sekmesi
+- Seriler: yazar/çizer alanı kaldırıldı, yerine Türkçe + İngilizce ad (`title_en`)
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 

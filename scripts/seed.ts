@@ -51,7 +51,6 @@ async function main() {
       .values({
         slug: s.slug,
         title: s.title,
-        author: "Örnek Yazar",
         description: s.description,
         genres: s.genres,
         status: s.status,

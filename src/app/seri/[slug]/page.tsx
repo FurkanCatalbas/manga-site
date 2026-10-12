@@ -59,7 +59,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
         name: series.title,
         description: series.description,
         image: absoluteUrl(series.cover),
-        author: { "@type": "Person", name: series.author },
+        ...(series.titleEn && { alternateName: series.titleEn }),
         genre: series.genres,
         inLanguage: "tr",
         ...(latest && { dateModified: latest.publishedAt }),
@@ -101,14 +101,14 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
             {/* Mobilde başlık kapağın yanında */}
             <div className="min-w-0 self-end sm:hidden">
               <h1 className="font-display text-2xl leading-tight tracking-tight">{series.title}</h1>
-              <p className="mt-1 text-sm text-muted">{series.author}</p>
+              {series.titleEn && <p className="mt-1 text-sm text-muted">{series.titleEn}</p>}
             </div>
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="hidden font-display text-4xl leading-[1.05] tracking-tight sm:block lg:text-5xl">
               {series.title}
             </h1>
-            <p className="mt-2 hidden text-muted sm:block">{series.author}</p>
+            {series.titleEn && <p className="mt-2 hidden text-muted sm:block">{series.titleEn}</p>}
 
             <div className="flex flex-wrap gap-2 text-sm sm:mt-5">
               <span className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 font-semibold">

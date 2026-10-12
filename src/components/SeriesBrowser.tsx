@@ -189,7 +189,7 @@ export function SeriesBrowser({
   const q = normalize(state.query.trim());
   const filtered = series.filter(
     (s) =>
-      (!q || normalize(s.title).includes(q) || normalize(s.author).includes(q)) &&
+      (!q || normalize(s.title).includes(q) || normalize(s.titleEn).includes(q)) &&
       (!state.genre || s.genres.includes(state.genre)) &&
       (!state.status || s.status === state.status),
   );
@@ -210,8 +210,8 @@ export function SeriesBrowser({
           <SearchIcon size={19} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted" />
           <input
             type="search"
-            aria-label="Seri adı ya da yazar"
-            placeholder="Seri adı ya da yazar ara…"
+            aria-label="Seri adı (Türkçe ya da İngilizce)"
+            placeholder="Seri adı ara (Türkçe ya da İngilizce)…"
             value={state.query}
             onChange={(e) => update({ query: e.target.value })}
             className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 pr-4 pl-12 text-base placeholder:text-muted focus:border-accent/60 focus:outline-none"

@@ -5,7 +5,8 @@ export const series = pgTable("series", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
-  author: text("author").notNull(),
+  // Serinin İngilizce adı (isteğe bağlı); Türkçe ad `title`
+  titleEn: text("title_en").notNull().default(""),
   description: text("description").notNull(),
   genres: text("genres").array().notNull().default([]),
   status: text("status", { enum: ["Devam Ediyor", "Tamamlandı"] }).notNull(),

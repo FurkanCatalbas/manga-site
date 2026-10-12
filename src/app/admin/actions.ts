@@ -43,7 +43,7 @@ export async function logout() {
 export type SeriesInput = {
   slug: string;
   title: string;
-  author: string;
+  titleEn: string;
   description: string;
   genres: string[];
   status: "Devam Ediyor" | "Tamamlandı";
@@ -85,7 +85,7 @@ export async function createSeries(input: SeriesInput): Promise<FormState> {
   const { source, ...values } = input;
   const [row] = await db
     .insert(series)
-    .values({ ...values, title: values.title.trim(), author: values.author.trim() })
+    .values({ ...values, title: values.title.trim(), titleEn: values.titleEn.trim() })
     .onConflictDoNothing({ target: series.slug })
     .returning({ id: series.id });
   if (!row) return { error: `"${input.slug}" adresi başka bir seride kullanılıyor.` };
@@ -106,7 +106,7 @@ export async function updateSeries(input: SeriesInput): Promise<FormState> {
   const { slug, source, ...rest } = input;
   const [row] = await db
     .update(series)
-    .set({ ...rest, title: rest.title.trim(), author: rest.author.trim() })
+    .set({ ...rest, title: rest.title.trim(), titleEn: rest.titleEn.trim() })
     .where(eq(series.slug, slug))
     .returning({ id: series.id });
   if (!row) return { error: "Seri bulunamadı." };
