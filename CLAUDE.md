@@ -185,6 +185,14 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 - "use client" dosyalarından dışa aktarılan fonksiyonlar sunucuda çağrılamaz; ortak yardımcılar
   `src/lib/series.ts` gibi istemci işareti olmayan dosyalarda durur (ör. `toLibraryItems`).
 
+### Yer imiyle bölüm alma: `/admin/al`
+
+Panel → "Bölüm al" sayfasındaki yer imi (bookmarklet, `ChapterImport.tsx`) kaynak sitede açılan bölümün
+görsellerini toplar (okutoon: `img.reader-page`, diğerleri: genişliği 400+ görseller) ve `/admin/al#<json>`
+adresini açar; veri `#` içinde olduğu için sunucuya gitmez. Panel bağlantıları dener ve `createChapter` ile
+yayınlar. Yer imi şifre taşımaz; yayın panel oturumuyla. Kaynak seri → webtooku seri eşlemesi
+localStorage'da (`webtooku:kaynak-seri`). React `javascript:` href'ini engellediği için adres ref ile yazılır.
+
 ### Dışarıdan bölüm yayınlama: `/api/admin/bolum`
 
 `Authorization: Bearer <ADMIN_PASSWORD>` (ya da panel oturumu) ister. `GET ?seri=<slug>` serideki bölüm
@@ -248,6 +256,7 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Seriler: yazar/çizer alanı kaldırıldı, yerine Türkçe + İngilizce ad (`title_en`)
 - Panel: R2'ye yüklemeden, başka sitedeki görsel bağlantılarıyla kapak ve bölüm ekleme
 - Bölüm yayınlama API'si (`/api/admin/bolum`) ve Python yayıncı scripti için ortak `insertChapter`
+- Panel → Bölüm al: kaynak sitede tek tıkla bölüm gönderen yer imi
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
