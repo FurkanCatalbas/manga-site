@@ -32,6 +32,7 @@ async function AdminNav() {
     <nav className="flex items-center gap-5 text-sm font-semibold">
       <Link href="/admin" className="underline-offset-4 hover:underline">Seriler</Link>
       <Link href="/admin/turler" className="underline-offset-4 hover:underline">Türler</Link>
+      <Link href="/admin/kaynaklar" className="underline-offset-4 hover:underline">Kaynaklar</Link>
       <form action={logout}>
         <button className="text-muted underline-offset-4 hover:text-fg hover:underline">Çıkış yap</button>
       </form>

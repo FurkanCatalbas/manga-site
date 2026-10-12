@@ -42,6 +42,29 @@ export const genres = pgTable("genres", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Çeviri kaynakları (fansub ekipleri/siteleri). Seri sayfasında "Bu çeviri X (x.com) üzerinden
+// alınmıştır" kutusu olarak görünür. Bir ekipten birden çok seri alınabildiği için ayrı listede tutulur.
+export const fansubs = pgTable("fansubs", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(), // sonradan değişmez (logo R2'de bu adın altında)
+  url: text("url"), // ekibin sitesi
+  logo: text("logo"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Serinin çeviri kaynağı (isteğe bağlı, seri başına en fazla bir). Ayrı tablo: seriler tablosuna sütun
+// eklenmediği için bu tablolar veritabanına eklenmeden yayınlansa da site çalışır.
+export const seriesFansubs = pgTable("series_fansubs", {
+  seriesId: integer("series_id")
+    .primaryKey()
+    .references(() => series.id, { onDelete: "cascade" }),
+  fansubId: integer("fansub_id")
+    .notNull()
+    .references(() => fansubs.id, { onDelete: "cascade" }),
+  url: text("url"), // serinin kaynak sitedeki sayfası; boşsa ekibin sitesine gidilir
+});
+
 // Gün gün okunma sayıları (Popüler: günlük / haftalık / aylık ve okunma grafiği için)
 export const seriesViewsDaily = pgTable(
   "series_views_daily",

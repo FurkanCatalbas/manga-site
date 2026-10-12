@@ -104,3 +104,11 @@ export const CheckIcon = (p: IconProps) => (
     <path d="m5 12.5 4.5 4.5L19 7.5" />
   </Icon>
 );
+
+export const ExternalLinkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 4h6v6" />
+    <path d="m20 4-9 9" />
+    <path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
+  </Icon>
+);

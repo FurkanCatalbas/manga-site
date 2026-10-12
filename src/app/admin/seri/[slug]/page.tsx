@@ -8,6 +8,7 @@ import { SeriesForm } from "@/components/admin/SeriesForm";
 import { db } from "@/db";
 import { chapters, series } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { getFansubList, getSeriesFansub } from "@/lib/fansubs";
 import { getGenreList } from "@/lib/genres";
 import { formatDate } from "@/lib/series";
 import { deleteChapter, deleteSeries } from "../../actions";
@@ -33,6 +34,7 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
     getGenreList(),
   ]);
   if (!s) notFound();
+  const [sources, source] = await Promise.all([getFansubList(), getSeriesFansub(s.id)]);
 
   const nextNumber = (s.chapters.at(-1)?.number ?? 0) + 1;
 
@@ -47,6 +49,7 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
         </div>
         <SeriesForm
           allGenres={(genreList ?? []).map((g) => g.name)}
+          sources={sources && sources.map((f) => ({ id: f.id, name: f.name }))}
           initial={{
             slug: s.slug,
             title: s.title,
@@ -55,6 +58,7 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
             genres: s.genres,
             status: s.status,
             cover: s.cover,
+            source: { fansubId: source?.fansubId ?? null, url: source?.url ?? "" },
           }}
         />
       </section>

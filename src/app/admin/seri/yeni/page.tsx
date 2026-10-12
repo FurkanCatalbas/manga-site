@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { SeriesForm } from "@/components/admin/SeriesForm";
 import { requireAdmin } from "@/lib/auth";
+import { getFansubList } from "@/lib/fansubs";
 import { getGenreList } from "@/lib/genres";
 
 export const metadata = { title: "Yeni seri" };
@@ -18,6 +19,11 @@ export default function NewSeriesPage() {
 
 async function Guarded() {
   await requireAdmin();
-  const genres = (await getGenreList()) ?? [];
-  return <SeriesForm allGenres={genres.map((g) => g.name)} />;
+  const [genres, sources] = await Promise.all([getGenreList(), getFansubList()]);
+  return (
+    <SeriesForm
+      allGenres={(genres ?? []).map((g) => g.name)}
+      sources={sources && sources.map((f) => ({ id: f.id, name: f.name }))}
+    />
+  );
 }

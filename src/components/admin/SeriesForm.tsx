@@ -11,9 +11,11 @@ type Props = {
   initial?: SeriesInput;
   /** Türler listesi (panel → Türler); seçilebilir çipler olarak gösterilir */
   allGenres?: string[];
+  /** Çeviri kaynakları listesi (panel → Kaynaklar); null ise tablolar henüz yok */
+  sources?: { id: number; name: string }[] | null;
 };
 
-export function SeriesForm({ initial, allGenres = [] }: Props) {
+export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
   const editing = !!initial;
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
@@ -35,6 +37,8 @@ export function SeriesForm({ initial, allGenres = [] }: Props) {
     setNewGenre("");
   };
   const [status, setStatus] = useState<SeriesInput["status"]>(initial?.status ?? "Devam Ediyor");
+  const [sourceId, setSourceId] = useState(initial?.source?.fansubId ?? 0);
+  const [sourceUrl, setSourceUrl] = useState(initial?.source?.url ?? "");
   const [cover, setCover] = useState(initial?.cover ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [message, setMessage] = useState<{ error?: string; ok?: string }>();
@@ -66,6 +70,8 @@ export function SeriesForm({ initial, allGenres = [] }: Props) {
           genres,
           status,
           cover: coverUrl,
+          // Tablolar yoksa kaynak hiç gönderilmez (mevcut değer korunur)
+          ...(sources ? { source: { fansubId: sourceId || null, url: sourceUrl } } : {}),
         };
         const result = await (editing ? updateSeries(input) : createSeries(input));
         if (result) setMessage(result);
@@ -198,6 +204,36 @@ export function SeriesForm({ initial, allGenres = [] }: Props) {
             Seçmek için türe dokun. Yeni tür, seri kaydedilince Türler listesine de eklenir.
           </p>
         </fieldset>
+        {sources && (
+          <fieldset className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="source" className={label}>Çeviri kaynağı (isteğe bağlı)</label>
+              <select id="source" value={sourceId} onChange={(e) => setSourceId(Number(e.target.value))} className={field}>
+                <option value={0}>Yok (kendi çevirim)</option>
+                {sources.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+              {sources.length === 0 && (
+                <p className="mt-1 text-xs text-muted">Kaynak eklemek için panelde Kaynaklar sayfasına git.</p>
+              )}
+            </div>
+            {sourceId > 0 && (
+              <div>
+                <label htmlFor="source-url" className={label}>Serinin o sitedeki adresi (isteğe bağlı)</label>
+                <input
+                  id="source-url"
+                  value={sourceUrl}
+                  onChange={(e) => setSourceUrl(e.target.value)}
+                  placeholder="Boşsa kaynağın ana sitesine gider"
+                  className={field}
+                />
+              </div>
+            )}
+          </fieldset>
+        )}
         <div>
           <label htmlFor="description" className={label}>Açıklama</label>
           <textarea

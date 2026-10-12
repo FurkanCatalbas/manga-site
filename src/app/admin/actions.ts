@@ -5,8 +5,9 @@ import { refresh, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { chapters, genres, series } from "@/db/schema";
+import { chapters, fansubs, genres, series } from "@/db/schema";
 import { checkPassword, requireAdmin, SESSION_COOKIE, SESSION_MAX_AGE, sessionToken } from "@/lib/auth";
+import { cleanUrl, setSeriesFansub } from "@/lib/fansubs";
 import { cleanGenreName, ensureGenres, isMissingTable } from "@/lib/genres";
 import { deletePrefix } from "@/lib/r2";
 import { SLUG_PATTERN, slugify } from "@/lib/slug";
@@ -47,7 +48,18 @@ export type SeriesInput = {
   genres: string[];
   status: "Devam Ediyor" | "Tamamlandı";
   cover: string;
+  /** Çeviri kaynağı (isteğe bağlı): kaynak listesinden seçilen ekip ve serinin o sitedeki adresi */
+  source?: { fansubId: number | null; url: string };
 };
+
+/** Formdaki kaynağı doğrular: seçili ekip (yoksa null) ve temizlenmiş seri adresi. */
+function parseSource(source: SeriesInput["source"]) {
+  if (!source) return undefined;
+  const fansubId = Number.isInteger(source.fansubId) && source.fansubId! > 0 ? source.fansubId : null;
+  const cleaned = cleanUrl(fansubId ? source.url : "");
+  if ("error" in cleaned) return { error: `Kaynak adresi: ${cleaned.error}` };
+  return { fansubId, url: cleaned.url };
+}
 
 /** Türleri temizler, tekrarları atar (sıra korunur). */
 function normalizeGenres(list: string[]) {
@@ -60,6 +72,8 @@ function validateSeries(input: SeriesInput): string | undefined {
   if (!input.cover) return "Kapak görseli yükle.";
   if (!["Devam Ediyor", "Tamamlandı"].includes(input.status)) return "Geçersiz durum.";
   if (input.genres.some((g) => g.length > GENRE_MAX)) return `Tür adı en fazla ${GENRE_MAX} karakter olabilir.`;
+  const source = parseSource(input.source);
+  if (source && "error" in source) return source.error;
 }
 
 export async function createSeries(input: SeriesInput): Promise<FormState> {
@@ -68,13 +82,16 @@ export async function createSeries(input: SeriesInput): Promise<FormState> {
   const error = validateSeries(input);
   if (error) return { error };
 
+  const { source, ...values } = input;
   const [row] = await db
     .insert(series)
-    .values({ ...input, title: input.title.trim(), author: input.author.trim() })
+    .values({ ...values, title: values.title.trim(), author: values.author.trim() })
     .onConflictDoNothing({ target: series.slug })
     .returning({ id: series.id });
   if (!row) return { error: `"${input.slug}" adresi başka bir seride kullanılıyor.` };
   await ensureGenres(input.genres);
+  const parsed = parseSource(source);
+  if (parsed && !("error" in parsed)) await setSeriesFansub(row.id, parsed.fansubId, parsed.url);
 
   updateTag("series");
   redirect(`/admin/seri/${input.slug}`);
@@ -86,12 +103,16 @@ export async function updateSeries(input: SeriesInput): Promise<FormState> {
   const error = validateSeries(input);
   if (error) return { error };
 
-  const { slug, ...rest } = input;
-  await db
+  const { slug, source, ...rest } = input;
+  const [row] = await db
     .update(series)
     .set({ ...rest, title: rest.title.trim(), author: rest.author.trim() })
-    .where(eq(series.slug, slug));
+    .where(eq(series.slug, slug))
+    .returning({ id: series.id });
+  if (!row) return { error: "Seri bulunamadı." };
   await ensureGenres(input.genres);
+  const parsed = parseSource(source);
+  if (parsed && !("error" in parsed)) await setSeriesFansub(row.id, parsed.fansubId, parsed.url);
   updateTag("series");
   return { ok: "Kaydedildi." };
 }
@@ -238,4 +259,72 @@ export async function addUnlistedGenres(names: string[]) {
   await requireAdmin();
   await ensureGenres(names.filter((n) => n.length <= GENRE_MAX));
   refresh();
+}
+
+// --- Çeviri kaynakları ---
+
+const MISSING_SOURCE_TABLE = "Kaynak tabloları veritabanında yok. Kaynaklar sayfasındaki SQL'i çalıştır.";
+
+/** Kaynak formu: ad, site adresi, logo (panelde önceden R2'ye yüklenmiş adres). */
+function parseFansubForm(formData: FormData) {
+  const name = String(formData.get("name") ?? "").replace(/\s+/g, " ").trim();
+  if (!name) return { error: "Kaynak adı boş olamaz." };
+  if (name.length > 60) return { error: "Kaynak adı en fazla 60 karakter olabilir." };
+  const site = cleanUrl(String(formData.get("url") ?? ""));
+  if ("error" in site) return { error: `Site adresi: ${site.error}` };
+  const logo = String(formData.get("logo") ?? "").trim() || null;
+  if (logo && !/^https:\/\//.test(logo)) return { error: "Logo adresi geçersiz." };
+  return { name, url: site.url, logo };
+}
+
+export async function createFansub(_: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const v = parseFansubForm(formData);
+  if ("error" in v) return v;
+  const slug = slugify(v.name);
+  if (!slug) return { error: "Kaynak adında en az bir harf ya da rakam olmalı." };
+  try {
+    const [row] = await db
+      .insert(fansubs)
+      .values({ ...v, slug })
+      .onConflictDoNothing()
+      .returning({ id: fansubs.id });
+    if (!row) return { error: `"${v.name}" zaten listede.` };
+  } catch (e) {
+    if (isMissingTable(e)) return { error: MISSING_SOURCE_TABLE };
+    throw e;
+  }
+  refresh();
+  return { ok: `"${v.name}" eklendi.` };
+}
+
+export async function updateFansub(id: number, _: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const v = parseFansubForm(formData);
+  if ("error" in v) return v;
+  try {
+    await db.update(fansubs).set(v).where(eq(fansubs.id, id));
+  } catch (e) {
+    if (isDuplicate(e)) return { error: `"${v.name}" adında başka bir kaynak var.` };
+    throw e;
+  }
+  updateTag("series");
+  refresh();
+  return { ok: "Kaydedildi." };
+}
+
+/** Kaynağı siler; bağlı serilerden kutu kalkar (cascade), logosu R2'den silinir. */
+export async function deleteFansub(id: number) {
+  await requireAdmin();
+  const [row] = await db.delete(fansubs).where(eq(fansubs.id, id)).returning({ slug: fansubs.slug });
+  updateTag("series");
+  refresh();
+  // Logo temizliği ikincil: R2'ye ulaşılamazsa kayıt yine silinmiş olur, artık dosya zararsızdır
+  if (row) {
+    try {
+      await deletePrefix(`fansubs/${row.slug}/`);
+    } catch (e) {
+      console.error("Kaynak logosu R2'den silinemedi:", e);
+    }
+  }
 }

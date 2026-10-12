@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { GenreList, PopularList } from "@/components/Sidebar";
 import { EyeIcon, LayersIcon } from "@/components/icons";
 import { ChapterList, ReadButtons } from "@/components/SeriesActions";
+import { SourceNotice } from "@/components/SourceNotice";
+import { getSeriesSource } from "@/lib/fansubs";
 import { JsonLd } from "@/components/JsonLd";
 import { getAllGenres, getPopular, getSeries, getSeriesList } from "@/lib/data";
 import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
@@ -35,7 +37,12 @@ export async function generateMetadata(props: PageProps<"/seri/[slug]">): Promis
 
 export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
   const { slug } = await props.params;
-  const [series, popular, genres] = await Promise.all([getSeries(slug), getPopular(), getAllGenres()]);
+  const [series, popular, genres, source] = await Promise.all([
+    getSeries(slug),
+    getPopular(),
+    getAllGenres(),
+    getSeriesSource(slug),
+  ]);
   if (!series) notFound();
 
   const first = series.chapters[0];
@@ -139,7 +146,11 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
 
       <div className="mx-auto mt-4 grid max-w-7xl gap-10 px-4 lg:grid-cols-[1fr_320px]">
         <section className="min-w-0">
-          <ChapterList slug={series.slug} chapters={series.chapters} />
+          <ChapterList
+            slug={series.slug}
+            chapters={series.chapters}
+            notice={source && <SourceNotice source={source} />}
+          />
         </section>
 
         <aside className="space-y-6">

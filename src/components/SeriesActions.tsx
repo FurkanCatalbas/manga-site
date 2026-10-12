@@ -36,7 +36,16 @@ export function ReadButtons({ slug, first, latest }: { slug: string; first: numb
 }
 
 /** Bölüm listesi: en yeni ya da en eski önce; okunanlar ve kalınan bölüm işaretli. */
-export function ChapterList({ slug, chapters }: { slug: string; chapters: ChapterInfo[] }) {
+export function ChapterList({
+  slug,
+  chapters,
+  notice,
+}: {
+  slug: string;
+  chapters: ChapterInfo[];
+  /** Başlığın altında gösterilecek not (ör. çeviri kaynağı kutusu) */
+  notice?: React.ReactNode;
+}) {
   const [newestFirst, setNewestFirst] = useState(true);
   const current = useAllProgress()[slug]?.chapter;
   const list = newestFirst ? [...chapters].reverse() : chapters;
@@ -57,6 +66,7 @@ export function ChapterList({ slug, chapters }: { slug: string; chapters: Chapte
           </button>
         )}
       </div>
+      {notice}
       {list.length === 0 ? (
         <p className="panel p-6 text-muted">Bu serinin ilk bölümü yakında eklenecek.</p>
       ) : (

@@ -2,7 +2,7 @@
 import sharp, { type OutputInfo } from "sharp";
 
 // Telefonlarda 3x ekranda bile net görünecek, gereğinden büyük olmayan genişlikler
-export const MAX_WIDTH = { page: 1200, cover: 720 } as const;
+export const MAX_WIDTH = { page: 1200, cover: 720, fansub: 256 } as const;
 
 /**
  * Görseli en fazla `maxWidth` genişliğe küçültür ve WebP'ye çevirir.

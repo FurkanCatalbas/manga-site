@@ -98,6 +98,7 @@ bilerek yok. Yeni sayfa eklerken bu ilkeyi koru.
 | `getChapter(slug, no)` | bölüm, sayfaları (`Page[]`) ve sonraki bölümün ilk 3 sayfası | okuyucu |
 | `getChapterRefs()` | tüm bölümlerin slug/numara/tarihi | sitemap, `generateStaticParams` |
 | `getPopular()` | günlük/haftalık/aylık en çok okunanlar ve 14 günlük eğri | yan sütun |
+| `getSeriesSource(slug)` (`src/lib/fansubs.ts`) | serinin çeviri kaynağı ya da `null` | seri sayfası, okuyucu |
 
 Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bileşenleri de kullanır.
 
@@ -113,6 +114,12 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   (`renameGenre`, `deleteGenre`). Sitenin genel tarafı türleri serilerden türetir, bu tabloya bağlı
   değildir; tablo yoksa panel çalıştırılacak SQL'i gösterir (`isMissingTable`, `src/lib/genres.ts`).
   Tür adları `cleanGenreName` ile düzenlenir (boşluklar, Türkçe ilk harf büyük).
+- `fansubs` (ad, slug, site adresi, logo) ve `series_fansubs` (seri başına en fazla bir kaynak +
+  serinin kaynak sitedeki adresi): başka ekipten alınan çeviriler için "Bu çeviri X (x.com) üzerinden
+  alınmıştır" kutusu (`src/components/SourceNotice.tsx`; seri sayfasında bölüm listesinin üstünde,
+  okuyucuda bölüm sonunda tek satır). Kaynak seçilmemiş seride kutu yok. Tablolar yoksa site bozulmaz
+  (`isMissingTable`), panel → Kaynaklar oluşturma SQL'ini gösterir. Bağlantılar `cleanUrl` ile yalnızca
+  http(s); dış bağlantılar `rel="nofollow noopener"`. Logo R2'de `fansubs/<slug>/` altında; slug sonradan değişmez.
 
 ### Okunma sayacı: `src/app/api/goruntulenme/route.ts`
 
@@ -165,8 +172,9 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 ### Yönetim paneli: `/admin`
 
 Tek şifre (`ADMIN_PASSWORD`); çerezde şifreden türetilen HMAC tutulur (`src/lib/auth.ts`).
-Bölümler: Seriler (ekleme/düzenleme/silme, bölüm yükleme) ve Türler (`/admin/turler`: ekle, adını
-değiştir, sil, serilerde olup listede olmayanları aktar). Seri formunda türler çiplerle seçilir; formda
+Bölümler: Seriler (ekleme/düzenleme/silme, bölüm yükleme), Türler (`/admin/turler`: ekle, adını
+değiştir, sil, serilerde olup listede olmayanları aktar) ve Kaynaklar (`/admin/kaynaklar`: çeviri ekipleri,
+logo yükleme; seri formunda "Çeviri kaynağı" seçilir). Seri formunda türler çiplerle seçilir; formda
 yazılan yeni tür kayıtta listeye eklenir. İşlemler `src/app/admin/actions.ts` içindeki server action'larda;
 sayfanın yeniden çizilmesi gerekiyorsa `refresh()` (next/cache) çağrılır. `"use server"` dosyası
 yalnızca async fonksiyon dışa aktarabilir.
@@ -209,6 +217,7 @@ yalnızca async fonksiyon dışa aktarabilir.
   seri sayfasında "Devam et" ve okundu işaretli sıralanabilir bölüm listesi, çipli Keşfet filtreleri;
   popüler listesinden grafikler kaldırıldı
 - Panel: tür yönetimi (Türler sayfası, formda çipli tür seçimi)
+- Çeviri kaynağı kutusu: panel → Kaynaklar, seri formunda isteğe bağlı kaynak seçimi
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 

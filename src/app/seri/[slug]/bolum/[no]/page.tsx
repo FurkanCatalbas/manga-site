@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
 import { JsonLd } from "@/components/JsonLd";
 import { getChapter, getChapterRefs } from "@/lib/data";
+import { getSeriesSource } from "@/lib/fansubs";
 import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
@@ -36,7 +37,7 @@ export async function generateMetadata(
 
 export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[no]">) {
   const { slug, no } = await props.params;
-  const found = await getChapter(slug, Number(no));
+  const [found, source] = await Promise.all([getChapter(slug, Number(no)), getSeriesSource(slug)]);
   if (!found) notFound();
 
   const { series, chapter, nextPages } = found;
@@ -84,6 +85,7 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
       prev={numbers[idx - 1] ?? null}
       next={numbers[idx + 1] ?? null}
       nextPages={nextPages}
+      source={source}
     />
     </>
   );
