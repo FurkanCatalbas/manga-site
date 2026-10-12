@@ -35,7 +35,11 @@ export function ReadButtons({ slug, first, latest }: { slug: string; first: numb
   );
 }
 
-/** Bölüm listesi: en yeni ya da en eski önce; okunanlar ve kalınan bölüm işaretli. */
+const FIRST_PAGE = 10;
+const STEP = 30;
+
+/** Bölüm listesi: en yeni ya da en eski önce; okunanlar ve kalınan bölüm işaretli. Önce 10 bölüm görünür,
+ * "Daha fazla" ile 30'ar 30'ar açılır (tüm bölümler site haritasında ve JSON-LD'de zaten var). */
 export function ChapterList({
   slug,
   chapters,
@@ -47,6 +51,7 @@ export function ChapterList({
   notice?: React.ReactNode;
 }) {
   const [newestFirst, setNewestFirst] = useState(true);
+  const [shown, setShown] = useState(FIRST_PAGE);
   const current = useAllProgress()[slug]?.chapter;
   const list = newestFirst ? [...chapters].reverse() : chapters;
 
@@ -58,7 +63,10 @@ export function ChapterList({
         </h2>
         {chapters.length > 1 && (
           <button
-            onClick={() => setNewestFirst((v) => !v)}
+            onClick={() => {
+              setNewestFirst((v) => !v);
+              setShown(FIRST_PAGE);
+            }}
             className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-muted hover:text-fg"
           >
             <SortIcon size={14} />
@@ -71,7 +79,7 @@ export function ChapterList({
         <p className="panel p-6 text-muted">Bu serinin ilk bölümü yakında eklenecek.</p>
       ) : (
         <ol className="grid gap-2 sm:grid-cols-2">
-          {list.map((c) => {
+          {list.slice(0, shown).map((c) => {
             const isCurrent = c.number === current;
             const read = current !== undefined && c.number < current;
             return (
@@ -102,6 +110,18 @@ export function ChapterList({
             );
           })}
         </ol>
+      )}
+      {list.length > shown && (
+        <div className="mt-3 flex gap-2">
+          <button type="button" onClick={() => setShown((n) => n + STEP)} className="btn-ghost flex-1 text-sm">
+            Daha fazla göster ({list.length - shown} bölüm daha)
+          </button>
+          {list.length - shown > STEP && (
+            <button type="button" onClick={() => setShown(list.length)} className="btn-ghost text-sm">
+              Tümü
+            </button>
+          )}
+        </div>
       )}
     </>
   );

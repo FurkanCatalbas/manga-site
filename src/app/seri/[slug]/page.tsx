@@ -6,6 +6,7 @@ import { GenreList, PopularList } from "@/components/Sidebar";
 import { EyeIcon, LayersIcon } from "@/components/icons";
 import { ChapterList, ReadButtons } from "@/components/SeriesActions";
 import { SectionHeader, SeriesCard } from "@/components/SeriesCard";
+import { Description } from "@/components/Description";
 import { ShareButton } from "@/components/ShareButton";
 import { CommentsSection } from "@/components/topluluk/Sections";
 import { SourceNotice } from "@/components/SourceNotice";
@@ -149,7 +150,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
                 </Link>
               ))}
             </div>
-            <p className="mt-5 max-w-prose leading-relaxed text-fg/80">{series.description}</p>
+            <Description text={series.description} className="mt-5" />
             {series.altTitles.length > 0 && (
               <p className="mt-3 max-w-prose text-sm text-muted">
                 <span className="font-semibold text-fg/70">Diğer adları: </span>
