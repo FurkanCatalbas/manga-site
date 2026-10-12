@@ -301,6 +301,13 @@ ilk listeye döner (yalnızca tarayıcıda, sayfa yenilenince # verisi yeniden o
 yayınlar. Yer imi şifre taşımaz; yayın panel oturumuyla. Kaynak seri → webtooku seri eşlemesi
 localStorage'da (`webtooku:kaynak-seri`). React `javascript:` href'ini engellediği için adres ref ile yazılır.
 
+**Toplu al** (`BulkImport.tsx`, aynı sayfanın altında): görsel adresi bölüm ve sayfa numarasıyla ilerleyen
+siteler için (`…/96238/<bölüm>/0001.webp`, `…/Chapter_<bölüm>/split_000.webp`). Tek görsel bağlantısından
+kalıp çıkarılır (dosyanın üstündeki klasör bölüm, dosya adındaki son sayı sayfa; sıfır dolgusu korunur).
+Her bölümde sayfalar 0'dan (yoksa 1'den) açılmayan ilk görsele kadar tarayıcıda `measureImage` ile denenir;
+arada tek sayfa eksikse bölüm yarım yayınlanmaz. Sitede olan bölümler (`GET /api/admin/bolum?seri=`) atlanır,
+diğerleri `createChapter` ile doğrudan yayınlanır. Son bölüm boşsa art arda 3 bölüm bulunamayınca durur.
+
 ### Dışarıdan bölüm yayınlama: `/api/admin/bolum`
 
 `Authorization: Bearer <ADMIN_PASSWORD>` (ya da panel oturumu) ister. `GET ?seri=<slug>` serideki bölüm
@@ -365,7 +372,8 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Seriler: yazar/çizer alanı kaldırıldı, yerine Türkçe + İngilizce ad (`title_en`)
 - Panel: R2'ye yüklemeden, başka sitedeki görsel bağlantılarıyla kapak ve bölüm ekleme
 - Bölüm yayınlama API'si (`/api/admin/bolum`) ve Python yayıncı scripti için ortak `insertChapter`
-- Panel → Bölüm al: kaynak sitede tek tıkla bölüm gönderen yer imi; yayından önce seçilen sayfaları çıkarma
+- Panel → Bölüm al: kaynak sitede tek tıkla bölüm gönderen yer imi; yayından önce seçilen sayfaları çıkarma;
+  sabit adresli sitelerden bölüm aralığını toplu bulup yayınlama (Toplu al)
 - Ana sayfa: panelden seçilen büyük afişli hero, yan sütunda Popüler altında "Yeni seriler" (Türler yerine);
   kartlarda "Yeni" (seri 14 gün içinde eklendiyse), alev (son güncellenenlerde, 3 gün içinde bölüm) ve
   "Orijinal" rozetleri (`Badges.tsx`; zamana bağlı olanlar tarayıcıda `Fresh` ile)

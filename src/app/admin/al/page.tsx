@@ -1,5 +1,6 @@
 import { asc } from "drizzle-orm";
 import { Suspense } from "react";
+import { BulkImport } from "@/components/admin/BulkImport";
 import { ChapterImport } from "@/components/admin/ChapterImport";
 import { db } from "@/db";
 import { series } from "@/db/schema";
@@ -28,6 +29,7 @@ async function Import() {
         </p>
       </div>
       <ChapterImport seriesList={list} />
+      <BulkImport seriesList={list} />
     </div>
   );
 }
