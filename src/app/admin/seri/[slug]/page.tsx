@@ -10,6 +10,7 @@ import { chapters, series } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { getFansubList, getSeriesFansub } from "@/lib/fansubs";
 import { getGenreList } from "@/lib/genres";
+import { ALT_TITLES_SQL, hasAltTitles } from "@/lib/schema-check";
 import { formatDate } from "@/lib/series";
 import { deleteChapter, deleteSeries } from "../../actions";
 
@@ -26,8 +27,11 @@ export default function EditSeriesPage(props: PageProps<"/admin/seri/[slug]">) {
 async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
   await requireAdmin();
   const { slug } = await params;
+  const alt = await hasAltTitles();
   const [s, genreList] = await Promise.all([
     db.query.series.findFirst({
+      // Sütun henüz yoksa seçilmez (bkz. src/lib/schema-check.ts)
+      columns: alt ? undefined : { altTitles: false },
       where: eq(series.slug, slug),
       with: { chapters: { orderBy: asc(chapters.number) } },
     }),
@@ -50,10 +54,12 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
         <SeriesForm
           allGenres={(genreList ?? []).map((g) => g.name)}
           sources={sources && sources.map((f) => ({ id: f.id, name: f.name }))}
+          altTitlesSql={alt ? undefined : ALT_TITLES_SQL}
           initial={{
             slug: s.slug,
             title: s.title,
             titleEn: s.titleEn,
+            altTitles: (s as { altTitles?: string[] }).altTitles ?? [],
             exclusive: s.exclusive,
             featured: s.featured,
             banner: s.banner,

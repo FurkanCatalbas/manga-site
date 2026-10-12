@@ -19,6 +19,7 @@ export default function AdminHome() {
 async function SeriesList() {
   await requireAdmin();
   const rows = await db.query.series.findMany({
+    columns: { id: true, slug: true, title: true, cover: true, status: true },
     orderBy: asc(series.title),
     with: { chapters: { columns: { number: true }, orderBy: asc(chapters.number) } },
   });

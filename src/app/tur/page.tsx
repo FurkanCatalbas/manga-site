@@ -4,7 +4,7 @@ import { getGenres, getSeriesList } from "@/lib/data";
 import { slugify } from "@/lib/slug";
 
 export const metadata: Metadata = {
-  title: "Türler",
+  title: "Türler: Türe Göre Türkçe Webtoon ve Manga",
   description: "Aksiyon, fantezi, romantizm ve daha fazlası: webtoon ve manga serilerini türe göre keşfet.",
   alternates: { canonical: "/tur" },
 };

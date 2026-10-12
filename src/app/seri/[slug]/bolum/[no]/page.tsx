@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ChapterAbout } from "@/components/ChapterAbout";
 import { Reader } from "@/components/Reader";
 import { JsonLd } from "@/components/JsonLd";
 import { getChapter, getChapterRefs } from "@/lib/data";
@@ -20,17 +21,20 @@ export async function generateMetadata(
   if (!found) return {};
   const { series, chapter } = found;
   const path = `/seri/${series.slug}/bolum/${chapter.number}`;
-  const title = `${series.title} ${chapter.number}. Bölüm Oku`;
+  const title = `${series.title} ${chapter.number}. Bölüm Türkçe Oku`;
+  const other = series.titleAlt || series.altTitles[0];
+  const named = chapter.title.toLocaleLowerCase("tr") !== `${chapter.number}. bölüm` ? ` "${chapter.title}"` : "";
   return {
     title,
-    description: `${series.title} ${chapter.number}. bölüm "${chapter.title}" ${SITE_NAME} üzerinde. ${chapter.pages.length} sayfa, hızlı ve kesintisiz oku.`,
+    description: `${series.title}${other ? ` (${other})` : ""} ${chapter.number}. bölüm${named} Türkçe oku. ${chapter.pages.length} sayfa, ${SITE_NAME} üzerinde hızlı ve kesintisiz.`,
     alternates: { canonical: path },
     openGraph: {
       type: "article",
       url: path,
       title,
       publishedTime: chapter.publishedAt,
-      images: [{ url: absoluteUrl(series.cover), alt: `${series.title} kapağı` }],
+      // Kapaklı, "N. bölüm" yazılı paylaşım görseli (src/app/paylasim)
+      images: [{ url: `/paylasim/${series.slug}/${chapter.number}`, width: 1200, height: 630, alt: `${series.title} ${chapter.number}. bölüm` }],
     },
   };
 }
@@ -86,7 +90,9 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
       next={numbers[idx + 1] ?? null}
       nextPages={nextPages}
       source={source}
-    />
+    >
+      <ChapterAbout series={series} chapter={chapter.number} />
+    </Reader>
     </>
   );
 }

@@ -13,14 +13,17 @@ type Props = {
   allGenres?: string[];
   /** Çeviri kaynakları listesi (panel → Kaynaklar); null ise tablolar henüz yok */
   sources?: { id: number; name: string }[] | null;
+  /** Veritabanında `alt_titles` sütunu yoksa "Diğer adları" alanı yerine eklenecek SQL gösterilir */
+  altTitlesSql?: string;
 };
 
-export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
+export function SeriesForm({ initial, allGenres = [], sources = [], altTitlesSql }: Props) {
   const editing = !!initial;
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(editing);
   const [titleEn, setTitleEn] = useState(initial?.titleEn ?? "");
+  const [altTitles, setAltTitles] = useState((initial?.altTitles ?? []).join("\n"));
   const [description, setDescription] = useState(initial?.description ?? "");
   const [genres, setGenres] = useState<string[]>(initial?.genres ?? []);
   const [newGenre, setNewGenre] = useState("");
@@ -89,6 +92,8 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
           slug,
           title,
           titleEn,
+          // Sütun yoksa gönderilmez
+          ...(altTitlesSql ? {} : { altTitles: altTitles.split("\n") }),
           exclusive,
           featured,
           banner: bannerUrl,
@@ -178,6 +183,29 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
               className={field}
             />
           </div>
+        </div>
+        <div>
+          <label htmlFor="alt-titles" className={label}>Diğer adları (isteğe bağlı)</label>
+          {altTitlesSql ? (
+            <p className="rounded-lg border border-accent/40 bg-surface p-3 text-xs text-muted">
+              Bu alan için Neon → SQL Editor&apos;de şunu çalıştır, sonra sayfayı yenile:
+              <code className="mt-1 block break-all text-fg">{altTitlesSql}</code>
+            </p>
+          ) : (
+            <>
+              <textarea
+                id="alt-titles"
+                rows={2}
+                value={altTitles}
+                onChange={(e) => setAltTitles(e.target.value)}
+                placeholder={"Her satıra bir ad, ör.\nNa Honjaman Level Up\n나 혼자만 레벨업"}
+                className={field}
+              />
+              <p className="mt-1 text-xs text-muted">
+                Korece, Japonca, romanize ya da kısaltılmış adlar. Seri sayfasında görünür, aramada ve Google&apos;da işe yarar.
+              </p>
+            </>
+          )}
         </div>
         <div>
           <label htmlFor="slug" className={label}>Adres</label>

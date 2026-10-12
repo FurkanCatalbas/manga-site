@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/Brand";
 import { GenreMenu } from "@/components/GenreMenu";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { SearchIcon } from "@/components/icons";
 import { DesktopNav, DesktopNavLinks, MobileTabBar, MobileTabBarView } from "@/components/SiteNav";
 import { getGenres } from "@/lib/data";
@@ -23,7 +24,7 @@ const onest = Onest({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: `${SITE_NAME}: Webtoon ve Manga Oku`, template: `%s | ${SITE_NAME}` },
+  title: { default: `${SITE_NAME}: Türkçe Webtoon ve Manga Oku`, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   // Arama motoru doğrulamaları (Bing Webmaster; ayrıca public/BingSiteAuth.xml)
   verification: { other: { "msvalidate.01": "A245B1C9684597A61885E2CA85A48C49" } },
@@ -127,6 +128,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </footer>
         <Suspense fallback={<MobileTabBarView pathname={null} />}>
           <MobileTabBar />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SiteAnalytics />
         </Suspense>
       </body>
     </html>

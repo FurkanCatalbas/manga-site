@@ -10,6 +10,8 @@ import { chapters as chaptersTable, series as seriesTable, seriesViewsDaily } fr
 import { slugify } from "@/lib/slug";
 import type { Chapter, ChapterInfo, Page, Period, PeriodViews, Series, SeriesSummary } from "@/lib/series";
 
+import { hasAltTitles } from "@/lib/schema-check";
+
 export * from "@/lib/series";
 
 const seriesColumns = {
@@ -57,8 +59,16 @@ export async function getSeriesList(): Promise<SeriesSummary[]> {
     .from(chaptersTable)
     .as("ranked");
 
+  // Sütun henüz yoksa (SQL çalıştırılmadıysa) boş liste
+  const altTitles = (await hasAltTitles())
+    ? sql`${seriesTable.altTitles}`.mapWith(seriesTable.altTitles)
+    : sql`'{}'::text[]`.mapWith(seriesTable.altTitles);
+
   const [rows, latest] = await Promise.all([
-    db.select({ id: seriesTable.id, ...seriesColumns, addedAt: seriesTable.createdAt }).from(seriesTable).orderBy(asc(displayTitle)),
+    db
+      .select({ id: seriesTable.id, ...seriesColumns, altTitles, addedAt: seriesTable.createdAt })
+      .from(seriesTable)
+      .orderBy(asc(displayTitle)),
     db.select().from(ranked).where(lte(ranked.rank, 3)).orderBy(asc(ranked.seriesId), asc(ranked.rank)),
   ]);
 
@@ -86,8 +96,9 @@ export async function getSeries(slug: string): Promise<Series | undefined> {
   cacheTag("series");
   cacheLife("hours");
 
+  const alt = await hasAltTitles();
   const row = await db.query.series.findFirst({
-    columns: { id: false, createdAt: false },
+    columns: { id: false, createdAt: false, ...(alt ? {} : { altTitles: false }) },
     where: eq(seriesTable.slug, slug),
     with: {
       chapters: {
@@ -99,6 +110,7 @@ export async function getSeries(slug: string): Promise<Series | undefined> {
   if (!row) return undefined;
   return {
     ...withNames(row),
+    altTitles: (row as { altTitles?: string[] }).altTitles ?? [],
     chapters: row.chapters.map((c) => ({ ...c, publishedAt: iso(c.publishedAt) })),
   };
 }
@@ -167,6 +179,21 @@ export async function getFeatured(): Promise<SeriesSummary[]> {
   const recent = await getRecentlyUpdated();
   const featured = recent.filter((s) => s.featured);
   return featured.length ? featured : recent.slice(0, 5);
+}
+
+/** Seriyle en çok türü paylaşan seriler; eşitlikte çok okunan önce. Ortak türü olmayanlar gelmez. */
+export async function getSimilarSeries(slug: string, limit = 6): Promise<SeriesSummary[]> {
+  const all = await getSeriesList();
+  const self = all.find((s) => s.slug === slug);
+  if (!self) return [];
+  const mine = new Set(self.genres);
+  return all
+    .filter((s) => s.slug !== slug)
+    .map((s) => ({ s, shared: s.genres.filter((g) => mine.has(g)).length }))
+    .filter((x) => x.shared > 0)
+    .sort((a, b) => b.shared - a.shared || b.s.views - a.s.views)
+    .slice(0, limit)
+    .map((x) => x.s);
 }
 
 /** En son eklenen seriler (sitenin seriyi eklediği tarihe göre). */

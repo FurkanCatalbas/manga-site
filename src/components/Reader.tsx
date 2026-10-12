@@ -75,10 +75,12 @@ type Props = {
   nextPages: Page[];
   /** Başka ekipten alınan çeviriyse kaynak notu (bölüm sonunda) */
   source?: SeriesSource | null;
+  /** Bölüm gezintisinin altında gösterilecek içerik (seri bilgisi, son bölümler) */
+  children?: React.ReactNode;
 };
 
 export function Reader(props: Props) {
-  const { slug, seriesTitle, chapter, chapterTitle, pages, chapterNumbers, prev, next, nextPages, source } = props;
+  const { slug, seriesTitle, chapter, chapterTitle, pages, chapterNumbers, prev, next, nextPages, source, children } = props;
   const router = useRouter();
   const [page, setPage] = useState(0); // 0 tabanlı
   const [resumedFrom, setResumedFrom] = useState<number | null>(null);
@@ -164,9 +166,10 @@ export function Reader(props: Props) {
           <Link href={`/seri/${slug}`} className="block truncate font-semibold hover:text-accent">
             {seriesTitle}
           </Link>
-          <p className="truncate text-xs text-muted">
+          <h1 className="truncate text-xs font-normal text-muted">
+            <span className="sr-only">{seriesTitle} </span>
             {chapter}. bölüm: {chapterTitle}
-          </p>
+          </h1>
         </div>
         {/* Bölüm içindeki ilerleme */}
         <div className="h-[3px] bg-line" aria-hidden>
@@ -198,6 +201,8 @@ export function Reader(props: Props) {
         </select>
         <NavButton href={nextUrl}>Sonraki bölüm</NavButton>
       </div>
+
+      {children}
 
       {nextUrl && <PullToNext href={nextUrl} />}
 

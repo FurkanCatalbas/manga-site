@@ -24,7 +24,7 @@ export async function generateMetadata(props: PageProps<"/tur/[slug]">): Promise
   const path = `/tur/${genre.slug}`;
   const description = `${genre.name} türündeki ${genre.count} webtoon ve manga serisini ${SITE_NAME}'da ücretsiz ve Türkçe oku.`;
   return {
-    title: `${genre.name} Webtoon ve Manga Oku`,
+    title: `${genre.name} Webtoon ve Manga Türkçe Oku`,
     description,
     alternates: { canonical: path },
     openGraph: { url: path, title: `${genre.name} Webtoon ve Manga`, description },

@@ -16,7 +16,7 @@ export const SITE_NAME = "webtooku";
  * (küçük harf, rakam, tire) uymadığı için gerçek bir seriyle çakışamaz; sayfası 404 verir.
  */
 export const PLACEHOLDER_SLUG = "_yok";
-export const SITE_DESCRIPTION = "Webtoon ve manga serilerini ücretsiz ve hızlı oku. Her hafta yeni bölümler.";
+export const SITE_DESCRIPTION = "Türkçe webtoon ve manga serilerini ücretsiz ve hızlı oku. Her hafta yeni bölümler.";
 
 /** Göreli adresi (/seri/x veya /sample/kapak.svg) tam adrese çevirir; tam adresleri olduğu gibi bırakır. */
 export function absoluteUrl(path: string) {

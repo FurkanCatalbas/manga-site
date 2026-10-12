@@ -6,7 +6,7 @@ import { SeriesBrowser, SeriesBrowserFromUrl } from "@/components/SeriesBrowser"
 import { getAllGenres, getPeriodViews, getSeriesList } from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "Keşfet: Tüm Seriler",
+  title: "Keşfet: Tüm Türkçe Webtoon ve Manga Serileri",
   description: "Tüm webtoon ve manga serileri. Türe ve duruma göre filtrele, popülerliğe göre sırala, adına göre ara.",
   alternates: { canonical: "/ara" },
 };

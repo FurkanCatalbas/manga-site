@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { chapters, series } from "@/db/schema";
 import { checkPassword, isAdmin } from "@/lib/auth";
 import { type ChapterInput, insertChapter } from "@/lib/chapters";
+import { notifyIndexNow } from "@/lib/indexnow";
 
 const fail = (status: number, error: string) => Response.json({ error }, { status });
 
@@ -42,5 +43,6 @@ export async function POST(request: Request) {
   if ("error" in result) return fail(result.conflict ? 409 : 400, result.error);
   // Route handler'da updateTag yok; { expire: 0 } ile eski sayfa gösterilmez, bölüm hemen görünür
   revalidateTag("series", { expire: 0 });
+  notifyIndexNow([`/seri/${input.slug}/bolum/${input.number}`, `/seri/${input.slug}`]);
   return Response.json(result);
 }

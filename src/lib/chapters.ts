@@ -34,7 +34,7 @@ export async function insertChapter(
   if (!Array.isArray(input.pages) || input.pages.length === 0) return { error: "En az bir sayfa yükle." };
   if (!input.pages.every(isImageSrc)) return { error: "Sayfa bağlantıları https:// ile başlamalı." };
 
-  const s = await db.query.series.findFirst({ where: eq(series.slug, String(input.slug)) });
+  const s = await db.query.series.findFirst({ columns: { id: true }, where: eq(series.slug, String(input.slug)) });
   if (!s) return { error: "Seri bulunamadı." };
 
   const [row] = await db

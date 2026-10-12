@@ -189,7 +189,7 @@ export function SeriesBrowser({
   const q = normalize(state.query.trim());
   const filtered = series.filter(
     (s) =>
-      (!q || normalize(s.title).includes(q) || normalize(s.titleAlt).includes(q)) &&
+      (!q || [s.title, s.titleAlt, ...s.altTitles].some((t) => normalize(t).includes(q))) &&
       (!state.genre || s.genres.includes(state.genre)) &&
       (!state.status || s.status === state.status),
   );

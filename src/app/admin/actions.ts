@@ -10,7 +10,9 @@ import { checkPassword, requireAdmin, SESSION_COOKIE, SESSION_MAX_AGE, sessionTo
 import { type ChapterInput, insertChapter, isImageSrc } from "@/lib/chapters";
 import { cleanUrl, setSeriesFansub } from "@/lib/fansubs";
 import { cleanGenreName, ensureGenres, isMissingTable } from "@/lib/genres";
+import { notifyIndexNow } from "@/lib/indexnow";
 import { deletePrefix } from "@/lib/r2";
+import { ALT_TITLES_SQL, hasAltTitles } from "@/lib/schema-check";
 import { SLUG_PATTERN, slugify } from "@/lib/slug";
 
 export type FormState = { error?: string; ok?: string } | undefined;
@@ -45,6 +47,8 @@ export type SeriesInput = {
   slug: string;
   title: string;
   titleEn: string;
+  /** Diğer adları; veritabanında sütun yoksa form göndermez */
+  altTitles?: string[];
   exclusive: boolean;
   featured: boolean;
   banner: string;
@@ -65,6 +69,23 @@ function parseSource(source: SeriesInput["source"]) {
   return { fansubId, url: cleaned.url };
 }
 
+const ALT_MAX = 10;
+const ALT_LEN = 150;
+
+/** Diğer adları temizler: boşlukları düzeltir; boşları, tekrarları ve Türkçe/İngilizce adın aynısını atar. */
+function normalizeAltTitles(input: SeriesInput) {
+  const seen = new Set([input.title, input.titleEn].map((t) => t.trim().toLocaleLowerCase("tr")));
+  const out: string[] = [];
+  for (const raw of input.altTitles ?? []) {
+    const v = raw.replace(/\s+/g, " ").trim();
+    const key = v.toLocaleLowerCase("tr");
+    if (!v || seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}
+
 /** Türleri temizler, tekrarları atar (sıra korunur). */
 function normalizeGenres(list: string[]) {
   return [...new Set(list.map(cleanGenreName).filter(Boolean))];
@@ -78,15 +99,21 @@ function validateSeries(input: SeriesInput): string | undefined {
   if (input.banner && !isImageSrc(input.banner)) return "Afiş bağlantısı https:// ile başlamalı.";
   if (!["Devam Ediyor", "Tamamlandı"].includes(input.status)) return "Geçersiz durum.";
   if (input.genres.some((g) => g.length > GENRE_MAX)) return `Tür adı en fazla ${GENRE_MAX} karakter olabilir.`;
+  if ((input.altTitles?.length ?? 0) > ALT_MAX) return `En fazla ${ALT_MAX} diğer ad yazılabilir.`;
+  if (input.altTitles?.some((t) => t.length > ALT_LEN)) return `Diğer adlar en fazla ${ALT_LEN} karakter olabilir.`;
   const source = parseSource(input.source);
   if (source && "error" in source) return source.error;
 }
 
 export async function createSeries(input: SeriesInput): Promise<FormState> {
   await requireAdmin();
-  input = { ...input, genres: normalizeGenres(input.genres) };
+  input = { ...input, genres: normalizeGenres(input.genres), altTitles: normalizeAltTitles(input) };
   const error = validateSeries(input);
   if (error) return { error };
+  // Ekleme sorgusu tüm sütunları yazar; sütun yoksa Postgres hata verir
+  if (!(await hasAltTitles())) {
+    return { error: `Yeni seri eklemeden önce Neon → SQL Editor'de şunu çalıştır: ${ALT_TITLES_SQL}` };
+  }
 
   const { source, ...values } = input;
   const [row] = await db
@@ -100,16 +127,19 @@ export async function createSeries(input: SeriesInput): Promise<FormState> {
   if (parsed && !("error" in parsed)) await setSeriesFansub(row.id, parsed.fansubId, parsed.url);
 
   updateTag("series");
+  notifyIndexNow([`/seri/${input.slug}`]);
   redirect(`/admin/seri/${input.slug}`);
 }
 
 export async function updateSeries(input: SeriesInput): Promise<FormState> {
   await requireAdmin();
-  input = { ...input, genres: normalizeGenres(input.genres) };
+  input = { ...input, genres: normalizeGenres(input.genres), altTitles: normalizeAltTitles(input) };
   const error = validateSeries(input);
   if (error) return { error };
 
-  const { slug, source, ...rest } = input;
+  const { slug, source, altTitles, ...rest } = input;
+  // Sütun henüz yoksa diğer adlar yazılmaz (form da bu durumda alanı göstermez)
+  if (await hasAltTitles()) Object.assign(rest, { altTitles });
   const [row] = await db
     .update(series)
     .set({ ...rest, title: rest.title.trim(), titleEn: rest.titleEn.trim() })
@@ -120,6 +150,7 @@ export async function updateSeries(input: SeriesInput): Promise<FormState> {
   const parsed = parseSource(source);
   if (parsed && !("error" in parsed)) await setSeriesFansub(row.id, parsed.fansubId, parsed.url);
   updateTag("series");
+  notifyIndexNow([`/seri/${slug}`]);
   return { ok: "Kaydedildi." };
 }
 
@@ -138,12 +169,13 @@ export async function createChapter(input: ChapterInput): Promise<FormState> {
   const result = await insertChapter(input);
   if ("error" in result) return { error: result.error };
   updateTag("series");
+  notifyIndexNow([`/seri/${input.slug}/bolum/${input.number}`, `/seri/${input.slug}`]);
   return result;
 }
 
 export async function deleteChapter(slug: string, number: number) {
   await requireAdmin();
-  const s = await db.query.series.findFirst({ where: eq(series.slug, slug) });
+  const s = await db.query.series.findFirst({ columns: { id: true }, where: eq(series.slug, slug) });
   if (!s) return;
   await db.delete(chapters).where(and(eq(chapters.seriesId, s.id), eq(chapters.number, number)));
   await deletePrefix(`series/${slug}/${number}/`);

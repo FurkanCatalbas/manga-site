@@ -100,6 +100,7 @@ bilerek yok. Yeni sayfa eklerken bu ilkeyi koru.
 | `getPeriodViews()` | her serinin bugün/7 gün/30 gün/toplam okunması | `/ara` ve `/tur/...` popülerlik sıralaması |
 | `getPopular()` | günlük/haftalık/aylık/tüm zamanların en çok okunanları | yan sütun |
 | `getGenres()` | serilerde geçen türler (ad, slug, seri sayısı); aynı slug'a düşen yazımlar birleşir | başlıktaki Türler menüsü, altbilgi, `/tur` |
+| `getSimilarSeries(slug)` | en çok türü paylaşan 6 seri (eşitlikte çok okunan) | seri sayfası "Benzer seriler" |
 | `getSeriesSource(slug)` (`src/lib/fansubs.ts`) | serinin çeviri kaynağı ya da `null` | seri sayfası, okuyucu |
 
 Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bileşenleri de kullanır.
@@ -113,6 +114,12 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   `exclusive` "Orijinal / Sadece webtooku" rozeti; `featured` ana sayfa afişi; `banner` geniş afiş görseli (R2'de
   `series/<slug>/banner-*` ya da bağlantı; boşsa hero kapağın bulanık halini kullanır). Panel → seri formu →
   Vitrin. Hiç `featured` seri yoksa hero son güncellenen 5 seriyi gösterir (`getFeatured`).
+  `alt_titles` (text[]) diğer adları (Korece, romanize…): seri sayfasında "Diğer adları", JSON-LD `alternateName`,
+  aramada eşleşir. Panelde her satıra bir ad; kayıtta boşlar, tekrarlar ve Türkçe/İngilizce adın aynısı atılır.
+  **Sütun yoksa site bozulmaz:** `hasAltTitles()` (`src/lib/schema-check.ts`, `series` etiketiyle önbellekli)
+  sütunu denetler; okuma sorguları onu atlar, panel eklenecek SQL'i gösterir, yeni seri ekleme o SQL'i ister
+  (Drizzle insert tüm sütunları yazar). Bu yüzden `db.query.series` sorgularında `columns` belirt; tüm sütunları
+  seçen yeni sorgu yazma.
 - `chapters`: `pages` (text[], URL'ler, okunma sırasıyla) ve `page_sizes` (jsonb, `[genişlik, yükseklik][]`,
   `pages` ile aynı sırada; eski bölümlerde `[]` olabilir, okuyucu boyutsuz da çalışır)
 - `series_views_daily`: seri başına günlük okunma (İstanbul saatine göre gün)
@@ -128,6 +135,25 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   okuyucuda bölüm sonunda tek satır). Kaynak seçilmemiş seride kutu yok. Tablolar yoksa site bozulmaz
   (`isMissingTable`), panel → Kaynaklar oluşturma SQL'ini gösterir. Bağlantılar `cleanUrl` ile yalnızca
   http(s); dış bağlantılar `rel="nofollow noopener"`. Logo R2'de `fansubs/<slug>/` altında; slug sonradan değişmez.
+
+### SEO ve paylaşım
+
+- Başlıklarda "Türkçe Oku" (seri: `X Türkçe Oku`, bölüm: `X 12. Bölüm Türkçe Oku`); açıklamalarda diğer adlar.
+- Bölüm sayfasında okuyucu çubuğundaki satır `h1`; okuyucunun altında `ChapterAbout` (seri bilgisi, Paylaş,
+  son 6 bölüm, kısa metin). Okuyucu `children` ile alır, gezinti düğmelerinin altına koyar.
+- Paylaşım görselleri (og:image, 1200×630): `/paylasim/<slug>` ve `/paylasim/<slug>/<no>` (route handler,
+  `src/lib/share-image.tsx`). Kapak sunucuda indirilip `sharp` ile JPEG'e çevrilir (satori WebP okuyamaz);
+  açılmazsa kapaksız çizilir. Türkçe harfler için Onest latin-ext dosyaları (`assets/fonts`); yazı tipleri
+  `next.config.ts` → `outputFileTracingIncludes` ile pakete girer. CDN'de 1 gün önbellek. `/api/` altında
+  değil, çünkü robots.txt `/api/`'yi kapatıyor ve paylaşım botları robots'a uyar.
+- `ShareButton`: dokunmatikte sistemin paylaşım ekranı, masaüstünde WhatsApp/X/Telegram/kopyala menüsü.
+- IndexNow (`src/lib/indexnow.ts`): bölüm eklenince (panel ve `/api/admin/bolum`) ve seri kaydedilince
+  Bing/Yandex'e `after()` ile bildirir; yalnızca üretimde ve `SITE_URL` https iken. Anahtar dosyası
+  `public/<INDEXNOW_KEY>.txt`. Google katılmıyor, site haritasını okur.
+- Doğrulamalar: Bing `public/BingSiteAuth.xml` + layout `verification` (`msvalidate.01`). Google/Yandex
+  eklenecekse aynı yere.
+- Ölçüm: Vercel Web Analytics (`SiteAnalytics.tsx`, `/admin` sayılmaz); Vercel panelinde açılmalı.
+- `SITE_URL` canlıda `https://www.webtooku.com.tr` olmalı (canonical, site haritası, IndexNow buna göre).
 
 ### Okunma sayacı: `src/app/api/goruntulenme/route.ts`
 
@@ -273,6 +299,8 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Ana sayfa: panelden seçilen büyük afişli hero, yan sütunda Popüler altında "Yeni seriler" (Türler yerine);
   kartlarda "Yeni" (seri 14 gün içinde eklendiyse), alev (son güncellenenlerde, 3 gün içinde bölüm) ve
   "Orijinal" rozetleri (`Badges.tsx`; zamana bağlı olanlar tarayıcıda `Fresh` ile)
+- SEO: diğer adlar (`alt_titles`), başlıklarda "Türkçe", bölüm sayfasında seri bilgisi ve son bölümler,
+  benzer seriler, kapaklı paylaşım görselleri ve Paylaş düğmesi, IndexNow, Bing doğrulaması, Vercel Analytics
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
@@ -285,7 +313,7 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Kullanıcı hesapları (Auth.js / Better Auth): kütüphane/takip listesi, yeni bölüm bildirimi,
   cihazlar arası okuma geçmişi, puanlama
 - Topluluk: bölüm yorumları (spoiler gizleme, moderasyon), bölüm sonu tepkileri
-- Keşif: benzer seriler, yayın takvimi, RSS, seri tipi (webtoon/manga/manhwa) filtresi
+- Keşif: yayın takvimi, RSS, seri tipi (webtoon/manga/manhwa) filtresi
 - Panel: zamanlanmış yayın, taslak bölümler, ZIP ile toplu yükleme, bölüm bazlı istatistik
 - Altyapı: hata takibi (Sentry), analitik, Playwright uçtan uca testleri
 - Yukarıdaki prerendering uyarıları

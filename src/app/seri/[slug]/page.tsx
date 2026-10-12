@@ -5,10 +5,12 @@ import { ExclusiveBadge } from "@/components/Badges";
 import { GenreList, PopularList } from "@/components/Sidebar";
 import { EyeIcon, LayersIcon } from "@/components/icons";
 import { ChapterList, ReadButtons } from "@/components/SeriesActions";
+import { SectionHeader, SeriesCard } from "@/components/SeriesCard";
+import { ShareButton } from "@/components/ShareButton";
 import { SourceNotice } from "@/components/SourceNotice";
 import { getSeriesSource } from "@/lib/fansubs";
 import { JsonLd } from "@/components/JsonLd";
-import { genreHref, getAllGenres, getPopular, getSeries, getSeriesList } from "@/lib/data";
+import { genreHref, getAllGenres, getPopular, getSeries, getSeriesList, getSimilarSeries, type Series } from "@/lib/data";
 import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
@@ -17,34 +19,41 @@ export async function generateStaticParams() {
   return params.length ? params : [{ slug: PLACEHOLDER_SLUG }];
 }
 
+/** Başlık dışındaki tüm adlar: Türkçe ad (İngilizce ad başlıksa) ve diğer adları */
+const otherNames = (s: Series) => [s.titleAlt, ...s.altTitles].filter(Boolean);
+
 export async function generateMetadata(props: PageProps<"/seri/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   const series = await getSeries(slug);
   if (!series) return {};
   const path = `/seri/${series.slug}`;
+  const names = otherNames(series);
+  const description = `${series.title}${names.length ? ` (${names.slice(0, 2).join(", ")})` : ""} Türkçe oku. ${series.description}`;
   return {
-    title: `${series.title} Oku`,
-    description: `${series.title}: ${series.description}`.slice(0, 160),
+    title: `${series.title} Türkçe Oku`,
+    description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description,
     alternates: { canonical: path },
     openGraph: {
       type: "book",
       url: path,
       title: series.title,
       description: series.description,
-      images: [{ url: absoluteUrl(series.cover), alt: `${series.title} kapağı` }],
+      images: [{ url: `/paylasim/${series.slug}`, width: 1200, height: 630, alt: `${series.title} kapağı` }],
     },
   };
 }
 
 export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
   const { slug } = await props.params;
-  const [series, popular, genres, source] = await Promise.all([
+  const [series, popular, genres, source, similar] = await Promise.all([
     getSeries(slug),
     getPopular(),
     getAllGenres(),
     getSeriesSource(slug),
+    getSimilarSeries(slug),
   ]);
   if (!series) notFound();
+  const names = otherNames(series);
 
   const first = series.chapters[0];
   const latest = series.chapters.at(-1);
@@ -60,7 +69,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
         name: series.title,
         description: series.description,
         image: absoluteUrl(series.cover),
-        ...(series.titleAlt && { alternateName: series.titleAlt }),
+        ...(names.length > 0 && { alternateName: names }),
         genre: series.genres,
         inLanguage: "tr",
         ...(latest && { dateModified: latest.publishedAt }),
@@ -140,8 +149,15 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
               ))}
             </div>
             <p className="mt-5 max-w-prose leading-relaxed text-fg/80">{series.description}</p>
-            <div className="mt-6">
+            {series.altTitles.length > 0 && (
+              <p className="mt-3 max-w-prose text-sm text-muted">
+                <span className="font-semibold text-fg/70">Diğer adları: </span>
+                {series.altTitles.join(" · ")}
+              </p>
+            )}
+            <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
               <ReadButtons slug={series.slug} first={first?.number ?? null} latest={latest?.number ?? null} />
+              <ShareButton url={url} title={`${series.title} Türkçe oku`} className="w-full sm:w-auto" />
             </div>
           </div>
         </div>
@@ -154,6 +170,16 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
             chapters={series.chapters}
             notice={source && <SourceNotice source={source} />}
           />
+          {similar.length > 0 && (
+            <section className="mt-14">
+              <SectionHeader title="Benzer seriler" />
+              <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6">
+                {similar.map((s) => (
+                  <SeriesCard key={s.slug} series={s} chapters={0} />
+                ))}
+              </div>
+            </section>
+          )}
         </section>
 
         <aside className="space-y-6">

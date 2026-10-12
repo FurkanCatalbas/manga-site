@@ -7,6 +7,8 @@ export const series = pgTable("series", {
   title: text("title").notNull(),
   // Serinin İngilizce adı (isteğe bağlı); Türkçe ad `title`
   titleEn: text("title_en").notNull().default(""),
+  // Diğer adları (Korece, Japonca, romanize…); aramada, seri sayfasında ve SEO'da kullanılır
+  altTitles: text("alt_titles").array().notNull().default([]),
   // "Sadece webtooku" (Orijinal) rozeti: yalnızca bu sitede yayınlanan seriler
   exclusive: boolean("exclusive").notNull().default(false),
   // Ana sayfanın en üstündeki afişlerde gösterilir; banner geniş afiş görseli (boşsa kapaktan üretilir)
