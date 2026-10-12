@@ -190,7 +190,7 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 Tek şifre (`ADMIN_PASSWORD`); çerezde şifreden türetilen HMAC tutulur (`src/lib/auth.ts`).
 Bölümler: Seriler (ekleme/düzenleme/silme, bölüm yükleme), Türler (`/admin/turler`: ekle, adını
 değiştir, sil, serilerde olup listede olmayanları aktar) ve Kaynaklar (`/admin/kaynaklar`: çeviri ekipleri,
-logo yükleme; seri formunda "Çeviri kaynağı" seçilir). Seri formunda türler çiplerle seçilir; formda
+logo yükleme; seri formunda "Çeviri kaynağı" seçilir). Yeni seride adres (slug) İngilizce addan, o boşsa Türkçe addan üretilir; sonradan değişmez. Seri formunda türler çiplerle seçilir; formda
 yazılan yeni tür kayıtta listeye eklenir. İşlemler `src/app/admin/actions.ts` içindeki server action'larda;
 sayfanın yeniden çizilmesi gerekiyorsa `refresh()` (next/cache) çağrılır. `"use server"` dosyası
 yalnızca async fonksiyon dışa aktarabilir.

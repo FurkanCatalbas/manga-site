@@ -139,14 +139,23 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                if (!slugTouched) setSlug(slugify(e.target.value));
+                // Adres İngilizce addan üretilir; İngilizce ad boşsa Türkçe addan
+                if (!slugTouched && !titleEn.trim()) setSlug(slugify(e.target.value));
               }}
               className={field}
             />
           </div>
           <div>
             <label htmlFor="title-en" className={label}>İngilizce adı (isteğe bağlı)</label>
-            <input id="title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className={field} />
+            <input
+              id="title-en"
+              value={titleEn}
+              onChange={(e) => {
+                setTitleEn(e.target.value);
+                if (!slugTouched) setSlug(slugify(e.target.value.trim() ? e.target.value : title));
+              }}
+              className={field}
+            />
           </div>
         </div>
         <div>
@@ -165,7 +174,11 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
               className="w-full px-1 py-2 outline-none disabled:text-muted"
             />
           </div>
-          {editing && <p className="mt-1 text-xs text-muted">Adres, bağlantılar bozulmasın diye sonradan değiştirilemez.</p>}
+          {editing ? (
+            <p className="mt-1 text-xs text-muted">Adres, bağlantılar bozulmasın diye sonradan değiştirilemez.</p>
+          ) : (
+            <p className="mt-1 text-xs text-muted">İngilizce addan otomatik oluşur (boşsa Türkçe addan).</p>
+          )}
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
