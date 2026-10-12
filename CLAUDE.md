@@ -135,15 +135,21 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   değildir; tablo yoksa panel çalıştırılacak SQL'i gösterir (`isMissingTable`, `src/lib/genres.ts`).
   Tür adları `cleanGenreName` ile düzenlenir (boşluklar, Türkçe ilk harf büyük).
 - `fansubs` (ad, slug, site adresi, logo) ve `series_fansubs` (seri başına en fazla bir kaynak +
-  serinin kaynak sitedeki adresi): başka ekipten alınan çeviriler için "Bu çeviri X (x.com) üzerinden
-  alınmıştır" kutusu (`src/components/SourceNotice.tsx`; yalnızca seri sayfasında bölüm listesinin üstünde;
-  bölüm sonundaki satır kullanıcı isteğiyle kaldırıldı). Kaynak seçilmemiş seride kutu yok. Tablolar yoksa site bozulmaz
+  serinin kaynak sitedeki adresi): yalnızca panelde kayıt olarak tutulur. Sitede gösterilen "Bu çeviri X
+  üzerinden alınmıştır" kutusu ve bölüm sonu satırı kullanıcı isteğiyle tamamen kaldırıldı. Tablolar yoksa site bozulmaz
   (`isMissingTable`), panel → Kaynaklar oluşturma SQL'ini gösterir. Bağlantılar `cleanUrl` ile yalnızca
   http(s); dış bağlantılar `rel="nofollow noopener"`. Logo R2'de `fansubs/<slug>/` altında; slug sonradan değişmez.
 
 ### SEO ve paylaşım
 
+- Sitenin vaadi: **reklamsız, üyeliksiz (okumak için hesap gerekmez), tamamen ücretsiz**. `SITE_PROMISE` ve
+  `SITE_DESCRIPTION` (`src/lib/site.ts`) açıklamalarda kullanılır; JSON-LD'de `isAccessibleForFree: true`.
+  Sitede reklam ya da ücretli içerik eklenirse bu metinler de değişmeli.
 - Başlıklarda "Türkçe Oku" (seri: `X Türkçe Oku`, bölüm: `X 12. Bölüm Türkçe Oku`); açıklamalarda diğer adlar.
+- Meta `keywords`: genel liste `SITE_KEYWORDS`, seride ad/diğer adlar + "oku/türkçe" + türler, bölümde
+  "X 12. bölüm" kalıpları. Google kullanmaz; asıl etki başlık/açıklama/metinden.
+- Ana sayfada `WebSite` (+ `/ara?q=` SearchAction) ve `Organization` JSON-LD (site adı ve logo).
+- Site haritasında seri sayfalarına kapak görseli (`images`) eklenir.
 - Bölüm sayfasında okuyucu çubuğundaki satır `h1`; okuyucunun altında `ChapterAbout` (seri bilgisi, Paylaş,
   son 6 bölüm, kısa metin). Okuyucu `children` ile alır, gezinti düğmelerinin altına koyar.
 - Paylaşım görselleri (og:image, 1200×630): `/paylasim/<slug>` ve `/paylasim/<slug>/<no>` (route handler,
@@ -272,7 +278,8 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 - `layout.tsx`: cam başlık (masaüstünde bağlantılar + `GenreMenu` açılır tür menüsü + arama, mobilde
   arama ikonu, sağda hesap düğmesi), türleri ve Keşfet bağlantılarını listeleyen altbilgi ve `MobileTabBar`
   (Ana sayfa, Keşfet, Kütüphane, Topluluk, Profil; okuyucuda ve panelde gizli; `/tur` sayfalarında Keşfet etkin).
-- Seri sayfası: bölüm listesi önce 10, "Daha fazla göster" ile 30'ar, "Tümü" (`SeriesActions.tsx`); uzun
+- Seri sayfası: bölüm listesi önce 10, "Daha fazla göster" ile 30'ar, "Tümü" (`SeriesActions.tsx`; görünmeyen
+  bölümler `hidden` ile HTML'de kalır, arama motorları tüm bölüm bağlantılarını görür); uzun
   açıklama 3 satır + "Devamını göster" (`Description.tsx`, metin HTML'de tam).
 - Seri listeleri `SeriesBrowser.tsx`: arama (Türkçe + İngilizce ad), tür/durum çipleri, sıralama, sayfa başına 24 seri.
   Süzme tarayıcıda yapılır. `/ara`'da seçimler adrese yazılır (`q`, `tur`, `durum=devam|tamam`,
@@ -383,7 +390,8 @@ yalnızca async fonksiyon dışa aktarabilir.
   spoiler, şikâyet), bölüm sonu tepkileri, panelde yorum moderasyonu ve engelleme, KVKK/kullanım/topluluk sayfaları
 - Topluluk 2: forum, canlı sohbet (yoklama), seri puanlama (yıldız, ortalama, Keşfet sıralaması, JSON-LD),
   öneri listeleri, herkese açık profil (rozetler, istatistikler), Topluluk merkezi ve sekmesi, panelde forum/sohbet
-- Seri sayfası: 10'ar açılan bölüm listesi, kısaltılmış açıklama; bölüm sonundaki kaynak satırı kaldırıldı
+- Seri sayfası: 10'ar açılan bölüm listesi, kısaltılmış açıklama; çeviri kaynağı kutusu ve satırı kaldırıldı
+- SEO: "reklamsız, üyeliksiz, ücretsiz" vurgusu, meta anahtar kelimeler, ana sayfada WebSite/Organization JSON-LD
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 

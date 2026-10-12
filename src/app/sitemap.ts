@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getChapterRefs, getGenres, getSeriesList } from "@/lib/data";
 import { FORUM_CATEGORIES, getRecentTopicIds } from "@/lib/forum";
-import { SITE_URL } from "@/lib/site";
+import { absoluteUrl, SITE_URL } from "@/lib/site";
 
 // Ana sayfa, türler, seri sayfaları ve tüm bölüm sayfaları. Yeni bölüm eklenince kendiliğinden güncellenir.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -29,6 +29,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: s.latestChapters[0]?.publishedAt,
       changeFrequency: "weekly" as const,
       priority: 0.9,
+      // Kapak görseli: Google Görseller'de seri sayfasıyla eşleşir
+      images: [absoluteUrl(s.cover)],
     })),
     ...chapters.map((c) => ({
       url: `${SITE_URL}/seri/${c.slug}/bolum/${c.number}`,

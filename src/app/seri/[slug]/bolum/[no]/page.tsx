@@ -5,7 +5,7 @@ import { Reader } from "@/components/Reader";
 import { CommentsSection, ReactionsSection } from "@/components/topluluk/Sections";
 import { JsonLd } from "@/components/JsonLd";
 import { getChapter, getChapterRefs } from "@/lib/data";
-import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME, SITE_PROMISE } from "@/lib/site";
 
 export async function generateStaticParams() {
   const params = (await getChapterRefs()).map((c) => ({ slug: c.slug, no: String(c.number) }));
@@ -26,7 +26,14 @@ export async function generateMetadata(
   const named = chapter.title.toLocaleLowerCase("tr") !== `${chapter.number}. bölüm` ? ` "${chapter.title}"` : "";
   return {
     title,
-    description: `${series.title}${other ? ` (${other})` : ""} ${chapter.number}. bölüm${named} Türkçe oku. ${chapter.pages.length} sayfa, ${SITE_NAME} üzerinde hızlı ve kesintisiz.`,
+    description: `${series.title}${other ? ` (${other})` : ""} ${chapter.number}. bölüm${named} Türkçe oku. ${chapter.pages.length} sayfa, ${SITE_NAME} üzerinde ${SITE_PROMISE}.`,
+    keywords: [
+      `${series.title} ${chapter.number}. bölüm`,
+      `${series.title} ${chapter.number}. bölüm türkçe`,
+      `${series.title} bölüm ${chapter.number}`,
+      ...(other ? [`${other} ${chapter.number}. bölüm`] : []),
+      `${series.title} türkçe oku`,
+    ],
     alternates: { canonical: path },
     openGraph: {
       type: "article",
@@ -62,6 +69,7 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
         datePublished: chapter.publishedAt,
         image: absoluteUrl(series.cover),
         inLanguage: "tr",
+        isAccessibleForFree: true,
         isPartOf: { "@type": "ComicSeries", "@id": seriesUrl, name: series.title, url: seriesUrl },
       },
       {

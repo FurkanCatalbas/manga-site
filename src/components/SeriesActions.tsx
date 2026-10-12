@@ -39,16 +39,14 @@ const FIRST_PAGE = 10;
 const STEP = 30;
 
 /** Bölüm listesi: en yeni ya da en eski önce; okunanlar ve kalınan bölüm işaretli. Önce 10 bölüm görünür,
- * "Daha fazla" ile 30'ar 30'ar açılır (tüm bölümler site haritasında ve JSON-LD'de zaten var). */
+ * "Daha fazla" ile 30'ar 30'ar açılır. Gizli bölümler de HTML'de durur (`hidden`), böylece arama motorları
+ * tüm bölüm bağlantılarını seri sayfasından izleyebilir. */
 export function ChapterList({
   slug,
   chapters,
-  notice,
 }: {
   slug: string;
   chapters: ChapterInfo[];
-  /** Başlığın altında gösterilecek not (ör. çeviri kaynağı kutusu) */
-  notice?: React.ReactNode;
 }) {
   const [newestFirst, setNewestFirst] = useState(true);
   const [shown, setShown] = useState(FIRST_PAGE);
@@ -74,16 +72,15 @@ export function ChapterList({
           </button>
         )}
       </div>
-      {notice}
       {list.length === 0 ? (
         <p className="panel p-6 text-muted">Bu serinin ilk bölümü yakında eklenecek.</p>
       ) : (
         <ol className="grid gap-2 sm:grid-cols-2">
-          {list.slice(0, shown).map((c) => {
+          {list.map((c, i) => {
             const isCurrent = c.number === current;
             const read = current !== undefined && c.number < current;
             return (
-              <li key={c.number}>
+              <li key={c.number} hidden={i >= shown}>
                 <Link
                   href={`/seri/${slug}/bolum/${c.number}`}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 ring-1 transition-colors ${

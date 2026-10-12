@@ -3,7 +3,37 @@ import { HeroSlider } from "@/components/HeroSlider";
 import { ContinueShelf } from "@/components/Library";
 import { SectionHeader, SeriesCard } from "@/components/SeriesCard";
 import { NewSeriesList, PopularList } from "@/components/Sidebar";
+import { JsonLd } from "@/components/JsonLd";
 import { getFeatured, getNewest, getPopular, getRecentlyUpdated, toLibraryItems } from "@/lib/data";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+
+// Site adı ve logosu için yapısal veri: Google sonuçlarda site adını "webtooku" olarak gösterebilir
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": absoluteUrl("/#site"),
+      url: absoluteUrl("/"),
+      name: SITE_NAME,
+      description: SITE_DESCRIPTION,
+      inLanguage: "tr",
+      publisher: { "@id": absoluteUrl("/#org") },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: { "@type": "EntryPoint", urlTemplate: absoluteUrl("/ara?q={search_term_string}") },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": absoluteUrl("/#org"),
+      name: SITE_NAME,
+      url: absoluteUrl("/"),
+      logo: absoluteUrl("/icons/icon-512.png"),
+    },
+  ],
+};
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -17,7 +47,8 @@ export default async function Home() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:pt-6">
-      <h1 className="sr-only">webtooku: Webtoon ve manga oku</h1>
+      <JsonLd data={jsonLd} />
+      <h1 className="sr-only">webtooku: Reklamsız ve ücretsiz Türkçe webtoon, manga oku</h1>
       <HeroSlider items={featured} />
 
       <ContinueShelf items={toLibraryItems(recent)} />

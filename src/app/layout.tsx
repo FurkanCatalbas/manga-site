@@ -9,7 +9,7 @@ import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { SearchIcon } from "@/components/icons";
 import { DesktopNav, DesktopNavLinks, MobileTabBar, MobileTabBarView } from "@/components/SiteNav";
 import { getGenres } from "@/lib/data";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const dela = Dela_Gothic_One({
@@ -25,8 +25,9 @@ const onest = Onest({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: `${SITE_NAME}: Türkçe Webtoon ve Manga Oku`, template: `%s | ${SITE_NAME}` },
+  title: { default: `${SITE_NAME}: Reklamsız Türkçe Webtoon ve Manga Oku`, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
   // Arama motoru doğrulamaları (Bing Webmaster; ayrıca public/BingSiteAuth.xml)
   verification: { other: { "msvalidate.01": "A245B1C9684597A61885E2CA85A48C49" } },
   applicationName: SITE_NAME,

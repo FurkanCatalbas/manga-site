@@ -90,8 +90,8 @@ export function ChapterAbout({ series, chapter }: { series: Series; chapter: num
       </ol>
 
       <p className="mt-6 text-xs leading-relaxed text-muted">
-        {series.title} {chapter}. bölümü {SITE_NAME}&apos;da Türkçe okuyorsun. Serinin tüm bölümleri ücretsiz;
-        yeni bölümler eklendikçe burada.
+        {series.title} {chapter}. bölümü {SITE_NAME}&apos;da Türkçe okuyorsun. Serinin tüm bölümleri
+        reklamsız, üyeliksiz ve ücretsiz; yeni bölümler eklendikçe burada.
       </p>
     </section>
   );

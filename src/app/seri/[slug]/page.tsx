@@ -15,11 +15,9 @@ import { authProviders } from "@/lib/hesap";
 import { getListsWithSeries } from "@/lib/listeler";
 import { getRatingSummary } from "@/lib/puan";
 import { resolveScope } from "@/lib/topluluk";
-import { SourceNotice } from "@/components/SourceNotice";
-import { getSeriesSource } from "@/lib/fansubs";
 import { JsonLd } from "@/components/JsonLd";
 import { genreHref, getAllGenres, getPopular, getSeries, getSeriesList, getSimilarSeries, type Series } from "@/lib/data";
-import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, PLACEHOLDER_SLUG, SITE_KEYWORDS, SITE_NAME, SITE_PROMISE } from "@/lib/site";
 
 export async function generateStaticParams() {
   const params = (await getSeriesList()).map((s) => ({ slug: s.slug }));
@@ -30,16 +28,23 @@ export async function generateStaticParams() {
 /** Başlık dışındaki tüm adlar: Türkçe ad (İngilizce ad başlıksa) ve diğer adları */
 const otherNames = (s: Series) => [s.titleAlt, ...s.altTitles].filter(Boolean);
 
+/** Seri adı ve diğer adlarıyla "oku / türkçe" aramaları, türler ve genel anahtar kelimeler */
+function seriesKeywords(s: Series, names: string[]) {
+  const all = [s.title, ...names].flatMap((n) => [n, `${n} oku`, `${n} türkçe`, `${n} türkçe oku`]);
+  return [...new Set([...all, ...s.genres.map((g) => `${g.toLocaleLowerCase("tr")} webtoon`), ...SITE_KEYWORDS])];
+}
+
 export async function generateMetadata(props: PageProps<"/seri/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   const series = await getSeries(slug);
   if (!series) return {};
   const path = `/seri/${series.slug}`;
   const names = otherNames(series);
-  const description = `${series.title}${names.length ? ` (${names.slice(0, 2).join(", ")})` : ""} Türkçe oku. ${series.description}`;
+  const description = `${series.title}${names.length ? ` (${names.slice(0, 2).join(", ")})` : ""} Türkçe oku; ${SITE_PROMISE}. ${series.description}`;
   return {
     title: `${series.title} Türkçe Oku`,
     description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description,
+    keywords: seriesKeywords(series, names),
     alternates: { canonical: path },
     openGraph: {
       type: "book",
@@ -53,11 +58,10 @@ export async function generateMetadata(props: PageProps<"/seri/[slug]">): Promis
 
 export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
   const { slug } = await props.params;
-  const [series, popular, genres, source, similar] = await Promise.all([
+  const [series, popular, genres, similar] = await Promise.all([
     getSeries(slug),
     getPopular(),
     getAllGenres(),
-    getSeriesSource(slug),
     getSimilarSeries(slug),
   ]);
   if (!series) notFound();
@@ -87,6 +91,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
           aggregateRating: { "@type": "AggregateRating", ratingValue: rating.avg, ratingCount: rating.count, bestRating: 10, worstRating: 1 },
         }),
         inLanguage: "tr",
+        isAccessibleForFree: true,
         ...(latest && { dateModified: latest.publishedAt }),
         hasPart: series.chapters.map((c) => ({
           "@type": "ComicIssue",
@@ -190,11 +195,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
 
       <div className="mx-auto mt-4 grid max-w-7xl gap-10 px-4 lg:grid-cols-[1fr_320px]">
         <section className="min-w-0">
-          <ChapterList
-            slug={series.slug}
-            chapters={series.chapters}
-            notice={source && <SourceNotice source={source} />}
-          />
+          <ChapterList slug={series.slug} chapters={series.chapters} />
           {rating && (
             <div id="puan-bolumu" className="mt-14 scroll-mt-24">
               <h2 className="mb-4 text-xl font-bold tracking-tight sm:text-2xl">Puan</h2>

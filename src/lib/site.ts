@@ -16,7 +16,27 @@ export const SITE_NAME = "webtooku";
  * (küçük harf, rakam, tire) uymadığı için gerçek bir seriyle çakışamaz; sayfası 404 verir.
  */
 export const PLACEHOLDER_SLUG = "_yok";
-export const SITE_DESCRIPTION = "Türkçe webtoon ve manga serilerini ücretsiz ve hızlı oku. Her hafta yeni bölümler.";
+export const SITE_DESCRIPTION =
+  "Türkçe webtoon, manga ve manhwa serilerini reklamsız, üyeliksiz ve tamamen ücretsiz oku. Her hafta yeni bölümler.";
+
+/** Sitenin vaadi: başlık ve açıklamalarda kullanılır (reklam yok, üyelik gerekmez, ücretsiz). */
+export const SITE_PROMISE = "reklamsız, üyeliksiz, ücretsiz";
+
+/**
+ * Meta anahtar kelimeleri. Google bu etiketi sıralamada kullanmaz; zararı yok, bazı arama motorları okur.
+ * Asıl etki başlık, açıklama ve sayfa metninden gelir.
+ */
+export const SITE_KEYWORDS = [
+  "webtoon oku",
+  "türkçe webtoon",
+  "manga oku",
+  "türkçe manga",
+  "manhwa oku",
+  "türkçe manhwa",
+  "reklamsız webtoon",
+  "ücretsiz manga oku",
+  "üyeliksiz webtoon oku",
+];
 
 /** Göreli adresi (/seri/x veya /sample/kapak.svg) tam adrese çevirir; tam adresleri olduğu gibi bırakır. */
 export function absoluteUrl(path: string) {

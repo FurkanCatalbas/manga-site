@@ -1,47 +1,11 @@
 // Çeviri kaynakları (fansub) sorguları (yalnızca sunucuda).
 // Tablolar veritabanında yoksa (db:push yapılmamışsa) site bozulmaz: okuma sorguları boş döner.
 import { eq, sql } from "drizzle-orm";
-import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/db";
-import { fansubs, series, seriesFansubs } from "@/db/schema";
+import { fansubs, seriesFansubs } from "@/db/schema";
 import { isMissingTable } from "@/lib/genres";
 
-/** Sitede gösterilen kaynak notu: "Bu çeviri {name} ({domain}) üzerinden alınmıştır". */
-export type SeriesSource = { name: string; logo: string | null; link: string | null; domain: string | null };
 export type FansubRow = { id: number; name: string; slug: string; url: string | null; logo: string | null; count: number };
-
-/** "https://www.merlintoon.com/seri/x" → "merlintoon.com" */
-export function domainOf(url: string | null) {
-  if (!url) return null;
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return null;
-  }
-}
-
-/** Serinin çeviri kaynağı; yoksa (ya da tablolar yoksa) null. */
-export async function getSeriesSource(seriesSlug: string): Promise<SeriesSource | null> {
-  "use cache";
-  cacheTag("series");
-  cacheLife("hours");
-
-  try {
-    const [row] = await db
-      .select({ name: fansubs.name, logo: fansubs.logo, siteUrl: fansubs.url, seriesUrl: seriesFansubs.url })
-      .from(seriesFansubs)
-      .innerJoin(fansubs, eq(fansubs.id, seriesFansubs.fansubId))
-      .innerJoin(series, eq(series.id, seriesFansubs.seriesId))
-      .where(eq(series.slug, seriesSlug));
-    if (!row) return null;
-    // Bağlantı önce serinin kaynak sitedeki sayfasına, yoksa ekibin sitesine gider
-    const link = row.seriesUrl ?? row.siteUrl;
-    return { name: row.name, logo: row.logo, link, domain: domainOf(row.siteUrl ?? link) };
-  } catch (e) {
-    if (isMissingTable(e)) return null;
-    throw e;
-  }
-}
 
 /** Panel: tüm kaynaklar ve her birinden alınan seri sayısı. Tablo yoksa null. */
 export async function getFansubList(): Promise<FansubRow[] | null> {
