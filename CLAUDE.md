@@ -45,6 +45,10 @@ Yeni kod da bu dile ve üsluba uymalı.
   yazı tipleri `assets/fonts` (OFL).
 - İkonlar `src/components/icons.tsx` (satır içi SVG, kütüphane yok).
 - Mobilde yatay kayan raflar için `no-scrollbar -mx-4 px-4 overflow-x-auto snap-x`.
+- **Yatay taşma:** `html, body { overflow-x: clip }` güvenlik önlemi var (`hidden` değil, sticky'yi bozar),
+  ama kök nedeni de düzelt. İçinde `truncate`/`whitespace-nowrap` olan mobil grid'lerde sütunu
+  `grid-cols-1` ile ver (yoksa sütun en uzun metne göre genişler), flex çocuklarına `min-w-0`.
+  Sığmayabilecek çip/düğme satırları yatay kayan raf olsun. 320 px genişlikte de kontrol et.
 - Popüler listesinde grafik/çizgi istenmiyor (kullanıcı kaldırttı).
 
 ## Çalışma düzeni
@@ -171,6 +175,9 @@ Seri ekleme/düzenleme/silme ve bölüm yükleme. İşlemler `src/app/admin/acti
 - `next build` veritabanı ister (`generateStaticParams`). Yukarıdaki yerel Postgres düzeneğiyle
   `ADMIN_PASSWORD=... npx next build` çalıştırılabilir; **arayüzde önemli değişiklikten sonra mutlaka
   build al**, çünkü `cacheComponents` hatalarını `tsc`, lint ve `next dev` yakalamaz.
+- `cacheComponents`'ta `generateStaticParams` boş dizi döndüremez (build kırılır). Liste boşsa
+  `PLACEHOLDER_SLUG` (`src/lib/site.ts`) ile yer tutucu döndürülür, sayfası 404 verir. Boş veritabanıyla
+  build'i de dene (`createdb` + `drizzle-kit push`).
 - `cacheComponents` kuralı: `usePathname`, `useSearchParams`, `cookies()`, `params` gibi istek/adres
   verisi okuyan her şey `<Suspense>` içinde olmalı. Root layout'taki menüler bu yüzden Suspense içinde,
   `pathname={null}` yedeğiyle (`SiteNav.tsx`).

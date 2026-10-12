@@ -84,9 +84,9 @@ export function LibraryList({ items }: { items: LibraryItem[] }) {
   }
 
   return (
-    <ul className="grid gap-3 sm:grid-cols-2">
+    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {entries.map((e) => (
-        <li key={e.slug} className="panel flex items-center gap-4 p-3">
+        <li key={e.slug} className="panel flex min-w-0 items-center gap-4 p-3">
           <Link href={`/seri/${e.slug}`} className="shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={e.cover} alt="" loading="lazy" className="h-24 w-[4.5rem] rounded-xl object-cover ring-1 ring-white/10" />

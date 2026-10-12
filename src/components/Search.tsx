@@ -62,7 +62,7 @@ export function Search({ series, genres }: { series: SeriesSummary[]; genres: st
             </Chip>
           ))}
         </div>
-        <div role="group" aria-label="Durum" className="flex gap-2">
+        <div role="group" aria-label="Durum" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           {STATUSES.map((st) => (
             <Chip key={st || "hepsi"} active={status === st} onClick={() => setStatus(st)}>
               {st || "Hepsi"}

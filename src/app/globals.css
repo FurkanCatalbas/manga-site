@@ -32,6 +32,13 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Güvenlik önlemi: hiçbir öğe sayfayı yatayda kaydıramasın (mobilde sağda boşluk kalmasın).
+   "hidden" değil "clip": hidden body'yi kaydırma kutusuna çevirip yapışkan başlığı bozar. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   /* Sayfanın tepesinde hafif bir renk ışıması */
   background:
