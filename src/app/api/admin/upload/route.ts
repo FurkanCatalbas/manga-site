@@ -59,6 +59,13 @@ export async function POST(request: Request) {
     key = `series/${slug}/${chapter}/${String(index).padStart(3, "0")}-${rand}.${ext}`;
   }
 
+  // Adres yüklemeden önce hesaplanır: ayar hatalıysa R2'ye boşuna dosya yüklenmez, panel nedenini gösterir
+  let url: string;
+  try {
+    url = publicUrl(key);
+  } catch (e) {
+    return fail(500, (e as Error).message);
+  }
   await putObject(key, image.bytes, image.type);
-  return Response.json({ url: publicUrl(key), width: image.width, height: image.height });
+  return Response.json({ url, width: image.width, height: image.height });
 }

@@ -26,7 +26,13 @@ function s3() {
 }
 
 export function publicUrl(key: string) {
-  return `${env("R2_PUBLIC_URL").replace(/\/$/, "")}/${key}`;
+  const base = env("R2_PUBLIC_URL").trim().replace(/\/$/, "");
+  // Değer tam adres değilse (ör. yanlışlıkla "R2_BUCKET" yazılmışsa) adres sitenin kendi alan adına
+  // göre çözülür ve görsel açılmaz. Yanlış adresi veritabanına yazmaktansa yüklemeyi durdur.
+  if (!/^https:\/\/[^/]+/.test(base)) {
+    throw new Error(`R2_PUBLIC_URL tam bir adres olmalı (ör. https://cdn.webtooku.com.tr), şu an: "${base}"`);
+  }
+  return `${base}/${key}`;
 }
 
 export async function putObject(key: string, body: Uint8Array, contentType: string) {
