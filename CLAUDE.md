@@ -110,6 +110,9 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   başlıktır (kartlar, listeler, okuyucu, SEO); Türkçe ad yalnızca seri sayfasında başlığın altında görünür.
   `src/lib/data.ts` → `withNames`: `title` = İngilizce ad ya da Türkçe ad, `titleAlt` = İngilizce ad varsa
   Türkçe ad. Aramada ikisi de eşleşir. Panel ham alanları (`title`, `titleEn`) kullanır. Eski `author` (yazar/çizer) alanı kaldırıldı.
+  `exclusive` "Orijinal / Sadece webtooku" rozeti; `featured` ana sayfa afişi; `banner` geniş afiş görseli (R2'de
+  `series/<slug>/banner-*` ya da bağlantı; boşsa hero kapağın bulanık halini kullanır). Panel → seri formu →
+  Vitrin. Hiç `featured` seri yoksa hero son güncellenen 5 seriyi gösterir (`getFeatured`).
 - `chapters`: `pages` (text[], URL'ler, okunma sırasıyla) ve `page_sizes` (jsonb, `[genişlik, yükseklik][]`,
   `pages` ile aynı sırada; eski bölümlerde `[]` olabilir, okuyucu boyutsuz da çalışır)
 - `series_views_daily`: seri başına günlük okunma (İstanbul saatine göre gün)
