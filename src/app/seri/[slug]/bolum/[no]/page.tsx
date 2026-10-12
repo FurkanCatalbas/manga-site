@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
 import { JsonLd } from "@/components/JsonLd";
 import { getChapter, getChapterRefs } from "@/lib/data";
-import { absoluteUrl, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
-  return (await getChapterRefs()).map((c) => ({ slug: c.slug, no: String(c.number) }));
+  const params = (await getChapterRefs()).map((c) => ({ slug: c.slug, no: String(c.number) }));
+  // cacheComponents boş liste kabul etmiyor (hiç bölüm yokken build kırılmasın): yer tutucu 404 verir
+  return params.length ? params : [{ slug: PLACEHOLDER_SLUG, no: "0" }];
 }
 
 export async function generateMetadata(

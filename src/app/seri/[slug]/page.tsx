@@ -6,10 +6,12 @@ import { EyeIcon, LayersIcon } from "@/components/icons";
 import { ChapterList, ReadButtons } from "@/components/SeriesActions";
 import { JsonLd } from "@/components/JsonLd";
 import { getAllGenres, getPopular, getSeries, getSeriesList } from "@/lib/data";
-import { absoluteUrl, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
-  return (await getSeriesList()).map((s) => ({ slug: s.slug }));
+  const params = (await getSeriesList()).map((s) => ({ slug: s.slug }));
+  // cacheComponents boş liste kabul etmiyor (hiç seri yokken build kırılmasın): yer tutucu 404 verir
+  return params.length ? params : [{ slug: PLACEHOLDER_SLUG }];
 }
 
 export async function generateMetadata(props: PageProps<"/seri/[slug]">): Promise<Metadata> {

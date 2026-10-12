@@ -10,6 +10,12 @@ export const SITE_URL = (
 ).replace(/\/$/, "");
 
 export const SITE_NAME = "webtooku";
+
+/**
+ * Henüz hiç seri/bölüm yokken generateStaticParams'ın döndürdüğü yer tutucu. Slug kalıbına
+ * (küçük harf, rakam, tire) uymadığı için gerçek bir seriyle çakışamaz; sayfası 404 verir.
+ */
+export const PLACEHOLDER_SLUG = "_yok";
 export const SITE_DESCRIPTION = "Webtoon ve manga serilerini ücretsiz ve hızlı oku. Her hafta yeni bölümler.";
 
 /** Göreli adresi (/seri/x veya /sample/kapak.svg) tam adrese çevirir; tam adresleri olduğu gibi bırakır. */
