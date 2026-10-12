@@ -195,8 +195,14 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 ### Yer imiyle bölüm alma: `/admin/al`
 
 Panel → "Bölüm al" sayfasındaki yer imi (bookmarklet, `ChapterImport.tsx`) kaynak sitede açılan bölümün
-görsellerini toplar (okutoon: `img.reader-page`, diğerleri: genişliği 400+ görseller) ve `/admin/al#<json>`
-adresini açar; veri `#` içinde olduğu için sunucuya gitmez. Panel bağlantıları dener ve `createChapter` ile
+görsellerini toplar ve `/admin/al#<json>`
+adresini açar; veri `#` içinde olduğu için sunucuya gitmez. Görsel seçimi: önce bilinen okuyucu kutuları
+(`READER`: okutoon `img.reader-page`, paradoxscans `#chapter-content img`, Madara temaları…). Yoksa genişliği
+400+ görsellerden yorum alanındakiler (`COMMENTS`: `[class*=comment]`, avatar, disqus…) atılır ve görsellerin
+%70'ini içeren en içteki kutunun dışındakiler (kenar çubuğu, yorum) bırakılır. Yeni bir site yanlış görsel
+çekerse okuyucu kutusunu `READER`'a ekle. Yer imi kodu değişince kullanıcı yer imini yeniden sürüklemeli. Yayından önce istenmeyen sayfalar (reklam,
+ekip tanıtımı) küçük resimlere dokunarak seçilip "Seçilenleri çıkar" ile listeden atılır; "Hepsini geri getir"
+ilk listeye döner (yalnızca tarayıcıda, sayfa yenilenince # verisi yeniden okunur). Panel bağlantıları dener ve `createChapter` ile
 yayınlar. Yer imi şifre taşımaz; yayın panel oturumuyla. Kaynak seri → webtooku seri eşlemesi
 localStorage'da (`webtooku:kaynak-seri`). React `javascript:` href'ini engellediği için adres ref ile yazılır.
 
@@ -263,7 +269,7 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Seriler: yazar/çizer alanı kaldırıldı, yerine Türkçe + İngilizce ad (`title_en`)
 - Panel: R2'ye yüklemeden, başka sitedeki görsel bağlantılarıyla kapak ve bölüm ekleme
 - Bölüm yayınlama API'si (`/api/admin/bolum`) ve Python yayıncı scripti için ortak `insertChapter`
-- Panel → Bölüm al: kaynak sitede tek tıkla bölüm gönderen yer imi
+- Panel → Bölüm al: kaynak sitede tek tıkla bölüm gönderen yer imi; yayından önce seçilen sayfaları çıkarma
 - Ana sayfa: panelden seçilen büyük afişli hero, yan sütunda Popüler altında "Yeni seriler" (Türler yerine);
   kartlarda "Yeni" (seri 14 gün içinde eklendiyse), alev (son güncellenenlerde, 3 gün içinde bölüm) ve
   "Orijinal" rozetleri (`Badges.tsx`; zamana bağlı olanlar tarayıcıda `Fresh` ile)
