@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { preload } from "react-dom";
 import { getProgress, saveProgress, type Progress } from "@/lib/progress";
-import { SourceNotice } from "@/components/SourceNotice";
-import type { SeriesSource } from "@/lib/fansubs";
 import type { Page } from "@/lib/series";
 
 /** Bölüm açılışını sayaca bildirir; aynı tarayıcıdan aynı bölüm günde bir kez sayılır. */
@@ -73,14 +71,12 @@ type Props = {
   next: number | null;
   /** Sonraki bölümün ilk sayfaları, bölüm sonuna yaklaşınca önceden yüklenir */
   nextPages: Page[];
-  /** Başka ekipten alınan çeviriyse kaynak notu (bölüm sonunda) */
-  source?: SeriesSource | null;
   /** Bölüm gezintisinin altında gösterilecek içerik (seri bilgisi, son bölümler) */
   children?: React.ReactNode;
 };
 
 export function Reader(props: Props) {
-  const { slug, seriesTitle, chapter, chapterTitle, pages, chapterNumbers, prev, next, nextPages, source, children } = props;
+  const { slug, seriesTitle, chapter, chapterTitle, pages, chapterNumbers, prev, next, nextPages, children } = props;
   const router = useRouter();
   const [page, setPage] = useState(0); // 0 tabanlı
   const [resumedFrom, setResumedFrom] = useState<number | null>(null);
@@ -178,12 +174,6 @@ export function Reader(props: Props) {
       </div>
 
       <VerticalPages pages={pages} imgRefs={imgRefs} onVisible={setPage} />
-
-      {source && (
-        <div className="mx-auto max-w-3xl px-4 pt-6">
-          <SourceNotice source={source} compact />
-        </div>
-      )}
 
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-6">
         <NavButton href={prev !== null ? chapterUrl(prev) : null}>Önceki bölüm</NavButton>

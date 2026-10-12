@@ -135,8 +135,8 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   Tür adları `cleanGenreName` ile düzenlenir (boşluklar, Türkçe ilk harf büyük).
 - `fansubs` (ad, slug, site adresi, logo) ve `series_fansubs` (seri başına en fazla bir kaynak +
   serinin kaynak sitedeki adresi): başka ekipten alınan çeviriler için "Bu çeviri X (x.com) üzerinden
-  alınmıştır" kutusu (`src/components/SourceNotice.tsx`; seri sayfasında bölüm listesinin üstünde,
-  okuyucuda bölüm sonunda tek satır). Kaynak seçilmemiş seride kutu yok. Tablolar yoksa site bozulmaz
+  alınmıştır" kutusu (`src/components/SourceNotice.tsx`; yalnızca seri sayfasında bölüm listesinin üstünde;
+  bölüm sonundaki satır kullanıcı isteğiyle kaldırıldı). Kaynak seçilmemiş seride kutu yok. Tablolar yoksa site bozulmaz
   (`isMissingTable`), panel → Kaynaklar oluşturma SQL'ini gösterir. Bağlantılar `cleanUrl` ile yalnızca
   http(s); dış bağlantılar `rel="nofollow noopener"`. Logo R2'de `fansubs/<slug>/` altında; slug sonradan değişmez.
 

@@ -5,7 +5,6 @@ import { Reader } from "@/components/Reader";
 import { CommentsSection, ReactionsSection } from "@/components/topluluk/Sections";
 import { JsonLd } from "@/components/JsonLd";
 import { getChapter, getChapterRefs } from "@/lib/data";
-import { getSeriesSource } from "@/lib/fansubs";
 import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
@@ -42,7 +41,7 @@ export async function generateMetadata(
 
 export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[no]">) {
   const { slug, no } = await props.params;
-  const [found, source] = await Promise.all([getChapter(slug, Number(no)), getSeriesSource(slug)]);
+  const found = await getChapter(slug, Number(no));
   if (!found) notFound();
 
   const { series, chapter, nextPages } = found;
@@ -90,7 +89,6 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
       prev={numbers[idx - 1] ?? null}
       next={numbers[idx + 1] ?? null}
       nextPages={nextPages}
-      source={source}
     >
       <div className="mx-auto grid max-w-3xl gap-12 px-4 pt-4 pb-12">
         <ReactionsSection slug={series.slug} chapter={chapter.number} />
