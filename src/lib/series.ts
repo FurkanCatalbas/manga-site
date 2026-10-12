@@ -19,6 +19,9 @@ type SeriesBase = {
   slug: string;
   title: string; // sitede görünen ad: İngilizce ad, yoksa Türkçe ad
   titleAlt: string; // İngilizce ad varsa Türkçe ad (yalnızca seri sayfasında), yoksa boş
+  exclusive: boolean; // yalnızca webtooku'da (Orijinal rozeti)
+  featured: boolean; // ana sayfa afişlerinde
+  banner: string; // geniş afiş görseli, boş olabilir
   description: string;
   genres: string[];
   status: SeriesStatus;

@@ -41,6 +41,10 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
   const [sourceUrl, setSourceUrl] = useState(initial?.source?.url ?? "");
   const [cover, setCover] = useState(initial?.cover ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [exclusive, setExclusive] = useState(initial?.exclusive ?? false);
+  const [featured, setFeatured] = useState(initial?.featured ?? false);
+  const [banner, setBanner] = useState(initial?.banner ?? "");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [message, setMessage] = useState<{ error?: string; ok?: string }>();
   const [pending, startTransition] = useTransition();
 
@@ -49,6 +53,11 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
     if (filePreview) URL.revokeObjectURL(filePreview);
   }, [filePreview]);
   const preview = filePreview ?? cover;
+  const bannerFilePreview = useMemo(() => (bannerFile ? URL.createObjectURL(bannerFile) : null), [bannerFile]);
+  useEffect(() => () => {
+    if (bannerFilePreview) URL.revokeObjectURL(bannerFilePreview);
+  }, [bannerFilePreview]);
+  const bannerPreview = bannerFilePreview ?? banner;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,10 +76,22 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
             throw new Error("Kapak bağlantısı açılamadı. Adres yanlış ya da kaynak site dışarıdan gösterilmesini engelliyor.");
           });
         }
+        let bannerUrl = banner;
+        if (bannerFile) {
+          if (!slug) throw new Error("Önce seri adresini doldur.");
+          bannerUrl = (await uploadImage(bannerFile, { slug, kind: "banner" })).url;
+          setBanner(bannerUrl);
+          setBannerFile(null);
+        } else if (bannerUrl && !isImageLink(bannerUrl)) {
+          throw new Error("Afiş bağlantısı https:// ile başlamalı.");
+        }
         const input: SeriesInput = {
           slug,
           title,
           titleEn,
+          exclusive,
+          featured,
+          banner: bannerUrl,
           description,
           genres,
           status,
@@ -194,6 +215,83 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
             </select>
           </div>
         </div>
+        <fieldset className="grid gap-3 rounded-xl border border-line p-4">
+          <legend className="px-1 text-sm font-semibold">Vitrin</legend>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={exclusive}
+              onChange={(e) => setExclusive(e.target.checked)}
+              className="mt-1 h-4 w-4 accent-[var(--accent)]"
+            />
+            <span>
+              <span className="font-semibold">Sadece webtooku (Orijinal)</span>
+              <span className="block text-xs text-muted">Kartlarda ve seri sayfasında &quot;Orijinal&quot; rozeti çıkar.</span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={featured}
+              onChange={(e) => setFeatured(e.target.checked)}
+              className="mt-1 h-4 w-4 accent-[var(--accent)]"
+            />
+            <span>
+              <span className="font-semibold">Ana sayfa afişinde göster</span>
+              <span className="block text-xs text-muted">Ana sayfanın en üstündeki büyük afişlerde döner.</span>
+            </span>
+          </label>
+          {featured && (
+            <div className="grid gap-2 pl-7">
+              <span className="text-sm font-semibold">Afiş görseli (isteğe bağlı)</span>
+              <label className="flex aspect-[21/9] max-w-xl cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-line bg-surface text-center text-sm hover:border-accent">
+                {bannerPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img referrerPolicy="no-referrer" src={bannerPreview} alt="Afiş önizleme" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="px-4 text-muted">Geniş görsel seç (ör. 1920×820). Boşsa kapak kullanılır.</span>
+                )}
+                <input
+                  type="file"
+                  accept={ACCEPT_IMAGES}
+                  className="sr-only"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f && !isImageFile(f)) return setMessage({ error: `${f.name} bir görsel değil.` });
+                    if (f && f.size > MAX_UPLOAD_BYTES) return setMessage({ error: "Afiş 4 MB'tan büyük olamaz." });
+                    setMessage(undefined);
+                    setBannerFile(f ?? null);
+                  }}
+                />
+              </label>
+              <div className="flex max-w-xl gap-2">
+                <input
+                  aria-label="Afiş görseli bağlantısı"
+                  type="url"
+                  placeholder="ya da görsel bağlantısı: https://…"
+                  value={bannerFile ? "" : banner}
+                  onChange={(e) => {
+                    setBannerFile(null);
+                    setBanner(e.target.value.trim());
+                  }}
+                  className={`${field} text-xs`}
+                />
+                {bannerPreview && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBannerFile(null);
+                      setBanner("");
+                    }}
+                    className="shrink-0 rounded-lg bg-surface-2 px-3 text-sm font-semibold hover:bg-line"
+                  >
+                    Kaldır
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </fieldset>
         <fieldset>
           <legend className={label}>Türler</legend>
           {options.length > 0 && (

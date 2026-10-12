@@ -45,3 +45,13 @@ export function NewBadge({ iso }: { iso: string }) {
     <span className="rounded-full bg-fresh/15 px-1.5 py-px text-[10px] font-bold tracking-wide text-fresh uppercase">Yeni</span>
   );
 }
+
+/** Tarih son `days` gün içindeyse çocukları gösterir. Sunucuda (önbellekli HTML'de) hiç gösterilmez. */
+export function Fresh({ iso, days, children }: { iso?: string; days: number; children: React.ReactNode }) {
+  const fresh = useSyncExternalStore(
+    noopSubscribe,
+    () => !!iso && Date.now() - new Date(iso).getTime() < days * DAY,
+    () => false,
+  );
+  return fresh ? children : null;
+}

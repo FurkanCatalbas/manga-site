@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const sniffed = sniffImage(bytes);
   if (!sniffed) return fail(400, `${file.name}: desteklenmeyen dosya türü (WebP, JPG, PNG, AVIF, GIF).`);
-  if (kind !== "cover" && kind !== "page" && kind !== "fansub") return fail(400, "Geçersiz yükleme türü.");
+  if (kind !== "cover" && kind !== "banner" && kind !== "page" && kind !== "fansub") return fail(400, "Geçersiz yükleme türü.");
 
   let image: Awaited<ReturnType<typeof optimizeImage>>;
   try {
@@ -50,6 +50,8 @@ export async function POST(request: Request) {
   let key: string;
   if (kind === "cover") {
     key = `series/${slug}/cover-${rand}.${ext}`;
+  } else if (kind === "banner") {
+    key = `series/${slug}/banner-${rand}.${ext}`;
   } else if (kind === "fansub") {
     // Burada slug, çeviri ekibinin adresi
     key = `fansubs/${slug}/logo-${rand}.${ext}`;

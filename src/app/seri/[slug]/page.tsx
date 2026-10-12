@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ExclusiveBadge } from "@/components/Badges";
 import { GenreList, PopularList } from "@/components/Sidebar";
 import { EyeIcon, LayersIcon } from "@/components/icons";
 import { ChapterList, ReadButtons } from "@/components/SeriesActions";
@@ -111,7 +112,8 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
             </h1>
             {series.titleAlt && <p className="mt-2 hidden text-muted sm:block">{series.titleAlt}</p>}
 
-            <div className="flex flex-wrap gap-2 text-sm sm:mt-5">
+            <div className="flex flex-wrap items-center gap-2 text-sm sm:mt-5">
+              {series.exclusive && <ExclusiveBadge long />}
               <span className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 font-semibold">
                 <span className={`h-2 w-2 rounded-full ${series.status === "Tamamlandı" ? "bg-accent-2" : "bg-fresh"}`} />
                 {series.status}

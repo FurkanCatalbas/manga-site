@@ -15,7 +15,7 @@ export function isImageFile(f: File) {
 export async function uploadImage(
   file: File,
   fields:
-    | { slug: string; kind: "cover" | "fansub" }
+    | { slug: string; kind: "cover" | "banner" | "fansub" }
     | { slug: string; kind: "page"; chapter: number; index: number },
 ): Promise<{ url: string; width: number; height: number }> {
   const form = new FormData();

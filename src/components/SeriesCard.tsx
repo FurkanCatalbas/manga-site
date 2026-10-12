@@ -1,10 +1,19 @@
 import Link from "next/link";
+import { ExclusiveBadge, HotBadge, NewSeriesBadge } from "@/components/Badges";
 import { ArrowRightIcon } from "@/components/icons";
 import { NewBadge, TimeAgo } from "@/components/TimeAgo";
 import type { SeriesSummary } from "@/lib/series";
 
-/** Kapak ve altında son bölümler: portal ızgarasının ana kartı. */
-export function SeriesCard({ series, chapters = 2 }: { series: SeriesSummary; chapters?: number }) {
+/** Kapak ve altında son bölümler: portal ızgarasının ana kartı. `hot`: yeni bölüm gelmişse alev göster. */
+export function SeriesCard({
+  series,
+  chapters = 2,
+  hot = false,
+}: {
+  series: SeriesSummary;
+  chapters?: number;
+  hot?: boolean;
+}) {
   const latest = series.latestChapters.slice(0, chapters);
   return (
     <article className="group">
@@ -22,13 +31,20 @@ export function SeriesCard({ series, chapters = 2 }: { series: SeriesSummary; ch
         />
         {/* Alt kenarda okunabilirlik için hafif karartma */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute top-2 left-2 flex gap-1.5">
+        <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+          {series.exclusive && <ExclusiveBadge />}
+          <NewSeriesBadge addedAt={series.addedAt} />
           {series.status === "Tamamlandı" && (
             <span className="rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase backdrop-blur-md">
               Tamamlandı
             </span>
           )}
         </div>
+        {hot && (
+          <div className="absolute top-2 right-2">
+            <HotBadge iso={series.latestChapters[0]?.publishedAt} />
+          </div>
+        )}
         {series.latestChapters[0] && (
           <span className="absolute right-2 bottom-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-md">
             {series.chapterCount} bölüm

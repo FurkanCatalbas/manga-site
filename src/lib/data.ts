@@ -16,6 +16,9 @@ const seriesColumns = {
   slug: seriesTable.slug,
   title: seriesTable.title,
   titleEn: seriesTable.titleEn,
+  exclusive: seriesTable.exclusive,
+  featured: seriesTable.featured,
+  banner: seriesTable.banner,
   description: seriesTable.description,
   genres: seriesTable.genres,
   status: seriesTable.status,
@@ -157,6 +160,18 @@ export async function getRecentlyUpdated(): Promise<SeriesSummary[]> {
   return [...(await getSeriesList())].sort((a, b) =>
     (b.latestChapters[0]?.publishedAt ?? "").localeCompare(a.latestChapters[0]?.publishedAt ?? ""),
   );
+}
+
+/** Ana sayfa afişleri: panelde "Ana sayfa afişi" seçilen seriler, son güncellenen önce. Hiç yoksa son güncellenen 5 seri. */
+export async function getFeatured(): Promise<SeriesSummary[]> {
+  const recent = await getRecentlyUpdated();
+  const featured = recent.filter((s) => s.featured);
+  return featured.length ? featured : recent.slice(0, 5);
+}
+
+/** En son eklenen seriler (sitenin seriyi eklediği tarihe göre). */
+export async function getNewest(limit = 6): Promise<SeriesSummary[]> {
+  return [...(await getSeriesList())].sort((a, b) => b.addedAt.localeCompare(a.addedAt)).slice(0, limit);
 }
 
 const PERIOD_DAYS = { gunluk: 1, haftalik: 7, aylik: 30 } as const;

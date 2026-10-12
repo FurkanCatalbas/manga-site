@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ExclusiveBadge } from "@/components/Badges";
 import { ChevronLeftIcon, ChevronRightIcon, PlayIcon } from "@/components/icons";
 import type { SeriesSummary } from "@/lib/series";
 
@@ -55,20 +56,26 @@ export function HeroSlider({ items }: { items: SeriesSummary[] }) {
             inert={!active}
             className={`transition-opacity ${active ? "relative opacity-100 duration-700" : "absolute inset-0 opacity-0 duration-300"}`}
           >
-            {/* Bulanık kapak arka planı */}
+            {/* Panelde afiş görseli verilmişse tam genişlikte, yoksa kapağın bulanık hali arka plan olur */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               referrerPolicy="no-referrer"
-              src={s.cover}
+              src={s.banner || s.cover}
               alt=""
-              className={`absolute inset-0 h-full w-full object-cover opacity-50 blur-3xl transition-transform duration-[6s] ease-out ${active ? "scale-110" : "scale-125"}`}
+              fetchPriority={i === 0 ? "high" : "low"}
+              className={`absolute inset-0 h-full w-full object-cover transition-transform duration-[6s] ease-out ${
+                s.banner ? (active ? "scale-105" : "scale-100") : `opacity-50 blur-3xl ${active ? "scale-110" : "scale-125"}`
+              }`}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-bg/30" />
+            <div
+              className={`absolute inset-0 bg-gradient-to-r ${s.banner ? "from-bg/95 via-bg/55 to-transparent" : "from-bg via-bg/85 to-bg/30"}`}
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-bg/90 via-transparent to-transparent" />
 
-            <div className="relative flex min-h-[340px] items-center gap-5 px-4 pt-8 pb-16 sm:min-h-[400px] sm:gap-10 sm:px-10 sm:pt-12 sm:pb-20">
+            <div className="relative flex min-h-[380px] items-center gap-5 px-4 pt-8 pb-16 sm:min-h-[460px] sm:gap-10 sm:px-10 sm:pt-12 sm:pb-20 lg:min-h-[520px] lg:px-14">
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {s.exclusive && <ExclusiveBadge long />}
                   {s.genres.slice(0, 3).map((g) => (
                     <span
                       key={g}
@@ -99,7 +106,7 @@ export function HeroSlider({ items }: { items: SeriesSummary[] }) {
                 referrerPolicy="no-referrer"
                 src={s.cover}
                 alt={`${s.title} kapağı`}
-                className="w-28 shrink-0 rounded-2xl shadow-2xl ring-1 shadow-black/60 ring-white/15 sm:w-44 lg:w-56"
+                className={`${s.banner ? "hidden" : ""} w-28 shrink-0 rounded-2xl shadow-2xl ring-1 shadow-black/60 ring-white/15 sm:w-44 lg:w-56`}
               />
             </div>
           </div>

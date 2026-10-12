@@ -45,6 +45,9 @@ export type SeriesInput = {
   slug: string;
   title: string;
   titleEn: string;
+  exclusive: boolean;
+  featured: boolean;
+  banner: string;
   description: string;
   genres: string[];
   status: "Devam Ediyor" | "Tamamlandı";
@@ -72,6 +75,7 @@ function validateSeries(input: SeriesInput): string | undefined {
   if (!SLUG_PATTERN.test(input.slug)) return "Adres yalnızca küçük harf, rakam ve tire içerebilir.";
   if (!input.cover) return "Kapak görseli yükle.";
   if (!isImageSrc(input.cover)) return "Kapak bağlantısı https:// ile başlamalı.";
+  if (input.banner && !isImageSrc(input.banner)) return "Afiş bağlantısı https:// ile başlamalı.";
   if (!["Devam Ediyor", "Tamamlandı"].includes(input.status)) return "Geçersiz durum.";
   if (input.genres.some((g) => g.length > GENRE_MAX)) return `Tür adı en fazla ${GENRE_MAX} karakter olabilir.`;
   const source = parseSource(input.source);

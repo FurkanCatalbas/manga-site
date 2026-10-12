@@ -261,6 +261,9 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Panel: R2'ye yüklemeden, başka sitedeki görsel bağlantılarıyla kapak ve bölüm ekleme
 - Bölüm yayınlama API'si (`/api/admin/bolum`) ve Python yayıncı scripti için ortak `insertChapter`
 - Panel → Bölüm al: kaynak sitede tek tıkla bölüm gönderen yer imi
+- Ana sayfa: panelden seçilen büyük afişli hero, yan sütunda Popüler altında "Yeni seriler" (Türler yerine);
+  kartlarda "Yeni" (seri 14 gün içinde eklendiyse), alev (son güncellenenlerde, 3 gün içinde bölüm) ve
+  "Orijinal" rozetleri (`Badges.tsx`; zamana bağlı olanlar tarayıcıda `Fresh` ile)
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 

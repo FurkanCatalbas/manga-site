@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { date, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { boolean, date, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
 
 export const series = pgTable("series", {
   id: serial("id").primaryKey(),
@@ -7,6 +7,11 @@ export const series = pgTable("series", {
   title: text("title").notNull(),
   // Serinin İngilizce adı (isteğe bağlı); Türkçe ad `title`
   titleEn: text("title_en").notNull().default(""),
+  // "Sadece webtooku" (Orijinal) rozeti: yalnızca bu sitede yayınlanan seriler
+  exclusive: boolean("exclusive").notNull().default(false),
+  // Ana sayfanın en üstündeki afişlerde gösterilir; banner geniş afiş görseli (boşsa kapaktan üretilir)
+  featured: boolean("featured").notNull().default(false),
+  banner: text("banner").notNull().default(""),
   description: text("description").notNull(),
   genres: text("genres").array().notNull().default([]),
   status: text("status", { enum: ["Devam Ediyor", "Tamamlandı"] }).notNull(),
