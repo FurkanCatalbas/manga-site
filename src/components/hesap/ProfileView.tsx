@@ -1,15 +1,17 @@
 "use client";
 
 // Profil: kullanıcı adı, fotoğraf, çıkış ve hesap silme. Giriş yoksa giriş sayfasına gönderir.
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient, authError } from "@/lib/hesap-client";
 import { Avatar } from "./Avatar";
+import { ProfileExtras } from "./ProfileExtras";
 
 const input =
   "w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-base placeholder:text-muted focus:border-accent/60 focus:outline-none";
 
-export function ProfileView() {
+export function ProfileView({ seriesOptions = [] }: { seriesOptions?: { slug: string; title: string }[] }) {
   const router = useRouter();
   const { data, isPending, refetch } = authClient.useSession();
   const [username, setUsername] = useState<string>();
@@ -67,6 +69,9 @@ export function ProfileView() {
         <div className="min-w-0">
           <p className="truncate text-xl font-bold tracking-tight">@{user.username}</p>
           <p className="truncate text-sm text-muted">{user.email}</p>
+          <Link href={`/u/${user.username}`} className="mt-1 inline-block text-sm font-semibold text-accent hover:text-fg">
+            Herkese açık profilini gör →
+          </Link>
           {user.image && (
             <button type="button" onClick={removePhoto} className="mt-1 text-xs font-semibold text-muted hover:text-fg">
               Fotoğrafı kaldır
@@ -97,6 +102,8 @@ export function ProfileView() {
         </button>
       </form>
 
+      <ProfileExtras seriesOptions={seriesOptions} />
+
       <div className="flex flex-wrap gap-3">
         <button type="button" onClick={signOut} className="btn-ghost">Çıkış yap</button>
         <button type="button" onClick={() => setConfirmDelete((v) => !v)} className="btn-ghost text-accent">
@@ -107,7 +114,7 @@ export function ProfileView() {
       {confirmDelete && (
         <form onSubmit={deleteAccount} className="panel grid gap-3 border border-accent/40 p-5">
           <p className="text-sm leading-relaxed">
-            Hesabın, yorumların, beğenilerin ve tepkilerin <strong>kalıcı olarak</strong> silinir. Bu işlem geri alınamaz.
+            Hesabın ve paylaştığın her şey (yorumlar, puanlar, listeler, forum ve sohbet mesajları) <strong>kalıcı olarak</strong> silinir. Bu işlem geri alınamaz.
           </p>
           <label htmlFor="password" className="text-sm font-semibold">Şifren (e-postayla kayıt olduysan)</label>
           <input id="password" name="password" type="password" autoComplete="current-password" className={input} />

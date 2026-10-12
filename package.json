@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
     "db:backfill-sizes": "tsx scripts/backfill-page-sizes.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:topluluk-sql": "node scripts/generate-community-sql.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1149.0",

@@ -5,10 +5,24 @@ import { refresh, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { chapters, commentReports, comments, fansubs, genres, series, sessions, users } from "@/db/schema";
+import {
+  chapters,
+  chatMessages,
+  commentReports,
+  comments,
+  fansubs,
+  forumPosts,
+  forumReports,
+  forumTopics,
+  genres,
+  series,
+  sessions,
+  users,
+} from "@/db/schema";
 import { checkPassword, requireAdmin, SESSION_COOKIE, SESSION_MAX_AGE, sessionToken } from "@/lib/auth";
 import { type ChapterInput, insertChapter, isImageSrc } from "@/lib/chapters";
 import { cleanUrl, setSeriesFansub } from "@/lib/fansubs";
+import { FORUM_TAG, topicTag } from "@/lib/forum";
 import { cleanGenreName, ensureGenres, isMissingTable } from "@/lib/genres";
 import { notifyIndexNow } from "@/lib/indexnow";
 import { deletePrefix } from "@/lib/r2";
@@ -378,5 +392,52 @@ export async function setUserBanned(userId: string, banned: boolean) {
   await db.update(users).set({ banned }).where(eq(users.id, userId));
   // Engellenen kullanıcının oturumları kapanır (çerez önbelleğinde eski bilgi kalmasın)
   if (banned) await db.delete(sessions).where(eq(sessions.userId, userId));
+  refresh();
+}
+
+// --- Forum ve sohbet (moderasyon) ---
+
+export async function adminDeleteTopic(id: number) {
+  await requireAdmin();
+  await db.delete(forumTopics).where(eq(forumTopics.id, id));
+  updateTag(FORUM_TAG);
+  updateTag(topicTag(id));
+  refresh();
+}
+
+export async function adminDeletePost(id: number) {
+  await requireAdmin();
+  const [p] = await db
+    .update(forumPosts)
+    .set({ deleted: true, body: "" })
+    .where(eq(forumPosts.id, id))
+    .returning({ topicId: forumPosts.topicId });
+  if (p) {
+    await db.delete(forumReports).where(eq(forumReports.postId, id));
+    updateTag(topicTag(p.topicId));
+  }
+  refresh();
+}
+
+export async function setTopicFlag(id: number, flag: "pinned" | "locked", value: boolean) {
+  await requireAdmin();
+  await db
+    .update(forumTopics)
+    .set(flag === "pinned" ? { pinned: value } : { locked: value })
+    .where(eq(forumTopics.id, id));
+  updateTag(FORUM_TAG);
+  updateTag(topicTag(id));
+  refresh();
+}
+
+export async function dismissForumReport(id: number) {
+  await requireAdmin();
+  await db.delete(forumReports).where(eq(forumReports.id, id));
+  refresh();
+}
+
+export async function adminDeleteChatMessage(id: number) {
+  await requireAdmin();
+  await db.update(chatMessages).set({ deleted: true }).where(eq(chatMessages.id, id));
   refresh();
 }

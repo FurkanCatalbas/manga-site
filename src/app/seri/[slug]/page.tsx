@@ -8,7 +8,13 @@ import { ChapterList, ReadButtons } from "@/components/SeriesActions";
 import { SectionHeader, SeriesCard } from "@/components/SeriesCard";
 import { Description } from "@/components/Description";
 import { ShareButton } from "@/components/ShareButton";
+import { AddToList, ListCard } from "@/components/topluluk/Lists";
+import { RatingPanel } from "@/components/topluluk/Rating";
 import { CommentsSection } from "@/components/topluluk/Sections";
+import { authProviders } from "@/lib/hesap";
+import { getListsWithSeries } from "@/lib/listeler";
+import { getRatingSummary } from "@/lib/puan";
+import { resolveScope } from "@/lib/topluluk";
 import { SourceNotice } from "@/components/SourceNotice";
 import { getSeriesSource } from "@/lib/fansubs";
 import { JsonLd } from "@/components/JsonLd";
@@ -56,6 +62,10 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
   ]);
   if (!series) notFound();
   const names = otherNames(series);
+  const scope = authProviders.enabled ? await resolveScope({ slug: series.slug }) : null;
+  const [rating, inLists] = scope
+    ? await Promise.all([getRatingSummary(scope.seriesId), getListsWithSeries(series.slug)])
+    : [null, null];
 
   const first = series.chapters[0];
   const latest = series.chapters.at(-1);
@@ -73,6 +83,9 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
         image: absoluteUrl(series.cover),
         ...(names.length > 0 && { alternateName: names }),
         genre: series.genres,
+        ...(rating?.count && {
+          aggregateRating: { "@type": "AggregateRating", ratingValue: rating.avg, ratingCount: rating.count, bestRating: 10, worstRating: 1 },
+        }),
         inLanguage: "tr",
         ...(latest && { dateModified: latest.publishedAt }),
         hasPart: series.chapters.map((c) => ({
@@ -137,6 +150,13 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
                 <EyeIcon size={15} className="text-muted" />
                 {series.views.toLocaleString("tr-TR")} okunma
               </span>
+              {rating && rating.count > 0 && (
+                <a href="#puan-bolumu" className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 font-semibold">
+                  <span className="text-amber-400">★</span>
+                  {rating.avg.toFixed(1)}
+                  <span className="font-normal text-muted">({rating.count})</span>
+                </a>
+              )}
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -159,7 +179,10 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
             )}
             <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
               <ReadButtons slug={series.slug} first={first?.number ?? null} latest={latest?.number ?? null} />
-              <ShareButton url={url} title={`${series.title} Türkçe oku`} className="w-full sm:w-auto" />
+              <div className="grid grid-cols-2 gap-2.5 sm:flex">
+                <ShareButton url={url} title={`${series.title} Türkçe oku`} className="w-full sm:w-auto" />
+                {authProviders.enabled && <AddToList slug={series.slug} className="w-full sm:w-auto" />}
+              </div>
             </div>
           </div>
         </div>
@@ -172,6 +195,16 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
             chapters={series.chapters}
             notice={source && <SourceNotice source={source} />}
           />
+          {rating && (
+            <div id="puan-bolumu" className="mt-14 scroll-mt-24">
+              <h2 className="mb-4 text-xl font-bold tracking-tight sm:text-2xl">Puan</h2>
+              <RatingPanel
+                slug={series.slug}
+                initial={rating}
+                loginHref={`/giris?geri=${encodeURIComponent(`/seri/${series.slug}#puan-bolumu`)}`}
+              />
+            </div>
+          )}
           <div className="mt-14">
             <CommentsSection slug={series.slug} />
           </div>
@@ -183,6 +216,18 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
                   <SeriesCard key={s.slug} series={s} chapters={0} />
                 ))}
               </div>
+            </section>
+          )}
+          {inLists && inLists.length > 0 && (
+            <section className="mt-14">
+              <SectionHeader title="Bu seriyi içeren listeler" href="/listeler" linkLabel="Tüm listeler" />
+              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {inLists.map((l) => (
+                  <li key={l.id}>
+                    <ListCard list={l} />
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
         </section>

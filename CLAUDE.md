@@ -72,6 +72,7 @@ Yeni kod da bu dile ve üsluba uymalı.
 | `npm run db:backfill-sizes` | Sayfa boyutu kayıtlı olmayan eski bölümlerin boyutlarını okuyup kaydeder |
 | `npm run db:studio` | Drizzle Studio |
 | `npx tsx scripts/r2-check.ts` | R2 bağlantısını dener |
+| `npm run db:topluluk-sql` | Hesap/topluluk tablolarının tekrar çalıştırılabilir SQL'ini `src/lib/topluluk-sql.ts`'e yazar (şemaya topluluk tablosu eklenince çalıştır; yeni tabloyu betikteki `TABLES`'a ekle) |
 
 ## Ortam değişkenleri (`.env.local`)
 
@@ -184,7 +185,36 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
 - **Tepkiler** (`chapter_reactions`): bölüm sonunda 5 tepki (`REACTIONS`), kullanıcı başına bölümde bir;
   sayılar önbellekli (`tepki-<bölümId>`).
 - Tablolar yoksa yorum/tepki bölümleri görünmez (önbellekte yalnızca birkaç dakika tutulur), panel → Yorumlar
-  oluşturma SQL'ini gösterir (`src/lib/topluluk-sql.ts`; şema değişince güncelle).
+  oluşturma SQL'ini gösterir (`src/lib/topluluk-sql.ts`, `npm run db:topluluk-sql` ile üretilir; tekrar
+  çalıştırılabilir). Kullanıcı tabloları ekledikten sonra tüm SQL'i yeniden çalıştırması güvenli.
+- **users tablosuna sütun ekleme:** Better Auth users'ı tüm şema sütunlarıyla okur/yazar; SQL çalıştırılmadan
+  yayınlanan yeni sütun girişi tamamen bozar. Profil bilgileri bu yüzden ayrı `profiles` tablosunda.
+- Ortak üye kontrolü `src/lib/uye.ts`: `currentMember()` (oturum + veritabanından engel), `recentCount()`
+  (hız sınırı), `cleanText`, `linkCount`, `Result` tipi. Yeni topluluk action'ları bunu kullanmalı.
+- **Puanlar** (`series_ratings`, 1–10; arayüzde 5 yıldız, her yıldızın sol/sağ yarısı tek/çift puan):
+  `src/lib/puan.ts` (`getRatingSummary` seri başına önbellekli, `getAllRatings` Keşfet ve kartlar için),
+  `puan-actions.ts`. Seri sayfasında üst bilgide ★ çipi, ana sütunda `RatingPanel` (ortalama, dağılım, kendi
+  puanı), JSON-LD `aggregateRating`. Seri yorumlarında yazarın puanı rozet olarak görünür (`CommentView.score`).
+  Keşfet'te "En yüksek puan" sıralaması ve kartlarda puan (`SeriesCard rating`).
+- **Öneri listeleri** (`lists`, `list_items`): `src/lib/listeler.ts`, `liste-actions.ts`. Seri sayfasında
+  "Listeye ekle" (`AddToList`: listelerin işaretlenir, yeni liste) ve "Bu seriyi içeren listeler". `/liste/[id]`
+  (sahibi düzenler: ad, açıklama, gizlilik, sıra, not, silme; gizli liste yalnızca sahibine, sunucuda kontrol),
+  `/listeler` keşif. Sınırlar `LIST_LIMITS`.
+- **Forum** (`forum_topics`, `forum_posts`, `forum_reports`): kategoriler kodda (`FORUM_CATEGORIES`,
+  `src/lib/forum.ts`). `/forum`, `/forum/[kategori]`, `/forum/konu/[id]` (JSON-LD DiscussionForumPosting),
+  `/forum/yeni` (`?kategori=` ön seçimi). Konuya seri bağlanabilir. Yanıtlar düz liste (sayfa başı 40, "daha fazla"
+  action ile). Kendi yanıtını siler (yerinde "silindi"); konusunu yalnızca yanıt almamışsa siler. Sınırlar:
+  konu 2 dk'da bir/günde 10, yanıt 15 sn'de bir. Önbellek etiketleri `forum`, `forum-konu-<id>`.
+- **Sohbet** (`chat_messages`, tek oda): `/sohbet`, `ChatRoom.tsx` sekme görünürken 4 sn'de bir
+  `/api/sohbet?sonra=<id>` yoklar (dış servis yok; kalabalıkta Pusher/Ably'ye geçilebilir), `?once=` eskiler.
+  3 sn'de bir mesaj, günde 500; 30 günden eski mesajlar ara sıra silinir.
+- **Profil:** `/u/[kullanıcıadı]` (`src/lib/profil.ts`, birkaç dakika önbellekli, noindex): en sevilen serinin
+  bulanık kapağı, tanıtım, rozetler (`badgesFor`), istatistikler, sevdiği türler (7+ puan verdiği serilerden),
+  puanladıkları, listeleri, son yorumları, forum konuları. Tanıtım ve en sevilen seri `/profil`'den
+  (`ProfileExtras`, `profiles` tablosu). Yorum, forum ve sohbetteki kullanıcı adları profile bağlanır (`UserLink`).
+- **Topluluk merkezi** `/topluluk` (forum son konular, sohbet, listeler); alt menüde ve masaüstü başlıkta
+  "Topluluk" sekmesi (`/forum`, `/sohbet`, `/listeler`, `/liste`, `/u` de bu sekmeye sayılır). Sayfalar arası
+  `CommunityTabs`. Panel → "Forum ve sohbet" (`/admin/forum`): şikâyetler, sabitle/kilitle/sil, sohbet silme, engel.
 - Panel → Yorumlar (`/admin/yorumlar`): şikâyet edilenler, son yorumlar, silme, şikâyeti kapatma, engelleme
   (engel oturumları da kapatır).
 - Yasal sayfalar: `/gizlilik` (KVKK aydınlatma), `/kullanim-kosullari`, `/topluluk-kurallari` (`LegalPage.tsx`);
@@ -240,8 +270,10 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 ### Site iskeleti ve okuma geçmişi
 
 - `layout.tsx`: cam başlık (masaüstünde bağlantılar + `GenreMenu` açılır tür menüsü + arama, mobilde
-  arama ikonu), türleri ve Keşfet bağlantılarını listeleyen altbilgi ve `MobileTabBar` (Ana sayfa,
-  Keşfet, Kütüphane; okuyucuda ve panelde gizli; `/tur` sayfalarında Keşfet etkin görünür).
+  arama ikonu, sağda hesap düğmesi), türleri ve Keşfet bağlantılarını listeleyen altbilgi ve `MobileTabBar`
+  (Ana sayfa, Keşfet, Kütüphane, Topluluk, Profil; okuyucuda ve panelde gizli; `/tur` sayfalarında Keşfet etkin).
+- Seri sayfası: bölüm listesi önce 10, "Daha fazla göster" ile 30'ar, "Tümü" (`SeriesActions.tsx`); uzun
+  açıklama 3 satır + "Devamını göster" (`Description.tsx`, metin HTML'de tam).
 - Seri listeleri `SeriesBrowser.tsx`: arama (Türkçe + İngilizce ad), tür/durum çipleri, sıralama, sayfa başına 24 seri.
   Süzme tarayıcıda yapılır. `/ara`'da seçimler adrese yazılır (`q`, `tur`, `durum=devam|tamam`,
   `sira=guncel|yeni|populer|az`, `donem=gunluk|haftalik|aylik|tum`, `sayfa`) ve `SeriesBrowserFromUrl`
@@ -341,6 +373,9 @@ yalnızca async fonksiyon dışa aktarabilir.
   benzer seriler, kapaklı paylaşım görselleri ve Paylaş düğmesi, IndexNow, Bing doğrulaması, Vercel Analytics
 - Topluluk: Google + e-posta ile hesaplar (Better Auth), profil, seri ve bölüm yorumları (yanıt, beğeni,
   spoiler, şikâyet), bölüm sonu tepkileri, panelde yorum moderasyonu ve engelleme, KVKK/kullanım/topluluk sayfaları
+- Topluluk 2: forum, canlı sohbet (yoklama), seri puanlama (yıldız, ortalama, Keşfet sıralaması, JSON-LD),
+  öneri listeleri, herkese açık profil (rozetler, istatistikler), Topluluk merkezi ve sekmesi, panelde forum/sohbet
+- Seri sayfası: 10'ar açılan bölüm listesi, kısaltılmış açıklama; bölüm sonundaki kaynak satırı kaldırıldı
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
@@ -352,7 +387,8 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Yükleme iskeletleri (skeleton) ve sayfa geçiş animasyonları
 - Hesaplarla: kütüphane/takip listesi ve okuma geçmişinin sunucuya taşınması (cihazlar arası), yeni bölüm
   bildirimi, puanlama
-- Topluluk: forum (kategoriler, konular), sitede canlı sohbet (kullanıcı istedi; Pusher/Ably ya da yoklama)
+- Topluluk: takip et + yeni bölüm bildirimi, okuma geçmişinin hesaba taşınması, forumda beğeni/alıntı, bildirim
+  merkezi, sohbette çevrimiçi sayısı, kullanıcı seviyeleri
 - Keşif: yayın takvimi, RSS, seri tipi (webtoon/manga/manhwa) filtresi
 - Panel: zamanlanmış yayın, taslak bölümler, ZIP ile toplu yükleme, bölüm bazlı istatistik
 - Altyapı: hata takibi (Sentry), analitik, Playwright uçtan uca testleri

@@ -7,7 +7,7 @@
 // <Suspense> içinde yapılabilir; layout önce `pathname={null}` ile işaretsiz hâlini gösterir.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CompassIcon, HomeIcon, LibraryIcon, UserIcon } from "@/components/icons";
+import { ChatIcon, CompassIcon, HomeIcon, LibraryIcon, UserIcon } from "@/components/icons";
 
 type Tab = { href: string; label: string; Icon: typeof HomeIcon; also?: string[]; mobileOnly?: boolean };
 
@@ -15,6 +15,7 @@ const TABS: Tab[] = [
   { href: "/", label: "Ana sayfa", Icon: HomeIcon },
   { href: "/ara", label: "Keşfet", Icon: CompassIcon, also: ["/tur"] },
   { href: "/kutuphane", label: "Kütüphane", Icon: LibraryIcon },
+  { href: "/topluluk", label: "Topluluk", Icon: ChatIcon, also: ["/forum", "/sohbet", "/listeler", "/liste", "/u"] },
   // Masaüstünde başlıkta hesap düğmesi var
   { href: "/profil", label: "Profil", Icon: UserIcon, also: ["/giris", "/kayit", "/sifre"], mobileOnly: true },
 ];

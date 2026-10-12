@@ -22,7 +22,11 @@ export default function PrivacyPage() {
           <strong>Hesap bilgileri:</strong> adın, e-posta adresin, kullanıcı adın; Google ile girersen Google&apos;ın verdiği
           profil fotoğrafın. E-postayla kayıtta şifren yalnızca geri döndürülemez özet (hash) olarak saklanır.
         </li>
-        <li><strong>Paylaştıkların:</strong> yorumların, beğenilerin, bölüm tepkilerin ve şikâyet bildirimlerin.</li>
+        <li>
+          <strong>Paylaştıkların:</strong> yorumların, beğenilerin, bölüm tepkilerin, seri puanların, öneri listelerin,
+          forum konuların ve yanıtların, sohbet mesajların, profil tanıtımın ve şikâyet bildirimlerin. Bunlar (gizli
+          listeler ve şikâyetler hariç) kullanıcı adınla herkese açık görünür. Sohbet mesajları 30 gün sonra silinir.
+        </li>
         <li>
           <strong>Güvenlik bilgileri:</strong> oturum açtığında IP adresin ve tarayıcı bilgin oturum kaydında tutulur
           (hesabını korumak ve kötüye kullanımı önlemek için).
@@ -59,7 +63,8 @@ export default function PrivacyPage() {
       <h2>Ne kadar süre saklanıyor?</h2>
       <p>
         Hesap bilgilerin ve paylaştıkların hesabını silene kadar saklanır. Profil sayfasındaki &quot;Hesabımı sil&quot; ile
-        hesabın, yorumların, beğenilerin ve tepkilerin kalıcı olarak silinir. Oturum kayıtları süresi dolunca silinir.
+        hesabın ve paylaştığın her şey (yorumlar, puanlar, listeler, forum konuları ve yanıtları, sohbet mesajları,
+        beğeniler, tepkiler) kalıcı olarak silinir. Oturum kayıtları süresi dolunca silinir.
       </p>
 
       <h2>Hakların (KVKK m. 11)</h2>

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Avatar } from "@/components/hesap/Avatar";
 import { ChatIcon, FlagIcon, HeartIcon, ReplyIcon } from "@/components/icons";
 import { TimeAgo } from "@/components/TimeAgo";
+import { profileHref } from "./UserBits";
 import { authClient } from "@/lib/hesap-client";
 import type { CommentPage, CommentView, ScopeRef } from "@/lib/topluluk";
 import { deleteComment, loadMoreComments, myLikes, postComment, reportComment, toggleLike } from "@/lib/topluluk-actions";
@@ -157,7 +158,16 @@ function Item({
       <Avatar name={c.user?.username ?? "?"} image={c.user?.image} size={isReply ? 28 : 36} />
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
-          <span className="font-semibold">@{c.user?.username}</span>
+          {c.user && (
+            <Link href={profileHref(c.user.username)} className="font-semibold hover:text-accent">
+              @{c.user.username}
+            </Link>
+          )}
+          {c.score ? (
+            <span className="rounded-md bg-amber-400/15 px-1.5 text-[11px] font-bold text-amber-300" title="Seriye verdiği puan">
+              ★ {c.score}/10
+            </span>
+          ) : null}
           <TimeAgo iso={c.createdAt} className="text-xs text-muted" />
         </p>
         {c.spoiler ? <SpoilerText text={c.body} /> : <Body text={c.body} />}

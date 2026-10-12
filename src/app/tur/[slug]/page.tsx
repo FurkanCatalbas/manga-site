@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { ChevronRightIcon } from "@/components/icons";
 import { SeriesBrowser } from "@/components/SeriesBrowser";
 import { getGenres, getPeriodViews, getSeriesList } from "@/lib/data";
+import { getAllRatings } from "@/lib/puan";
 import { slugify } from "@/lib/slug";
 import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
 
@@ -33,7 +34,7 @@ export async function generateMetadata(props: PageProps<"/tur/[slug]">): Promise
 
 export default async function GenrePage(props: PageProps<"/tur/[slug]">) {
   const { slug } = await props.params;
-  const [genres, all, views] = await Promise.all([getGenres(), getSeriesList(), getPeriodViews()]);
+  const [genres, all, views, ratings] = await Promise.all([getGenres(), getSeriesList(), getPeriodViews(), getAllRatings()]);
   const genre = genres.find((g) => g.slug === slug);
   if (!genre) notFound();
 
@@ -66,7 +67,7 @@ export default async function GenrePage(props: PageProps<"/tur/[slug]">) {
       </p>
 
       <div className="mt-6">
-        <SeriesBrowser series={series} views={views} />
+        <SeriesBrowser series={series} views={views} ratings={ratings} />
       </div>
 
       {others.length > 0 && (

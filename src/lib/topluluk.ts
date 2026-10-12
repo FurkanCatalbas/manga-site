@@ -3,7 +3,7 @@
 import { and, asc, count, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/db";
-import { chapterReactions, chapters, comments, series, users } from "@/db/schema";
+import { chapterReactions, chapters, comments, series, seriesRatings, users } from "@/db/schema";
 import { isMissingTable } from "@/lib/genres";
 
 export const COMMENT_PAGE = 20;
@@ -32,6 +32,7 @@ export type CommentView = {
   deleted: boolean;
   createdAt: string;
   user: { username: string; image: string | null } | null; // silinmiş yorumda null
+  score?: number | null; // seri yorumlarında yazarın bu seriye verdiği puan (1–10)
   replies: CommentView[];
 };
 
@@ -71,6 +72,7 @@ const commentColumns = {
   likes: comments.likes,
   deleted: comments.deleted,
   createdAt: comments.createdAt,
+  userId: comments.userId,
   username: users.username,
   image: users.image,
 };
@@ -83,12 +85,14 @@ type Row = {
   likes: number;
   deleted: boolean;
   createdAt: Date | string;
+  userId: string;
   username: string | null;
   image: string | null;
 };
 
-function toView(r: Row): CommentView {
+function toView(r: Row, scores?: Map<string, number>): CommentView {
   return {
+    score: r.deleted ? null : (scores?.get(r.userId) ?? null),
     id: r.id,
     body: r.deleted ? "" : r.body,
     spoiler: r.spoiler,
@@ -123,9 +127,23 @@ async function fetchComments(scope: Scope, before?: number): Promise<CommentPage
         .where(inArray(comments.parentId, ids))
         .orderBy(asc(comments.id))
     : [];
+  // Seri sayfasında yorum yazanların seriye verdiği puan da gösterilir
+  const scores = new Map<string, number>();
+  if (scope.chapterId === null && page.length) {
+    try {
+      const userIds = [...new Set([...page, ...replies].map((r) => r.userId))];
+      const rows = await db
+        .select({ userId: seriesRatings.userId, score: seriesRatings.score })
+        .from(seriesRatings)
+        .where(and(eq(seriesRatings.seriesId, scope.seriesId), inArray(seriesRatings.userId, userIds)));
+      for (const r of rows) scores.set(r.userId, r.score);
+    } catch (e) {
+      if (!isMissingTable(e)) throw e;
+    }
+  }
   const threads = page.map((t) => ({
-    ...toView(t),
-    replies: replies.filter((r) => r.parentId === t.id).map((r) => toView(r)),
+    ...toView(t, scores),
+    replies: replies.filter((r) => r.parentId === t.id).map((r) => toView(r, scores)),
   }));
   return { total, threads, hasMore: tops.length > COMMENT_PAGE };
 }

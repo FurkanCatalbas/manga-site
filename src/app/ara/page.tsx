@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ArrowRightIcon } from "@/components/icons";
 import { SeriesBrowser, SeriesBrowserFromUrl } from "@/components/SeriesBrowser";
 import { getAllGenres, getPeriodViews, getSeriesList } from "@/lib/data";
+import { getAllRatings } from "@/lib/puan";
 
 export const metadata: Metadata = {
   title: "Keşfet: Tüm Türkçe Webtoon ve Manga Serileri",
@@ -12,8 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function SearchPage() {
-  const [series, genres, views] = await Promise.all([getSeriesList(), getAllGenres(), getPeriodViews()]);
-  const props = { series, genres, views };
+  const [series, genres, views, ratings] = await Promise.all([getSeriesList(), getAllGenres(), getPeriodViews(), getAllRatings()]);
+  const props = { series, genres, views, ratings };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">

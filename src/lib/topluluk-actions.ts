@@ -5,8 +5,8 @@
 import { and, count, eq, gt, sql } from "drizzle-orm";
 import { updateTag } from "next/cache";
 import { db } from "@/db";
-import { chapterReactions, commentLikes, commentReports, comments, users } from "@/db/schema";
-import { getSessionUser, type SessionUser } from "@/lib/hesap";
+import { chapterReactions, commentLikes, commentReports, comments } from "@/db/schema";
+import { getSessionUser } from "@/lib/hesap";
 import {
   COMMENT_MAX,
   type CommentPage,
@@ -18,22 +18,11 @@ import {
   type ScopeRef,
   scopeTag,
 } from "@/lib/topluluk";
+import { currentMember, LOGIN, type Result } from "@/lib/uye";
 
-type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
-
-const LOGIN = "Bunun için giriş yapmalısın.";
-const BANNED = "Hesabın yorum ve tepkilere kapatıldı.";
 const COOLDOWN_SECONDS = 20;
 const DAILY_LIMIT = 100;
-
-async function currentUser(): Promise<{ user: SessionUser; error?: undefined } | { user?: undefined; error: string }> {
-  const user = await getSessionUser();
-  if (!user) return { error: LOGIN };
-  // Oturum bilgisi çerezde birkaç dakika önbellekli; engel durumu her işlemde veritabanından okunur
-  const [row] = await db.select({ banned: users.banned }).from(users).where(eq(users.id, user.id)).limit(1);
-  if (!row || row.banned) return { error: row ? BANNED : LOGIN };
-  return { user };
-}
+const currentUser = currentMember;
 
 function cleanRef(ref: ScopeRef): ScopeRef | null {
   const slug = String(ref?.slug ?? "");

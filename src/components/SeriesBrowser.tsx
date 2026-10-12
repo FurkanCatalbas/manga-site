@@ -16,6 +16,7 @@ const SORTS = {
   guncel: "Son güncellenen",
   yeni: "Yeni eklenen",
   populer: "En popüler",
+  puan: "En yüksek puan",
   az: "A-Z",
 } as const;
 type Sort = keyof typeof SORTS;
@@ -72,7 +73,9 @@ function toParams(s: BrowseState) {
   return p.toString();
 }
 
-function sortSeries(list: SeriesSummary[], sort: Sort, period: Period, views: Record<string, PeriodViews>) {
+type Ratings = Record<string, { avg: number; count: number }>;
+
+function sortSeries(list: SeriesSummary[], sort: Sort, period: Period, views: Record<string, PeriodViews>, ratings: Ratings) {
   const latest = (s: SeriesSummary) => s.latestChapters[0]?.publishedAt ?? "";
   const v = (s: SeriesSummary, p: Period) => views[s.slug]?.[p] ?? (p === "tum" ? s.views : 0);
   const sorted = [...list];
@@ -84,6 +87,11 @@ function sortSeries(list: SeriesSummary[], sort: Sort, period: Period, views: Re
     case "populer":
       // Dönemde eşitlik varsa (ör. ikisi de 0) toplam okunma belirler
       return sorted.sort((a, b) => v(b, period) - v(a, period) || v(b, "tum") - v(a, "tum"));
+    case "puan":
+      // Puanı olmayanlar sona; eşit ortalamada çok puan alan önce
+      return sorted.sort(
+        (a, b) => (ratings[b.slug]?.avg ?? -1) - (ratings[a.slug]?.avg ?? -1) || (ratings[b.slug]?.count ?? 0) - (ratings[a.slug]?.count ?? 0),
+      );
     case "az":
       return sorted.sort((a, b) => a.title.localeCompare(b.title, "tr"));
   }
@@ -161,6 +169,7 @@ function Pagination({ page, total, onChange }: { page: number; total: number; on
 export function SeriesBrowser({
   series,
   views,
+  ratings = {},
   genres,
   initial = DEFAULT_BROWSE,
   syncUrl = false,
@@ -168,6 +177,8 @@ export function SeriesBrowser({
   series: SeriesSummary[];
   /** Dönemsel okunmalar (popülerliğe göre sıralama için), slug'a göre */
   views: Record<string, PeriodViews>;
+  /** Seri puanları (ortalama ve sayı), slug'a göre */
+  ratings?: Ratings;
   /** Verilirse tür çipleri gösterilir (tür sayfalarında tür zaten belli) */
   genres?: string[];
   initial?: BrowseState;
@@ -193,7 +204,7 @@ export function SeriesBrowser({
       (!state.genre || s.genres.includes(state.genre)) &&
       (!state.status || s.status === state.status),
   );
-  const results = sortSeries(filtered, state.sort, state.period, views);
+  const results = sortSeries(filtered, state.sort, state.period, views, ratings);
   const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const page = Math.min(state.page, totalPages);
   const shown = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -287,7 +298,7 @@ export function SeriesBrowser({
       ) : (
         <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 md:grid-cols-4 lg:grid-cols-6">
           {shown.map((s) => (
-            <SeriesCard key={s.slug} series={s} chapters={1} />
+            <SeriesCard key={s.slug} series={s} chapters={1} rating={ratings[s.slug]?.avg} />
           ))}
         </div>
       )}

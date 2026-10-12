@@ -9,10 +9,13 @@ export function SeriesCard({
   series,
   chapters = 2,
   hot = false,
+  rating,
 }: {
   series: SeriesSummary;
   chapters?: number;
   hot?: boolean;
+  /** Ortalama puan (10 üzerinden); verilirse kapakta yıldızla görünür */
+  rating?: number;
 }) {
   const latest = series.latestChapters.slice(0, chapters);
   return (
@@ -44,6 +47,11 @@ export function SeriesCard({
           <div className="absolute top-2 right-2">
             <HotBadge iso={series.latestChapters[0]?.publishedAt} />
           </div>
+        )}
+        {rating !== undefined && (
+          <span className="absolute bottom-2 left-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-md">
+            <span className="text-amber-400">★</span> {rating.toFixed(1)}
+          </span>
         )}
         {series.latestChapters[0] && (
           <span className="absolute right-2 bottom-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-md">
