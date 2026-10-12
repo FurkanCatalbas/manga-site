@@ -81,6 +81,10 @@ Yeni kod da bu dile ve üsluba uymalı.
   - R2 için kendi alan adı: `https://cdn.webtooku.com.tr` (`R2_PUBLIC_URL` bu olmalı; eski `r2.dev` adresinden geçiş yapıldı)
 - `SITE_URL`: isteğe bağlı; yoksa Vercel üretim adresi, o da yoksa localhost
 - `VIEW_SALT`: isteğe bağlı; okunma sayacındaki IP özetlerinin tuzu
+- `CONTACT_EMAIL`: yasal sayfalardaki başvuru adresi (varsayılan `iletisim@webtooku.com.tr`)
+- Hesaplar: `BETTER_AUTH_SECRET` (yoksa hesap/yorum/tepki kapalı), `GOOGLE_CLIENT_ID/SECRET`, `RESEND_API_KEY`
+  + `EMAIL_FROM` (e-postayla kayıt; yoksa yalnızca Google), isteğe bağlı `DISCORD_CLIENT_ID/SECRET`.
+  `AUTH_DEV_EMAIL=1` yalnızca yerel test: e-posta kaydı doğrulamasız açılır, e-postalar günlüğe yazılır.
 
 ## Mimari
 
@@ -154,6 +158,39 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   eklenecekse aynı yere.
 - Ölçüm: Vercel Web Analytics (`SiteAnalytics.tsx`, `/admin` sayılmaz); Vercel panelinde açılmalı.
 - `SITE_URL` canlıda `https://www.webtooku.com.tr` olmalı (canonical, site haritası, IndexNow buna göre).
+
+### Hesaplar ve topluluk
+
+- **Better Auth** (`src/lib/hesap.ts`, istemci `src/lib/hesap-client.ts`, uç noktalar `/api/auth/*`). Tablolar
+  `users`, `sessions`, `accounts`, `verifications` (Postgres'te `user` ayrılmış sözcük olduğu için çoğul; adaptöre
+  `schema` eşlemesiyle verilir). neon-http transaction desteklemez; Drizzle adaptörü pg'de transaction kullanmaz.
+  `getAuth()` env yoksa null döner, site hesapsız çalışır. Giriş yolları: Google, e-posta+şifre (Resend varsa
+  doğrulama zorunlu), Discord (env varsa). Aynı e-postalı Google hesabı mevcut hesaba bağlanır.
+- `users.username` sitede görünen ad (gerçek ad gösterilmez): kayıtta addan üretilir (`uniqueUsername`),
+  profilden `authClient.updateUser({ username })` ile değişir; kural ve tekillik `databaseHooks.user.update.before`
+  içinde (`APIError`). `users.banned`: panelden engel; engelli yorum/beğeni/tepki yapamaz.
+- **Oturum tarayıcıda okunur** (`authClient.useSession()`): sayfalar statik kalır. Başlıkta `AccountButton`
+  (masaüstü), mobilde alt menüde Profil sekmesi. Sunucuda `getSessionUser()` (yalnızca action/Suspense içinde).
+  Oturum çerezi 5 dk önbellekli; bu yüzden engel durumu her işlemde veritabanından okunur (`currentUser`).
+- Sayfalar: `/giris`, `/kayit`, `/sifre` (sıfırlama isteği), `/sifre/yeni?token=`, `/profil` (kullanıcı adı,
+  fotoğrafı kaldırma, çıkış, hesap silme). Dönüş adresi `?geri=` gönderimde `window.location`'dan okunur
+  (`safeNext` yalnızca site içi yol kabul eder); bu sayede formlar önceden çizilen HTML'de var.
+- **Yorumlar** (`comments`, `comment_likes`, `comment_reports`): seri sayfasında (chapter_id boş) ve bölüm
+  sayfasında. Yanıt tek seviye. Okuma `src/lib/topluluk.ts` (`getComments` ilk sayfa önbellekli, etiket
+  `yorum-c<bölümId>` / `yorum-s<seriId>`), yazma `src/lib/topluluk-actions.ts` (server action, `updateTag`).
+  İstemciden gelen kimliklere güvenilmez: `{ slug, chapter }` sunucuda `resolveScope` ile kimliğe çevrilir.
+  Sınırlar: 2–2000 karakter, en fazla 2 bağlantı, 20 sn'de bir, günde 100. Yanıtı olan yorum silinince
+  "Bu yorum silindi" olarak kalır. Bölüm sayfasında ilk 3 başlık görünür (`preview`).
+- **Tepkiler** (`chapter_reactions`): bölüm sonunda 5 tepki (`REACTIONS`), kullanıcı başına bölümde bir;
+  sayılar önbellekli (`tepki-<bölümId>`).
+- Tablolar yoksa yorum/tepki bölümleri görünmez (önbellekte yalnızca birkaç dakika tutulur), panel → Yorumlar
+  oluşturma SQL'ini gösterir (`src/lib/topluluk-sql.ts`; şema değişince güncelle).
+- Panel → Yorumlar (`/admin/yorumlar`): şikâyet edilenler, son yorumlar, silme, şikâyeti kapatma, engelleme
+  (engel oturumları da kapatır).
+- Yasal sayfalar: `/gizlilik` (KVKK aydınlatma), `/kullanim-kosullari`, `/topluluk-kurallari` (`LegalPage.tsx`);
+  altbilgide bağlantılar. Yeni bir kişisel veri işlenirse gizlilik metnini güncelle.
+- Test: `AUTH_DEV_EMAIL=1` + `BETTER_AUTH_SECRET` ile e-posta kaydı doğrulamasız çalışır; Playwright ile
+  kayıt → yorum → beğeni → şikâyet → panelde engel akışı denenebilir. Google girişi bulut ortamında denenemez.
 
 ### Okunma sayacı: `src/app/api/goruntulenme/route.ts`
 
@@ -257,6 +294,7 @@ yalnızca async fonksiyon dışa aktarabilir.
   2. `npm i --no-save pg @types/pg`; `src/db/index.ts`'i geçici olarak `drizzle-orm/node-postgres`'e çevir.
   3. `DATABASE_URL=... npx drizzle-kit push` ile şemayı kur, `next dev` ile dene.
   4. **Bitince `git checkout -- src/db/index.ts`**; test sürücüsü asla commit edilmemeli.
+  5. Scratchpad izinleri sıfırlanınca Postgres kapanabiliyor; veri klasörünü `/var/tmp` altında tutmak daha sağlam.
 - Tarayıcı testi: Playwright, `executablePath: "/opt/pw-browsers/chromium"` (`playwright-core`'u scratchpad'e kur).
 - `pkill -f "next dev ..."` aynı komut satırındaki kabuğu da öldürür (desen kendi komutuyla eşleşir).
   Önce `pgrep` ile PID bul, sonra ayrı komutla `kill`.
@@ -301,6 +339,8 @@ yalnızca async fonksiyon dışa aktarabilir.
   "Orijinal" rozetleri (`Badges.tsx`; zamana bağlı olanlar tarayıcıda `Fresh` ile)
 - SEO: diğer adlar (`alt_titles`), başlıklarda "Türkçe", bölüm sayfasında seri bilgisi ve son bölümler,
   benzer seriler, kapaklı paylaşım görselleri ve Paylaş düğmesi, IndexNow, Bing doğrulaması, Vercel Analytics
+- Topluluk: Google + e-posta ile hesaplar (Better Auth), profil, seri ve bölüm yorumları (yanıt, beğeni,
+  spoiler, şikâyet), bölüm sonu tepkileri, panelde yorum moderasyonu ve engelleme, KVKK/kullanım/topluluk sayfaları
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
@@ -310,9 +350,9 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Okuyucu: genişlik/parlaklık ayarı, tam ekran düğmesi
 - PWA: manifest ve ikonlar hazır; çevrimdışı çalışma (service worker) ve yükleme istemi eksik
 - Yükleme iskeletleri (skeleton) ve sayfa geçiş animasyonları
-- Kullanıcı hesapları (Auth.js / Better Auth): kütüphane/takip listesi, yeni bölüm bildirimi,
-  cihazlar arası okuma geçmişi, puanlama
-- Topluluk: bölüm yorumları (spoiler gizleme, moderasyon), bölüm sonu tepkileri
+- Hesaplarla: kütüphane/takip listesi ve okuma geçmişinin sunucuya taşınması (cihazlar arası), yeni bölüm
+  bildirimi, puanlama
+- Topluluk: forum (kategoriler, konular), sitede canlı sohbet (kullanıcı istedi; Pusher/Ably ya da yoklama)
 - Keşif: yayın takvimi, RSS, seri tipi (webtoon/manga/manhwa) filtresi
 - Panel: zamanlanmış yayın, taslak bölümler, ZIP ile toplu yükleme, bölüm bazlı istatistik
 - Altyapı: hata takibi (Sentry), analitik, Playwright uçtan uca testleri

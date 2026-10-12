@@ -33,6 +33,17 @@ R2_PUBLIC_URL=https://cdn.ornek.com  # Bucket'ın herkese açık adresi
 # İsteğe bağlı
 SITE_URL=https://ornek.com           # Yoksa Vercel üretim adresi kullanılır
 VIEW_SALT=rastgele-bir-deger         # Okunma sayacındaki IP özetlerinin tuzu
+CONTACT_EMAIL=iletisim@ornek.com     # Yasal sayfalardaki başvuru adresi
+
+# Kullanıcı hesapları (BETTER_AUTH_SECRET yoksa hesaplar, yorumlar ve tepkiler kapalı)
+BETTER_AUTH_SECRET=...               # openssl rand -base64 32
+GOOGLE_CLIENT_ID=...                 # Google ile giriş
+GOOGLE_CLIENT_SECRET=...
+RESEND_API_KEY=...                   # E-postayla kayıt, doğrulama ve şifre sıfırlama
+EMAIL_FROM="webtooku <bildirim@ornek.com>"  # Resend'de doğrulanmış alan adından
+DISCORD_CLIENT_ID=...                # İsteğe bağlı: Discord ile giriş
+DISCORD_CLIENT_SECRET=...
+# AUTH_DEV_EMAIL=1                   # Yalnızca yerel test: e-postalar günlüğe yazılır
 ```
 
 Veritabanını hazırla ve çalıştır:

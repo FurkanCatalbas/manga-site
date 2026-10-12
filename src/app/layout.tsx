@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/Brand";
 import { GenreMenu } from "@/components/GenreMenu";
+import { AccountButton } from "@/components/hesap/AccountButton";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { SearchIcon } from "@/components/icons";
 import { DesktopNav, DesktopNavLinks, MobileTabBar, MobileTabBarView } from "@/components/SiteNav";
@@ -84,6 +85,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             >
               <SearchIcon size={19} />
             </Link>
+            {/* Mobilde hesap alt menüdeki Profil sekmesinde */}
+            <div className="hidden md:block">
+              <AccountButton />
+            </div>
           </nav>
         </header>
         <main className="flex-1">{children}</main>
@@ -123,7 +128,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 </nav>
               </div>
             </div>
-            <p className="mt-10 border-t border-white/[0.06] pt-6 text-xs text-muted">© {SITE_NAME}</p>
+            <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-xs text-muted">
+              <p>© {SITE_NAME}</p>
+              <nav aria-label="Yasal" className="flex flex-wrap gap-x-4 gap-y-1">
+                <Link href="/gizlilik" className="hover:text-fg">Gizlilik ve KVKK</Link>
+                <Link href="/kullanim-kosullari" className="hover:text-fg">Kullanım koşulları</Link>
+                <Link href="/topluluk-kurallari" className="hover:text-fg">Topluluk kuralları</Link>
+              </nav>
+            </div>
           </div>
         </footer>
         <Suspense fallback={<MobileTabBarView pathname={null} />}>

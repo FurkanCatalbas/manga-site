@@ -14,6 +14,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITE_URL, lastModified: lastUpdate, changeFrequency: "daily", priority: 1 },
     { url: `${SITE_URL}/ara`, changeFrequency: "daily", priority: 0.6 },
     { url: `${SITE_URL}/tur`, changeFrequency: "weekly", priority: 0.5 },
+    ...["/gizlilik", "/kullanim-kosullari", "/topluluk-kurallari"].map((p) => ({
+      url: `${SITE_URL}${p}`,
+      changeFrequency: "yearly" as const,
+      priority: 0.2,
+    })),
     ...genres.map((g) => ({ url: `${SITE_URL}/tur/${g.slug}`, changeFrequency: "daily" as const, priority: 0.6 })),
     ...all.map((s) => ({
       url: `${SITE_URL}/seri/${s.slug}`,

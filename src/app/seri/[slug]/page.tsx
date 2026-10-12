@@ -7,6 +7,7 @@ import { EyeIcon, LayersIcon } from "@/components/icons";
 import { ChapterList, ReadButtons } from "@/components/SeriesActions";
 import { SectionHeader, SeriesCard } from "@/components/SeriesCard";
 import { ShareButton } from "@/components/ShareButton";
+import { CommentsSection } from "@/components/topluluk/Sections";
 import { SourceNotice } from "@/components/SourceNotice";
 import { getSeriesSource } from "@/lib/fansubs";
 import { JsonLd } from "@/components/JsonLd";
@@ -170,6 +171,9 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
             chapters={series.chapters}
             notice={source && <SourceNotice source={source} />}
           />
+          <div className="mt-14">
+            <CommentsSection slug={series.slug} />
+          </div>
           {similar.length > 0 && (
             <section className="mt-14">
               <SectionHeader title="Benzer seriler" />

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ChapterAbout } from "@/components/ChapterAbout";
 import { Reader } from "@/components/Reader";
+import { CommentsSection, ReactionsSection } from "@/components/topluluk/Sections";
 import { JsonLd } from "@/components/JsonLd";
 import { getChapter, getChapterRefs } from "@/lib/data";
 import { getSeriesSource } from "@/lib/fansubs";
@@ -91,6 +92,10 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
       nextPages={nextPages}
       source={source}
     >
+      <div className="mx-auto grid max-w-3xl gap-12 px-4 pt-4 pb-12">
+        <ReactionsSection slug={series.slug} chapter={chapter.number} />
+        <CommentsSection slug={series.slug} chapter={chapter.number} preview={3} />
+      </div>
       <ChapterAbout series={series} chapter={chapter.number} />
     </Reader>
     </>

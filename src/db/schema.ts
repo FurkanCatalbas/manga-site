@@ -1,5 +1,18 @@
 import { relations } from "drizzle-orm";
-import { boolean, date, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
+import {
+  type AnyPgColumn,
+  boolean,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 
 export const series = pgTable("series", {
   id: serial("id").primaryKey(),
@@ -98,6 +111,136 @@ export const viewHits = pgTable(
     day: date("day").notNull(),
   },
   (t) => [primaryKey({ columns: [t.day, t.visitor, t.chapterId] })],
+);
+
+// --- Hesaplar (Better Auth, src/lib/hesap.ts) ---
+// Alan adları Better Auth'un beklediği gibi; tablo adları çoğul (Postgres'te "user" ayrılmış sözcük).
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // Sitede görünen ad (yorumlarda); kayıtta addan üretilir, profilden değiştirilir
+  username: text("username").unique(),
+  // Panelden engellenen kullanıcı yorum yazamaz, tepki veremez
+  banned: boolean("banned").notNull().default(false),
+});
+
+export const sessions = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const accounts = pgTable("accounts", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const verifications = pgTable("verifications", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// --- Topluluk ---
+
+// Seri ve bölüm yorumları. chapter_id boşsa seri sayfasının yorumu. Yanıtlar tek seviye (parent_id).
+export const comments = pgTable(
+  "comments",
+  {
+    id: serial("id").primaryKey(),
+    seriesId: integer("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "cascade" }),
+    chapterId: integer("chapter_id").references(() => chapters.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    parentId: integer("parent_id").references((): AnyPgColumn => comments.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    spoiler: boolean("spoiler").notNull().default(false),
+    likes: integer("likes").notNull().default(0),
+    // Yanıtı olan yorum silinince kaydı kalır, metni gizlenir ("Bu yorum silindi")
+    deleted: boolean("deleted").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("comments_scope_idx").on(t.seriesId, t.chapterId, t.createdAt),
+    index("comments_user_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+export const commentLikes = pgTable(
+  "comment_likes",
+  {
+    commentId: integer("comment_id")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.commentId, t.userId] })],
+);
+
+export const commentReports = pgTable(
+  "comment_reports",
+  {
+    id: serial("id").primaryKey(),
+    commentId: integer("comment_id")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.commentId, t.userId)],
+);
+
+// Bölüm sonu tepkileri: kullanıcı başına bölümde bir tepki (değiştirilebilir)
+export const chapterReactions = pgTable(
+  "chapter_reactions",
+  {
+    chapterId: integer("chapter_id")
+      .notNull()
+      .references(() => chapters.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.chapterId, t.userId] })],
 );
 
 export const seriesRelations = relations(series, ({ many }) => ({

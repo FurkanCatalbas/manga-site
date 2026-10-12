@@ -5,7 +5,7 @@ import { refresh, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { chapters, fansubs, genres, series } from "@/db/schema";
+import { chapters, commentReports, comments, fansubs, genres, series, sessions, users } from "@/db/schema";
 import { checkPassword, requireAdmin, SESSION_COOKIE, SESSION_MAX_AGE, sessionToken } from "@/lib/auth";
 import { type ChapterInput, insertChapter, isImageSrc } from "@/lib/chapters";
 import { cleanUrl, setSeriesFansub } from "@/lib/fansubs";
@@ -14,6 +14,7 @@ import { notifyIndexNow } from "@/lib/indexnow";
 import { deletePrefix } from "@/lib/r2";
 import { ALT_TITLES_SQL, hasAltTitles } from "@/lib/schema-check";
 import { SLUG_PATTERN, slugify } from "@/lib/slug";
+import { scopeTag } from "@/lib/topluluk";
 
 export type FormState = { error?: string; ok?: string } | undefined;
 
@@ -335,4 +336,47 @@ export async function deleteFansub(id: number) {
       console.error("Kaynak logosu R2'den silinemedi:", e);
     }
   }
+}
+
+// --- Yorumlar (moderasyon) ---
+
+/** Yorumun bulunduğu yerin önbelleğini yeniler (seri ya da bölüm yorumları). */
+function refreshCommentScope(c: { seriesId: number; chapterId: number | null }) {
+  updateTag(scopeTag(c.chapterId ? `c${c.chapterId}` : `s${c.seriesId}`));
+}
+
+/** Yorumu siler (yanıtları varsa metni gizlenir). Şikâyetleri de kapanır. */
+export async function adminDeleteComment(id: number) {
+  await requireAdmin();
+  const [c] = await db
+    .select({ id: comments.id, seriesId: comments.seriesId, chapterId: comments.chapterId })
+    .from(comments)
+    .where(eq(comments.id, id))
+    .limit(1);
+  if (!c) return;
+  const [{ replies }] = await db.select({ replies: sql<number>`count(*)::int` }).from(comments).where(eq(comments.parentId, id));
+  if (replies > 0) {
+    await db.update(comments).set({ deleted: true, body: "" }).where(eq(comments.id, id));
+    await db.delete(commentReports).where(eq(commentReports.commentId, id));
+  } else {
+    await db.delete(comments).where(eq(comments.id, id));
+  }
+  refreshCommentScope(c);
+  refresh();
+}
+
+/** Şikâyetleri kapatır, yorum kalır. */
+export async function dismissReports(commentId: number) {
+  await requireAdmin();
+  await db.delete(commentReports).where(eq(commentReports.commentId, commentId));
+  refresh();
+}
+
+/** Kullanıcıyı engeller ya da engeli kaldırır. Engellenen yorum yazamaz, beğenemez, tepki veremez. */
+export async function setUserBanned(userId: string, banned: boolean) {
+  await requireAdmin();
+  await db.update(users).set({ banned }).where(eq(users.id, userId));
+  // Engellenen kullanıcının oturumları kapanır (çerez önbelleğinde eski bilgi kalmasın)
+  if (banned) await db.delete(sessions).where(eq(sessions.userId, userId));
+  refresh();
 }

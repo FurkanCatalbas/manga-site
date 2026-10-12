@@ -22,3 +22,6 @@ export const SITE_DESCRIPTION = "Türkçe webtoon ve manga serilerini ücretsiz 
 export function absoluteUrl(path: string) {
   return /^https?:\/\//.test(path) ? path : `${SITE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
 }
+
+/** Hukuki başvurular, telif bildirimleri ve KVKK talepleri için adres (yasal sayfalarda görünür). */
+export const CONTACT_EMAIL = process.env.CONTACT_EMAIL ?? "iletisim@webtooku.com.tr";

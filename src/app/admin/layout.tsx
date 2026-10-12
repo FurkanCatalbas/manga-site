@@ -34,6 +34,7 @@ async function AdminNav() {
       <Link href="/admin/turler" className="underline-offset-4 hover:underline">Türler</Link>
       <Link href="/admin/al" className="underline-offset-4 hover:underline">Bölüm al</Link>
       <Link href="/admin/kaynaklar" className="underline-offset-4 hover:underline">Kaynaklar</Link>
+      <Link href="/admin/yorumlar" className="underline-offset-4 hover:underline">Yorumlar</Link>
       <form action={logout}>
         <button className="text-muted underline-offset-4 hover:text-fg hover:underline">Çıkış yap</button>
       </form>

@@ -7,25 +7,29 @@
 // <Suspense> içinde yapılabilir; layout önce `pathname={null}` ile işaretsiz hâlini gösterir.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CompassIcon, HomeIcon, LibraryIcon } from "@/components/icons";
+import { CompassIcon, HomeIcon, LibraryIcon, UserIcon } from "@/components/icons";
 
-const TABS: { href: string; label: string; Icon: typeof HomeIcon; also?: string }[] = [
+type Tab = { href: string; label: string; Icon: typeof HomeIcon; also?: string[]; mobileOnly?: boolean };
+
+const TABS: Tab[] = [
   { href: "/", label: "Ana sayfa", Icon: HomeIcon },
-  { href: "/ara", label: "Keşfet", Icon: CompassIcon, also: "/tur" },
+  { href: "/ara", label: "Keşfet", Icon: CompassIcon, also: ["/tur"] },
   { href: "/kutuphane", label: "Kütüphane", Icon: LibraryIcon },
+  // Masaüstünde başlıkta hesap düğmesi var
+  { href: "/profil", label: "Profil", Icon: UserIcon, also: ["/giris", "/kayit", "/sifre"], mobileOnly: true },
 ];
 
 const matches = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 
-/** Tür sayfaları da Keşfet sekmesine sayılır. */
-const isActive = (pathname: string | null, tab: (typeof TABS)[number]) =>
-  pathname !== null && (matches(pathname, tab.href) || (!!tab.also && matches(pathname, tab.also)));
+/** Tür sayfaları Keşfet'e, giriş/kayıt Profil'e sayılır. */
+const isActive = (pathname: string | null, tab: Tab) =>
+  pathname !== null && (matches(pathname, tab.href) || !!tab.also?.some((h) => matches(pathname, h)));
 
 export function DesktopNavLinks({ pathname }: { pathname: string | null }) {
   return (
     <div className="flex items-center gap-1 text-sm font-medium">
-      {TABS.map((tab) => {
+      {TABS.filter((t) => !t.mobileOnly).map((tab) => {
         const { href, label } = tab;
         const active = isActive(pathname, tab);
         return (
