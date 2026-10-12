@@ -314,7 +314,8 @@ kalıp çıkarılır (dosyanın üstündeki klasör bölüm, dosya adındaki son
 Her bölümde sayfalar 0'dan (yoksa 1'den) açılmayan ilk görsele kadar tarayıcıda `measureImage` ile denenir;
 arada tek sayfa eksikse bölüm yarım yayınlanmaz. Sitede olan bölümler (`GET /api/admin/bolum?seri=`) atlanır,
 diğerleri `createChapter` ile doğrudan yayınlanır. Son bölüm boşsa art arda 3 bölüm bulunamayınca durur.
-**okutoon** (`om-cdn.okutoon.com/chapters/<seri-no>/<bölüm-kimliği>/<seri>_bolum-<N>_<001>.webp`): klasördeki
+**okutoon** (`om-cdn.okutoon.com/chapters/<seri-no>/<bölüm-kimliği>/<seri>_bolum-<N>_<001>.webp` ya da
+`…/<seri>-<N>-<001>.webp`; dosya adındaki son iki sayı bölüm ve sayfa, öncesi okutoon seri adresi): klasördeki
 bölüm kimliği sırayla gitmez (12. bölüm 11'den küçük olabilir, aralarda yüzlerce atlama olur), bu yüzden tahmin
 edilmez. `getOkutoonChapters` (server action, yalnızca `okutoon.com/<seri>`'ye istek atar) seri sayfasındaki
 `data-chapter-number` + `data-progress-id` eşlemesini okur; ondalık bölümler atlanır, son bölüm boşsa listedeki

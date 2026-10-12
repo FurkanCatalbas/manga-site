@@ -25,19 +25,23 @@ type Template = {
  * Sabit kalıplı görsel adresinden bölüm/sayfa adresi üretir:
  * `…/96238/1/0001.webp` ya da `…/74242/Chapter_1/split_000.webp`.
  * Dosyanın bir üstündeki klasör bölüm numarası, dosya adındaki son sayı sayfa numarasıdır (sıfır dolgusu korunur).
- * okutoon: `om-cdn.okutoon.com/chapters/<seri-no>/<bölüm-kimliği>/<seri>_bolum-<N>_<sayfa>.webp`
+ * okutoon: `om-cdn.okutoon.com/chapters/<seri-no>/<bölüm-kimliği>/<seri>_bolum-<N>_<sayfa>.webp` ya da
+ * `…/<seri>-<N>-<sayfa>.webp` (biçim seriden seriye değişir; dosya adındaki son iki sayı bölüm ve sayfadır).
  */
 function parseTemplate(sample: string): Template | null {
   if (!isImageLink(sample)) return null;
   const u = new URL(sample);
-  const o = u.hostname.endsWith("okutoon.com") && u.pathname.match(/^\/chapters\/(\d+)\/\d+\/([a-z0-9-]+)_bolum-(\d+)_(\d+)(\.[a-z]+)$/i);
+  const o = u.hostname.endsWith("okutoon.com") && u.pathname.match(/^\/chapters\/(\d+)\/\d+\/(.*?)(\d+)([-_])(\d+)(\.[a-z]+)$/i);
   if (o) {
-    const [, seriesId, name, chapter, page, ext] = o;
+    const [, seriesId, prefix, chapter, sep, page, ext] = o;
+    // "please-behave-my-wife_bolum-" / "a-red-knight-…-money-" → okutoon'daki seri adresi
+    const name = prefix.replace(/[-_]bolum[-_]$|[-_]$/i, "");
+    if (!/^[a-z0-9-]+$/.test(name)) return null;
     return {
       chapter: Number(chapter),
       okutoon: name,
       url: (ch, p, id) =>
-        `${u.origin}/chapters/${seriesId}/${id}/${name}_bolum-${ch}_${String(p).padStart(page.length, "0")}${ext}`,
+        `${u.origin}/chapters/${seriesId}/${id}/${prefix}${ch}${sep}${String(p).padStart(page.length, "0")}${ext}`,
     };
   }
   const m = u.pathname.match(/^(.*\/(?:chapter[-_]?)?)(\d+)(\/[^/]*?)(\d+)(\.[a-z]+)$/i);
@@ -191,7 +195,7 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
         <p className="mt-1 text-sm text-muted">
           Görsel adresi bölüm ve sayfa numarasıyla ilerliyorsa (ör. <code>…/96238/1/0001.webp</code>) kaynak sayfayı
           açmadan bölümleri sırayla bulup yayınlar. okutoon görsel bağlantısı
-          (<code>om-cdn.okutoon.com/chapters/…_bolum-1_001.webp</code>) verilirse bölüm listesi okutoon&apos;daki
+          (<code>om-cdn.okutoon.com/chapters/…_bolum-1_001.webp</code> ya da <code>…-1-001.webp</code>) verilirse bölüm listesi okutoon&apos;daki
           seri sayfasından okunur. Sitede zaten olan bölümler atlanır.
         </p>
       </div>
