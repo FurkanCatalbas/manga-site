@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { chapters, fansubs, genres, series } from "@/db/schema";
 import { checkPassword, requireAdmin, SESSION_COOKIE, SESSION_MAX_AGE, sessionToken } from "@/lib/auth";
+import { type ChapterInput, insertChapter, isImageSrc } from "@/lib/chapters";
 import { cleanUrl, setSeriesFansub } from "@/lib/fansubs";
 import { cleanGenreName, ensureGenres, isMissingTable } from "@/lib/genres";
 import { deletePrefix } from "@/lib/r2";
@@ -64,16 +65,6 @@ function parseSource(source: SeriesInput["source"]) {
 /** Türleri temizler, tekrarları atar (sıra korunur). */
 function normalizeGenres(list: string[]) {
   return [...new Set(list.map(cleanGenreName).filter(Boolean))];
-}
-
-/** Görsel adresi: R2 ya da başka sitedeki https bağlantısı; örnek veriler için sitedeki yol. */
-function isImageSrc(v: string) {
-  if (v.startsWith("/") && !v.startsWith("//")) return true;
-  try {
-    return new URL(v).protocol === "https:";
-  } catch {
-    return false;
-  }
 }
 
 function validateSeries(input: SeriesInput): string | undefined {
@@ -138,43 +129,12 @@ export async function deleteSeries(slug: string) {
 
 // --- Bölümler ---
 
-export type ChapterInput = {
-  slug: string;
-  number: number;
-  title: string;
-  pages: string[];
-  pageSizes: [number, number][]; // pages ile aynı sırada [genişlik, yükseklik]
-};
-
-const isSize = (v: unknown) =>
-  Array.isArray(v) && v.length === 2 && v.every((n) => Number.isInteger(n) && n > 0);
-
 export async function createChapter(input: ChapterInput): Promise<FormState> {
   await requireAdmin();
-  if (!Number.isInteger(input.number) || input.number < 1) return { error: "Bölüm numarası 1 veya daha büyük olmalı." };
-  if (input.pages.length === 0) return { error: "En az bir sayfa yükle." };
-  if (!input.pages.every(isImageSrc)) return { error: "Sayfa bağlantıları https:// ile başlamalı." };
-
-  const s = await db.query.series.findFirst({ where: eq(series.slug, input.slug) });
-  if (!s) return { error: "Seri bulunamadı." };
-
-  const [row] = await db
-    .insert(chapters)
-    .values({
-      seriesId: s.id,
-      number: input.number,
-      title: input.title.trim() || `${input.number}. bölüm`,
-      pages: input.pages,
-      // Boyutlar eksik ya da bozuksa hiç kaydetme; okuyucu boyutsuz da çalışır
-      pageSizes:
-        input.pageSizes?.length === input.pages.length && input.pageSizes.every(isSize) ? input.pageSizes : [],
-    })
-    .onConflictDoNothing()
-    .returning({ id: chapters.id });
-  if (!row) return { error: `${input.number}. bölüm zaten var. Önce eskisini sil.` };
-
+  const result = await insertChapter(input);
+  if ("error" in result) return { error: result.error };
   updateTag("series");
-  return { ok: `${input.number}. bölüm yayınlandı.` };
+  return result;
 }
 
 export async function deleteChapter(slug: string, number: number) {

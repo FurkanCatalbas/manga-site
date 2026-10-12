@@ -185,6 +185,14 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 - "use client" dosyalarından dışa aktarılan fonksiyonlar sunucuda çağrılamaz; ortak yardımcılar
   `src/lib/series.ts` gibi istemci işareti olmayan dosyalarda durur (ör. `toLibraryItems`).
 
+### Dışarıdan bölüm yayınlama: `/api/admin/bolum`
+
+`Authorization: Bearer <ADMIN_PASSWORD>` (ya da panel oturumu) ister. `GET ?seri=<slug>` serideki bölüm
+numaralarını, `POST { slug, number, title, pages, pageSizes }` bölümü ekler (409: zaten var). Panel ile aynı
+doğrulamayı kullanır (`insertChapter`, `src/lib/chapters.ts`). Route handler'da `updateTag` olmadığı için
+`revalidateTag("series", { expire: 0 })`. Kullanan: depo dışındaki `../yayinci/yayinla.py` (okutoon gibi
+sitelerden bölüm görsellerinin bağlantılarını çıkarıp yayınlar; Cloudflare kontrolünü aşmaz, kaydedilmiş HTML okur).
+
 ### Yönetim paneli: `/admin`
 
 Tek şifre (`ADMIN_PASSWORD`); çerezde şifreden türetilen HMAC tutulur (`src/lib/auth.ts`).
@@ -239,6 +247,7 @@ yalnızca async fonksiyon dışa aktarabilir.
   Popüler'de "Tümü" sekmesi
 - Seriler: yazar/çizer alanı kaldırıldı, yerine Türkçe + İngilizce ad (`title_en`)
 - Panel: R2'ye yüklemeden, başka sitedeki görsel bağlantılarıyla kapak ve bölüm ekleme
+- Bölüm yayınlama API'si (`/api/admin/bolum`) ve Python yayıncı scripti için ortak `insertChapter`
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
