@@ -188,6 +188,32 @@ export async function createChapter(input: ChapterInput): Promise<FormState> {
   return result;
 }
 
+/**
+ * Toplu al (okutoon): görsel adreslerindeki bölüm kimliği tahmin edilemediği için okutoon'daki seri
+ * sayfasından bölüm numarası → kimlik eşlemesi okunur. Yalnızca okutoon.com'a istek atılır.
+ */
+export async function getOkutoonChapters(
+  seriesSlug: string,
+): Promise<{ chapters: { number: number; id: number }[] } | { error: string }> {
+  await requireAdmin();
+  if (!/^[a-z0-9-]+$/.test(seriesSlug)) return { error: "Geçersiz seri adı." };
+  const res = await fetch(`https://okutoon.com/${seriesSlug}`, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+    },
+    cache: "no-store",
+  }).catch(() => null);
+  if (!res?.ok) return { error: `okutoon seri sayfası açılamadı (${res?.status ?? "bağlantı hatası"}).` };
+  const html = await res.text();
+  const chapters = html
+    .split("<a ")
+    .map((tag) => [tag.match(/data-chapter-number="([\d.]+)"/)?.[1], tag.match(/data-progress-id="(\d+)"/)?.[1]])
+    .filter(([n, id]) => n && id)
+    .map(([n, id]) => ({ number: Number(n), id: Number(id) }));
+  if (!chapters.length) return { error: "okutoon seri sayfasında bölüm listesi bulunamadı." };
+  return { chapters };
+}
+
 export async function deleteChapter(slug: string, number: number) {
   await requireAdmin();
   const s = await db.query.series.findFirst({ columns: { id: true }, where: eq(series.slug, slug) });

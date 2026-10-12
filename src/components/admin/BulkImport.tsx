@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createChapter } from "@/app/admin/actions";
+import { createChapter, getOkutoonChapters } from "@/app/admin/actions";
 import { field, label, primaryBtn, secondaryBtn } from "./ui";
 import { isImageLink, measureImage } from "./upload";
 
@@ -14,20 +14,38 @@ const MAX_PAGES = 500;
 // Bitiş verilmezse art arda bu kadar bölüm bulunamayınca seri bitti sayılır
 const MISSING_LIMIT = 3;
 
+type Template = {
+  chapter: number;
+  /** okutoon: klasördeki bölüm kimliği tahmin edilemez, seri sayfasından okunur (`getOkutoonChapters`) */
+  okutoon?: string;
+  url: (ch: number, p: number, id?: number) => string;
+};
+
 /**
  * Sabit kalıplı görsel adresinden bölüm/sayfa adresi üretir:
  * `…/96238/1/0001.webp` ya da `…/74242/Chapter_1/split_000.webp`.
  * Dosyanın bir üstündeki klasör bölüm numarası, dosya adındaki son sayı sayfa numarasıdır (sıfır dolgusu korunur).
+ * okutoon: `om-cdn.okutoon.com/chapters/<seri-no>/<bölüm-kimliği>/<seri>_bolum-<N>_<sayfa>.webp`
  */
-function parseTemplate(sample: string) {
+function parseTemplate(sample: string): Template | null {
   if (!isImageLink(sample)) return null;
   const u = new URL(sample);
+  const o = u.hostname.endsWith("okutoon.com") && u.pathname.match(/^\/chapters\/(\d+)\/\d+\/([a-z0-9-]+)_bolum-(\d+)_(\d+)(\.[a-z]+)$/i);
+  if (o) {
+    const [, seriesId, name, chapter, page, ext] = o;
+    return {
+      chapter: Number(chapter),
+      okutoon: name,
+      url: (ch, p, id) =>
+        `${u.origin}/chapters/${seriesId}/${id}/${name}_bolum-${ch}_${String(p).padStart(page.length, "0")}${ext}`,
+    };
+  }
   const m = u.pathname.match(/^(.*\/(?:chapter[-_]?)?)(\d+)(\/[^/]*?)(\d+)(\.[a-z]+)$/i);
   if (!m) return null;
   const [, head, chapter, mid, page, ext] = m;
   return {
     chapter: Number(chapter),
-    url: (ch: number, p: number) => `${u.origin}${head}${ch}${mid}${String(p).padStart(page.length, "0")}${ext}${u.search}`,
+    url: (ch, p) => `${u.origin}${head}${ch}${mid}${String(p).padStart(page.length, "0")}${ext}${u.search}`,
   };
 }
 
@@ -84,8 +102,7 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
     setRows([]);
     if (!template) return setError("Görsel bağlantısı …/<bölüm>/<sayfa>.webp biçiminde olmalı.");
     if (!slug) return setError("Seri seç.");
-    const last = to.trim() ? Number(to) : from + 2000;
-    if (!Number.isInteger(from) || from < 1 || !Number.isInteger(last) || last < from) {
+    if (!Number.isInteger(from) || from < 1 || (to.trim() && !(Number.isInteger(Number(to)) && Number(to) >= from))) {
       return setError("Bölüm aralığı 1 veya daha büyük olmalı ve küçükten büyüğe ilerlemeli.");
     }
 
@@ -93,6 +110,16 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
     setRunning(true);
     const add = (row: Row) => setRows((r) => [...r, row]);
     try {
+      // okutoon: bölüm numarası → klasör kimliği (ondalık bölümler sitede olmadığı için atlanır)
+      let ids: Map<number, number> | null = null;
+      if (template.okutoon) {
+        setStatus("okutoon bölüm listesi okunuyor…");
+        const list = await getOkutoonChapters(template.okutoon);
+        if ("error" in list) throw new Error(list.error);
+        ids = new Map(list.chapters.filter((c) => Number.isInteger(c.number)).map((c) => [c.number, c.id]));
+      }
+      const last = to.trim() ? Number(to) : ids ? Math.max(0, ...ids.keys()) : from + 2000;
+
       setStatus("Sitedeki bölümler okunuyor…");
       const res = await fetch(`/api/admin/bolum?seri=${encodeURIComponent(slug)}`);
       const data = await res.json().catch(() => ({}));
@@ -106,10 +133,15 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
           add({ number: n, state: "skip", text: "zaten var, atlandı" });
           continue;
         }
+        const id = ids?.get(n);
+        if (ids && id === undefined) {
+          add({ number: n, state: "missing", text: "kaynakta bulunamadı" });
+          continue;
+        }
         setStatus(`${n}. bölümün sayfaları aranıyor…`);
         let pages;
         try {
-          pages = await collectPages((p) => template.url(n, p), () => stopRef.current);
+          pages = await collectPages((p) => template.url(n, p, id), () => stopRef.current);
         } catch (e) {
           if (stopRef.current) break;
           add({ number: n, state: "error", text: (e as Error).message });
@@ -158,7 +190,9 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
         <h2 className="text-lg font-bold">Toplu al (sabit adresli siteler)</h2>
         <p className="mt-1 text-sm text-muted">
           Görsel adresi bölüm ve sayfa numarasıyla ilerliyorsa (ör. <code>…/96238/1/0001.webp</code>) kaynak sayfayı
-          açmadan bölümleri sırayla bulup yayınlar. Sitede zaten olan bölümler atlanır.
+          açmadan bölümleri sırayla bulup yayınlar. okutoon görsel bağlantısı
+          (<code>om-cdn.okutoon.com/chapters/…_bolum-1_001.webp</code>) verilirse bölüm listesi okutoon&apos;daki
+          seri sayfasından okunur. Sitede zaten olan bölümler atlanır.
         </p>
       </div>
       <div>
@@ -175,7 +209,11 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
           <p className="mt-1 text-xs text-accent">Bağlantıda …/&lt;bölüm&gt;/&lt;sayfa&gt;.webp kalıbı bulunamadı.</p>
         )}
         {template && (
-          <p className="mt-1 text-xs break-all text-muted">Örnek: {template.url(from || 1, 1)}</p>
+          <p className="mt-1 text-xs break-all text-muted">
+            {template.okutoon
+              ? `okutoon serisi: ${template.okutoon} (bölüm listesi okutoon.com/${template.okutoon} sayfasından okunur)`
+              : `Örnek: ${template.url(from || 1, 1)}`}
+          </p>
         )}
       </div>
       <div className="grid gap-4 sm:grid-cols-[1fr_120px_120px]">
