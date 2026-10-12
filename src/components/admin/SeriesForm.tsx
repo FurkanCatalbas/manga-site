@@ -2,20 +2,38 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createSeries, updateSeries, type SeriesInput } from "@/app/admin/actions";
+import { cleanGenreName } from "@/lib/series";
 import { slugify } from "@/lib/slug";
 import { field, label, primaryBtn } from "./ui";
 import { ACCEPT_IMAGES, isImageFile, MAX_UPLOAD_BYTES, uploadImage } from "./upload";
 
-type Props = { initial?: SeriesInput };
+type Props = {
+  initial?: SeriesInput;
+  /** Türler listesi (panel → Türler); seçilebilir çipler olarak gösterilir */
+  allGenres?: string[];
+};
 
-export function SeriesForm({ initial }: Props) {
+export function SeriesForm({ initial, allGenres = [] }: Props) {
   const editing = !!initial;
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(editing);
   const [author, setAuthor] = useState(initial?.author ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [genres, setGenres] = useState(initial?.genres.join(", ") ?? "");
+  const [genres, setGenres] = useState<string[]>(initial?.genres ?? []);
+  const [newGenre, setNewGenre] = useState("");
+  // Listedekiler + seride olup listede olmayanlar (eski kayıtlar) + formda yeni eklenenler
+  const options = [...new Set([...allGenres, ...genres])].sort((a, b) => a.localeCompare(b, "tr"));
+  const toggleGenre = (g: string) =>
+    setGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
+  const addNewGenre = () => {
+    const g = cleanGenreName(newGenre);
+    if (!g) return;
+    // Aynı tür farklı yazımla (büyük/küçük harf) iki kez eklenmesin
+    const existing = options.find((o) => o.toLocaleLowerCase("tr") === g.toLocaleLowerCase("tr"));
+    setGenres((prev) => (prev.includes(existing ?? g) ? prev : [...prev, existing ?? g]));
+    setNewGenre("");
+  };
   const [status, setStatus] = useState<SeriesInput["status"]>(initial?.status ?? "Devam Ediyor");
   const [cover, setCover] = useState(initial?.cover ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -45,7 +63,7 @@ export function SeriesForm({ initial }: Props) {
           title,
           author,
           description,
-          genres: genres.split(",").map((g) => g.trim()).filter(Boolean),
+          genres,
           status,
           cover: coverUrl,
         };
@@ -134,17 +152,52 @@ export function SeriesForm({ initial }: Props) {
             </select>
           </div>
         </div>
-        <div>
-          <label htmlFor="genres" className={label}>Türler</label>
-          <input
-            id="genres"
-            value={genres}
-            onChange={(e) => setGenres(e.target.value)}
-            placeholder="Aksiyon, Fantastik"
-            className={field}
-          />
-          <p className="mt-1 text-xs text-muted">Virgülle ayır.</p>
-        </div>
+        <fieldset>
+          <legend className={label}>Türler</legend>
+          {options.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {options.map((g) => {
+                const on = genres.includes(g);
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleGenre(g)}
+                    className={`rounded-full border px-3 py-1 text-sm font-semibold transition-colors ${
+                      on ? "border-accent bg-accent text-white" : "border-line bg-surface hover:border-accent"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="mt-3 flex gap-2">
+            <label htmlFor="new-genre" className="sr-only">Yeni tür</label>
+            <input
+              id="new-genre"
+              value={newGenre}
+              maxLength={40}
+              onChange={(e) => setNewGenre(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addNewGenre();
+                }
+              }}
+              placeholder="Listede yoksa yeni tür yaz"
+              className={`${field} max-w-xs`}
+            />
+            <button type="button" onClick={addNewGenre} className="rounded-lg bg-surface-2 px-4 py-2 text-sm font-semibold hover:bg-line">
+              Ekle
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            Seçmek için türe dokun. Yeni tür, seri kaydedilince Türler listesine de eklenir.
+          </p>
+        </fieldset>
         <div>
           <label htmlFor="description" className={label}>Açıklama</label>
           <textarea

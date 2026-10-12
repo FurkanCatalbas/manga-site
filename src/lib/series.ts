@@ -41,6 +41,12 @@ export type LibraryItem = { slug: string; title: string; cover: string; latest: 
 export const toLibraryItems = (list: SeriesSummary[]): LibraryItem[] =>
   list.map((s) => ({ slug: s.slug, title: s.title, cover: s.cover, latest: s.latestChapters[0]?.number ?? null }));
 
+/** Tür adını düzenler: fazla boşlukları temizler, ilk harfi Türkçe kurala göre büyütür ("korku" → "Korku"). */
+export function cleanGenreName(name: string) {
+  const s = name.replace(/\s+/g, " ").trim();
+  return s.charAt(0).toLocaleUpperCase("tr") + s.slice(1);
+}
+
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR", {
     day: "numeric",

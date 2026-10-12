@@ -8,6 +8,7 @@ import { SeriesForm } from "@/components/admin/SeriesForm";
 import { db } from "@/db";
 import { chapters, series } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { getGenreList } from "@/lib/genres";
 import { formatDate } from "@/lib/series";
 import { deleteChapter, deleteSeries } from "../../actions";
 
@@ -24,10 +25,13 @@ export default function EditSeriesPage(props: PageProps<"/admin/seri/[slug]">) {
 async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
   await requireAdmin();
   const { slug } = await params;
-  const s = await db.query.series.findFirst({
-    where: eq(series.slug, slug),
-    with: { chapters: { orderBy: asc(chapters.number) } },
-  });
+  const [s, genreList] = await Promise.all([
+    db.query.series.findFirst({
+      where: eq(series.slug, slug),
+      with: { chapters: { orderBy: asc(chapters.number) } },
+    }),
+    getGenreList(),
+  ]);
   if (!s) notFound();
 
   const nextNumber = (s.chapters.at(-1)?.number ?? 0) + 1;
@@ -42,6 +46,7 @@ async function EditSeries({ params }: { params: Promise<{ slug: string }> }) {
           </Link>
         </div>
         <SeriesForm
+          allGenres={(genreList ?? []).map((g) => g.name)}
           initial={{
             slug: s.slug,
             title: s.title,

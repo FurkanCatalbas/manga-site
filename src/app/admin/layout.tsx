@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div data-hide-tabbar className="mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between border-b border-line pb-3">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-line pb-3">
         <Link href="/admin" className="text-xl font-bold">
           Yönetim paneli
         </Link>
         <Suspense>
-          <LogoutButton />
+          <AdminNav />
         </Suspense>
       </div>
       {children}
@@ -25,11 +25,16 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   );
 }
 
-async function LogoutButton() {
+/** Giriş yapılmışsa bölümler arası bağlantılar ve çıkış. */
+async function AdminNav() {
   if (!(await isAdmin())) return null;
   return (
-    <form action={logout}>
-      <button className="text-sm font-semibold underline-offset-4 hover:underline">Çıkış yap</button>
-    </form>
+    <nav className="flex items-center gap-5 text-sm font-semibold">
+      <Link href="/admin" className="underline-offset-4 hover:underline">Seriler</Link>
+      <Link href="/admin/turler" className="underline-offset-4 hover:underline">Türler</Link>
+      <form action={logout}>
+        <button className="text-muted underline-offset-4 hover:text-fg hover:underline">Çıkış yap</button>
+      </form>
+    </nav>
   );
 }

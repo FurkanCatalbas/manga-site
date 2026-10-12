@@ -33,6 +33,15 @@ export const chapters = pgTable(
   (t) => [unique().on(t.seriesId, t.number)],
 );
 
+// Türlerin resmi listesi (panelden yönetilir). Seriler tür adlarını kendi `genres` dizisinde tutar;
+// bu tablo seçilebilecek türleri, ad değişikliklerini ve henüz hiçbir seride olmayan türleri taşır.
+export const genres = pgTable("genres", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Gün gün okunma sayıları (Popüler: günlük / haftalık / aylık ve okunma grafiği için)
 export const seriesViewsDaily = pgTable(
   "series_views_daily",

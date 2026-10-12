@@ -108,6 +108,11 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   `pages` ile aynı sırada; eski bölümlerde `[]` olabilir, okuyucu boyutsuz da çalışır)
 - `series_views_daily`: seri başına günlük okunma (İstanbul saatine göre gün)
 - `view_hits`: tekrar sayımı önlemek için (IP özeti, bölüm, gün). Sadece bugün ve dün tutulur.
+- `genres`: türlerin resmi listesi (ad, slug), panel → Türler'den yönetilir. Seriler tür **adlarını**
+  `series.genres` dizisinde tutar. Ad değişikliği/silme tek SQL ifadesiyle serilere de yansır
+  (`renameGenre`, `deleteGenre`). Sitenin genel tarafı türleri serilerden türetir, bu tabloya bağlı
+  değildir; tablo yoksa panel çalıştırılacak SQL'i gösterir (`isMissingTable`, `src/lib/genres.ts`).
+  Tür adları `cleanGenreName` ile düzenlenir (boşluklar, Türkçe ilk harf büyük).
 
 ### Okunma sayacı: `src/app/api/goruntulenme/route.ts`
 
@@ -160,7 +165,11 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 ### Yönetim paneli: `/admin`
 
 Tek şifre (`ADMIN_PASSWORD`); çerezde şifreden türetilen HMAC tutulur (`src/lib/auth.ts`).
-Seri ekleme/düzenleme/silme ve bölüm yükleme. İşlemler `src/app/admin/actions.ts` içindeki server action'larda.
+Bölümler: Seriler (ekleme/düzenleme/silme, bölüm yükleme) ve Türler (`/admin/turler`: ekle, adını
+değiştir, sil, serilerde olup listede olmayanları aktar). Seri formunda türler çiplerle seçilir; formda
+yazılan yeni tür kayıtta listeye eklenir. İşlemler `src/app/admin/actions.ts` içindeki server action'larda;
+sayfanın yeniden çizilmesi gerekiyorsa `refresh()` (next/cache) çağrılır. `"use server"` dosyası
+yalnızca async fonksiyon dışa aktarabilir.
 
 ## Test etme ipuçları (bulut ortamında)
 
@@ -199,6 +208,7 @@ Seri ekleme/düzenleme/silme ve bölüm yükleme. İşlemler `src/app/admin/acti
   sinematik ve kaydırılabilir hero, "Okumaya devam et" rafı, Kütüphane sayfası (`/kutuphane`),
   seri sayfasında "Devam et" ve okundu işaretli sıralanabilir bölüm listesi, çipli Keşfet filtreleri;
   popüler listesinden grafikler kaldırıldı
+- Panel: tür yönetimi (Türler sayfası, formda çipli tür seçimi)
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
