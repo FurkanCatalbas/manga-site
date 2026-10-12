@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: `${SITE_NAME}: Webtoon ve Manga Oku`, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
+  // Arama motoru doğrulamaları (Bing Webmaster; ayrıca public/BingSiteAuth.xml)
+  verification: { other: { "msvalidate.01": "A245B1C9684597A61885E2CA85A48C49" } },
   applicationName: SITE_NAME,
   openGraph: { type: "website", siteName: SITE_NAME, locale: "tr_TR", url: "/" },
   twitter: { card: "summary_large_image" },
