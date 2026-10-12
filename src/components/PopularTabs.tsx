@@ -67,6 +67,7 @@ export function PopularTabs({ data }: { data: Record<Period, PopularItem[]> }) {
                 </span>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
+                  referrerPolicy="no-referrer"
                   src={s.cover}
                   alt=""
                   className="h-16 w-12 shrink-0 rounded-lg object-cover ring-1 ring-white/10"

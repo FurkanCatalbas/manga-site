@@ -35,6 +35,7 @@ export default async function GenresPage() {
                   {cover && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
+                      referrerPolicy="no-referrer"
                       src={cover}
                       alt=""
                       loading="lazy"

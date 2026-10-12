@@ -87,13 +87,14 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
       {/* Bulanık kapak arka planlı başlık alanı */}
       <div className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={series.cover} alt="" className="absolute inset-0 h-full w-full scale-125 object-cover opacity-40 blur-3xl" />
+        <img referrerPolicy="no-referrer" src={series.cover} alt="" className="absolute inset-0 h-full w-full scale-125 object-cover opacity-40 blur-3xl" />
         <div className="absolute inset-0 bg-gradient-to-b from-bg/40 via-bg/80 to-bg" />
 
         <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-8 pb-10 sm:flex-row sm:gap-10 sm:pt-12">
           <div className="flex gap-4 sm:block">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              referrerPolicy="no-referrer"
               src={series.cover}
               alt={`${series.title} kapağı`}
               className="w-32 shrink-0 self-start rounded-2xl shadow-2xl ring-1 shadow-black/60 ring-white/15 sm:w-56 lg:w-64"

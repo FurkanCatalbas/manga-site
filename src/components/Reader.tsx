@@ -133,7 +133,7 @@ export function Reader(props: Props) {
   useEffect(() => {
     if (!nearEnd || !nextUrl) return;
     router.prefetch(nextUrl);
-    nextPages.forEach((p) => preload(p.src, { as: "image" }));
+    nextPages.forEach((p) => preload(p.src, { as: "image", referrerPolicy: "no-referrer" }));
   }, [nearEnd, nextUrl, nextPages, router]);
 
   const progress = ((page + 1) / pages.length) * 100;
@@ -229,6 +229,7 @@ function VerticalPages({
         // Boyutlar biliniyorsa tarayıcı görsel gelmeden yerini ayırır, sayfa kaymaz.
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          referrerPolicy="no-referrer"
           key={p.src}
           ref={(el) => {
             imgRefs.current[i] = el;

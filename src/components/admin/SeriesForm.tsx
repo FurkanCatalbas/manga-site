@@ -5,7 +5,7 @@ import { createSeries, updateSeries, type SeriesInput } from "@/app/admin/action
 import { cleanGenreName } from "@/lib/series";
 import { slugify } from "@/lib/slug";
 import { field, label, primaryBtn } from "./ui";
-import { ACCEPT_IMAGES, isImageFile, MAX_UPLOAD_BYTES, uploadImage } from "./upload";
+import { ACCEPT_IMAGES, isImageFile, isImageLink, MAX_UPLOAD_BYTES, measureImage, uploadImage } from "./upload";
 
 type Props = {
   initial?: SeriesInput;
@@ -61,6 +61,11 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
           coverUrl = (await uploadImage(coverFile, { slug, kind: "cover" })).url;
           setCover(coverUrl);
           setCoverFile(null);
+        } else if (coverUrl) {
+          if (!isImageLink(coverUrl)) throw new Error("Kapak bağlantısı https:// ile başlamalı.");
+          await measureImage(coverUrl).catch(() => {
+            throw new Error("Kapak bağlantısı açılamadı. Adres yanlış ya da kaynak site dışarıdan gösterilmesini engelliyor.");
+          });
         }
         const input: SeriesInput = {
           slug,
@@ -88,7 +93,7 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
         <label className="flex aspect-[2/3] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-line bg-surface hover:border-accent text-center text-sm">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Kapak önizleme" className="h-full w-full object-cover" />
+            <img referrerPolicy="no-referrer" src={preview} alt="Kapak önizleme" className="h-full w-full object-cover" />
           ) : (
             <span className="px-4">Görsel seç</span>
           )}
@@ -106,6 +111,22 @@ export function SeriesForm({ initial, allGenres = [], sources = [] }: Props) {
           />
         </label>
         {preview && <p className="mt-1 text-xs text-muted">Değiştirmek için görsele tıkla.</p>}
+        {/* Yükleme yerine başka sitedeki görselin bağlantısı: görsel R2'ye inmez, oradan gösterilir */}
+        <label htmlFor="cover-link" className="mt-3 mb-1 block text-xs font-semibold text-muted">
+          ya da görsel bağlantısı yapıştır
+        </label>
+        <input
+          id="cover-link"
+          type="url"
+          placeholder="https://…"
+          value={coverFile ? "" : cover}
+          onChange={(e) => {
+            setMessage(undefined);
+            setCoverFile(null);
+            setCover(e.target.value.trim());
+          }}
+          className={`${field} text-xs`}
+        />
       </div>
 
       <div className="grid gap-4">

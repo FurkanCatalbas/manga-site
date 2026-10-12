@@ -14,6 +14,7 @@ export function SeriesCard({ series, chapters = 2 }: { series: SeriesSummary; ch
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- kapaklar CDN'den doğrudan gelir */}
         <img
+          referrerPolicy="no-referrer"
           src={series.cover}
           alt=""
           loading="lazy"

@@ -39,7 +39,7 @@ export function ContinueShelf({ items }: { items: LibraryItem[] }) {
             <Link href={chapterUrl(e)} className="group block">
               <div className="relative overflow-hidden rounded-xl ring-1 ring-white/[0.08]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={e.cover} alt="" loading="lazy" className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <img referrerPolicy="no-referrer" src={e.cover} alt="" loading="lazy" className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                 <span className="absolute inset-0 m-auto grid h-10 w-10 place-items-center rounded-full bg-white/90 text-bg opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                   <PlayIcon size={16} />
@@ -89,7 +89,7 @@ export function LibraryList({ items }: { items: LibraryItem[] }) {
         <li key={e.slug} className="panel flex min-w-0 items-center gap-4 p-3">
           <Link href={`/seri/${e.slug}`} className="shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={e.cover} alt="" loading="lazy" className="h-24 w-[4.5rem] rounded-xl object-cover ring-1 ring-white/10" />
+            <img referrerPolicy="no-referrer" src={e.cover} alt="" loading="lazy" className="h-24 w-[4.5rem] rounded-xl object-cover ring-1 ring-white/10" />
           </Link>
           <div className="min-w-0 flex-1">
             <Link href={`/seri/${e.slug}`} className="block truncate font-semibold hover:text-accent">

@@ -144,6 +144,12 @@ bugün o bölümü saymadıysa `series.views` ve `series_views_daily` sayaçlar�
   Dosyalar `immutable` önbellek başlığıyla yüklenir. Silmede önek bazlı silinir (`deletePrefix`).
 - Veritabanında görseller **tam URL** olarak saklanır (`publicUrl()` ile `R2_PUBLIC_URL` + anahtar).
   `R2_PUBLIC_URL` değişirse eski kayıtlar SQL `replace` ile güncellenmeli (README → Yayınlama).
+- **Bağlantıyla görsel:** panelde kapak için "görsel bağlantısı" alanı, bölümde "Bağlantı yapıştır" sekmesi var.
+  Başka sitedeki https görsel adresleri R2'ye inmeden olduğu gibi `cover`/`pages`'e yazılır. Panel her
+  bağlantıyı tarayıcıda açıp ölçer (`measureImage`, `upload.ts`): açılmayan sayfa varsa yayınlamaz, boyutlar
+  `page_sizes`'a yazılır. Kaynak siteler hotlink'i çoğunlukla `Referer`'a bakarak engellediği için kapak ve
+  sayfa `<img>`'lerinde (ve okuyucudaki `preload`'da) `referrerPolicy="no-referrer"` var; yeni görsel
+  eklerken bunu koru. Sunucu yalnızca https ya da `/` ile başlayan yolları kabul eder (`isImageSrc`).
 - `next/image` bilerek kullanılmıyor: görseller yüklemede optimize ediliyor; ham `<img>` +
   `width`/`height` kullanılıyor.
 
@@ -232,6 +238,7 @@ yalnızca async fonksiyon dışa aktarabilir.
   (son güncellenen, yeni eklenen, popüler + dönem, A-Z), sayfalama;
   Popüler'de "Tümü" sekmesi
 - Seriler: yazar/çizer alanı kaldırıldı, yerine Türkçe + İngilizce ad (`title_en`)
+- Panel: R2'ye yüklemeden, başka sitedeki görsel bağlantılarıyla kapak ve bölüm ekleme
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 

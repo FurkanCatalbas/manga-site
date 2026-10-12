@@ -34,3 +34,32 @@ export function sortByName(files: File[]) {
     a.name.localeCompare(b.name, "tr", { numeric: true, sensitivity: "base" }),
   );
 }
+
+/** Satır satır (ya da boşlukla) yapıştırılmış görsel bağlantılarını ayırır. */
+export function splitLinks(text: string) {
+  return text.split(/\s+/).filter(Boolean);
+}
+
+/** Geçerli bir https görsel bağlantısı mı? (Siteye http görsel koymak tarayıcıda uyarı verir.) */
+export function isImageLink(v: string) {
+  try {
+    return new URL(v).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Bağlantıdaki görseli tarayıcıda açıp boyutlarını ölçer; görsel sunucuya ya da R2'ye inmez.
+ * Site, görselleri Referer göndermeden gösterir; burada da aynı şekilde denenir.
+ * Açılamazsa (yanlış adres ya da kaynak site engelliyor) hata atar.
+ */
+export function measureImage(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.referrerPolicy = "no-referrer";
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => reject(new Error(`Görsel açılamadı: ${src}`));
+    img.src = src;
+  });
+}

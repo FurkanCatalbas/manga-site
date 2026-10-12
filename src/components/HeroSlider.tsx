@@ -58,6 +58,7 @@ export function HeroSlider({ items }: { items: SeriesSummary[] }) {
             {/* Bulanık kapak arka planı */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              referrerPolicy="no-referrer"
               src={s.cover}
               alt=""
               className={`absolute inset-0 h-full w-full object-cover opacity-50 blur-3xl transition-transform duration-[6s] ease-out ${active ? "scale-110" : "scale-125"}`}
@@ -95,6 +96,7 @@ export function HeroSlider({ items }: { items: SeriesSummary[] }) {
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                referrerPolicy="no-referrer"
                 src={s.cover}
                 alt={`${s.title} kapağı`}
                 className="w-28 shrink-0 rounded-2xl shadow-2xl ring-1 shadow-black/60 ring-white/15 sm:w-44 lg:w-56"

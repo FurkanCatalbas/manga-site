@@ -43,7 +43,7 @@ async function SeriesList() {
                 className="flex items-center gap-4 border-b border-line py-3 hover:bg-surface"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.cover} alt="" className="h-16 w-11 shrink-0 rounded-md object-cover" />
+                <img referrerPolicy="no-referrer" src={s.cover} alt="" className="h-16 w-11 shrink-0 rounded-md object-cover" />
                 <span className="flex-1 font-semibold">{s.title}</span>
                 <span className="pr-3 text-sm text-muted">
                   {s.chapters.length} bölüm, {s.status.toLocaleLowerCase("tr")}

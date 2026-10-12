@@ -66,10 +66,21 @@ function normalizeGenres(list: string[]) {
   return [...new Set(list.map(cleanGenreName).filter(Boolean))];
 }
 
+/** Görsel adresi: R2 ya da başka sitedeki https bağlantısı; örnek veriler için sitedeki yol. */
+function isImageSrc(v: string) {
+  if (v.startsWith("/") && !v.startsWith("//")) return true;
+  try {
+    return new URL(v).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function validateSeries(input: SeriesInput): string | undefined {
   if (!input.title.trim()) return "Seri adı boş olamaz.";
   if (!SLUG_PATTERN.test(input.slug)) return "Adres yalnızca küçük harf, rakam ve tire içerebilir.";
   if (!input.cover) return "Kapak görseli yükle.";
+  if (!isImageSrc(input.cover)) return "Kapak bağlantısı https:// ile başlamalı.";
   if (!["Devam Ediyor", "Tamamlandı"].includes(input.status)) return "Geçersiz durum.";
   if (input.genres.some((g) => g.length > GENRE_MAX)) return `Tür adı en fazla ${GENRE_MAX} karakter olabilir.`;
   const source = parseSource(input.source);
@@ -142,6 +153,7 @@ export async function createChapter(input: ChapterInput): Promise<FormState> {
   await requireAdmin();
   if (!Number.isInteger(input.number) || input.number < 1) return { error: "Bölüm numarası 1 veya daha büyük olmalı." };
   if (input.pages.length === 0) return { error: "En az bir sayfa yükle." };
+  if (!input.pages.every(isImageSrc)) return { error: "Sayfa bağlantıları https:// ile başlamalı." };
 
   const s = await db.query.series.findFirst({ where: eq(series.slug, input.slug) });
   if (!s) return { error: "Seri bulunamadı." };
