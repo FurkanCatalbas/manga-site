@@ -3,8 +3,10 @@ import { Dela_Gothic_One, Onest } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/Brand";
+import { GenreMenu } from "@/components/GenreMenu";
 import { SearchIcon } from "@/components/icons";
 import { DesktopNav, DesktopNavLinks, MobileTabBar, MobileTabBarView } from "@/components/SiteNav";
+import { getGenres } from "@/lib/data";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -35,16 +37,30 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// Altbilgideki Keşfet bağlantıları (Keşfet sayfasının sıralama ve filtreleri)
+const EXPLORE_LINKS = [
+  { href: "/ara?sira=populer", label: "Popüler" },
+  { href: "/ara", label: "Son güncellenenler" },
+  { href: "/ara?sira=yeni", label: "Yeni eklenenler" },
+  { href: "/ara?durum=tamam", label: "Tamamlanan seriler" },
+  { href: "/tur", label: "Tüm türler" },
+  { href: "/kutuphane", label: "Kütüphanem" },
+];
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const genres = await getGenres();
   return (
     <html lang="tr" className={`${dela.variable} ${onest.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <header className="site-header glass sticky top-0 z-30 border-b border-white/[0.06] pt-[env(safe-area-inset-top)]">
           <nav className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:gap-8">
             <Logo />
-            <Suspense fallback={<DesktopNavLinks pathname={null} />}>
-              <DesktopNav />
-            </Suspense>
+            <div className="hidden items-center gap-1 md:flex">
+              <Suspense fallback={<DesktopNavLinks pathname={null} />}>
+                <DesktopNav />
+              </Suspense>
+              <GenreMenu genres={genres} />
+            </div>
             <form action="/ara" className="ml-auto hidden w-full max-w-xs md:block">
               <label htmlFor="site-search" className="sr-only">Seri ara</label>
               <div className="relative">
@@ -69,18 +85,42 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         <main className="flex-1">{children}</main>
         <footer className="mt-20 border-t border-white/[0.06]">
-          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <Logo id="logo-footer" />
-              <p className="mt-2 max-w-xs text-sm text-muted">{SITE_DESCRIPTION}</p>
-            </div>
-            <div className="flex flex-col gap-3 text-sm text-muted sm:items-end">
-              <div className="flex gap-5">
-                <Link href="/ara" className="hover:text-fg">Seriler</Link>
-                <Link href="/kutuphane" className="hover:text-fg">Kütüphane</Link>
+          <div className="mx-auto max-w-7xl px-4 py-10">
+            <div className="grid gap-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
+              <div>
+                <Logo id="logo-footer" />
+                <p className="mt-2 max-w-xs text-sm text-muted">{SITE_DESCRIPTION}</p>
               </div>
-              <p className="text-xs">© {SITE_NAME}</p>
+              <div className="grid gap-8 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-12">
+                {genres.length > 0 && (
+                  <nav aria-label="Türler">
+                    <h2 className="mb-3 text-sm font-bold">Türler</h2>
+                    <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted sm:grid-cols-3 md:grid-cols-4">
+                      {genres.map((g) => (
+                        <li key={g.slug} className="min-w-0">
+                          <Link href={`/tur/${g.slug}`} className="block truncate hover:text-fg">
+                            {g.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                )}
+                <nav aria-label="Keşfet">
+                  <h2 className="mb-3 text-sm font-bold">Keşfet</h2>
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted sm:grid-cols-1">
+                    {EXPLORE_LINKS.map((l) => (
+                      <li key={l.href}>
+                        <Link href={l.href} className="hover:text-fg">
+                          {l.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </div>
             </div>
+            <p className="mt-10 border-t border-white/[0.06] pt-6 text-xs text-muted">© {SITE_NAME}</p>
           </div>
         </footer>
         <Suspense fallback={<MobileTabBarView pathname={null} />}>

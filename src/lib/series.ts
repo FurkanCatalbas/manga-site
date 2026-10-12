@@ -1,4 +1,5 @@
 // İstemci ve sunucu bileşenlerinin ortak kullandığı tipler ve yardımcılar (veritabanı içermez).
+import { slugify } from "@/lib/slug";
 
 export type SeriesStatus = "Devam Ediyor" | "Tamamlandı";
 
@@ -27,6 +28,7 @@ type SeriesBase = {
 
 /** Liste sayfaları (ana sayfa, arama, popüler) için hafif seri bilgisi. */
 export type SeriesSummary = SeriesBase & {
+  addedAt: string; // sitenin seriyi eklediği tarih (ISO)
   chapterCount: number;
   firstChapter: number | null;
   latestChapters: ChapterInfo[]; // en yeniden eskiye, en fazla 3
@@ -46,6 +48,13 @@ export function cleanGenreName(name: string) {
   const s = name.replace(/\s+/g, " ").trim();
   return s.charAt(0).toLocaleUpperCase("tr") + s.slice(1);
 }
+
+/** Türün sayfası: "Bilim Kurgu" → "/tur/bilim-kurgu" */
+export const genreHref = (genre: string) => `/tur/${slugify(genre)}`;
+
+/** Dönemsel okunma sayıları; "tum" serinin toplam okunması. */
+export type Period = "gunluk" | "haftalik" | "aylik" | "tum";
+export type PeriodViews = Record<Period, number>;
 
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR", {

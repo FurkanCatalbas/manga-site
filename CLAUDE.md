@@ -93,11 +93,13 @@ bilerek yok. Yeni sayfa eklerken bu ilkeyi koru.
 
 | Fonksiyon | Döndürdüğü | Kullanan |
 |---|---|---|
-| `getSeriesList()` | `SeriesSummary[]`: seri bilgisi, bölüm sayısı, ilk bölüm, son 3 bölüm | ana sayfa, `/ara`, popüler, türler |
+| `getSeriesList()` | `SeriesSummary[]`: seri bilgisi, eklenme tarihi, bölüm sayısı, ilk bölüm, son 3 bölüm | ana sayfa, `/ara`, `/tur`, popüler |
 | `getSeries(slug)` | `Series`: seri ve tüm bölümlerin listesi (sayfalar hariç) | seri sayfası |
 | `getChapter(slug, no)` | bölüm, sayfaları (`Page[]`) ve sonraki bölümün ilk 3 sayfası | okuyucu |
 | `getChapterRefs()` | tüm bölümlerin slug/numara/tarihi | sitemap, `generateStaticParams` |
-| `getPopular()` | günlük/haftalık/aylık en çok okunanlar ve 14 günlük eğri | yan sütun |
+| `getPeriodViews()` | her serinin bugün/7 gün/30 gün/toplam okunması | `/ara` ve `/tur/...` popülerlik sıralaması |
+| `getPopular()` | günlük/haftalık/aylık/tüm zamanların en çok okunanları | yan sütun |
+| `getGenres()` | serilerde geçen türler (ad, slug, seri sayısı); aynı slug'a düşen yazımlar birleşir | başlıktaki Türler menüsü, altbilgi, `/tur` |
 | `getSeriesSource(slug)` (`src/lib/fansubs.ts`) | serinin çeviri kaynağı ya da `null` | seri sayfası, okuyucu |
 
 Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bileşenleri de kullanır.
@@ -160,8 +162,15 @@ Yalnızca dikey (webtoon) okuma; sayfa sayfa modu kaldırıldı.
 
 ### Site iskeleti ve okuma geçmişi
 
-- `layout.tsx`: cam başlık (masaüstünde bağlantılar + arama, mobilde arama ikonu), altbilgi ve
-  `MobileTabBar` (Ana sayfa, Keşfet, Kütüphane; okuyucuda ve panelde gizli).
+- `layout.tsx`: cam başlık (masaüstünde bağlantılar + `GenreMenu` açılır tür menüsü + arama, mobilde
+  arama ikonu), türleri ve Keşfet bağlantılarını listeleyen altbilgi ve `MobileTabBar` (Ana sayfa,
+  Keşfet, Kütüphane; okuyucuda ve panelde gizli; `/tur` sayfalarında Keşfet etkin görünür).
+- Seri listeleri `SeriesBrowser.tsx`: arama (ad + yazar), tür/durum çipleri, sıralama, sayfa başına 24 seri.
+  Süzme tarayıcıda yapılır. `/ara`'da seçimler adrese yazılır (`q`, `tur`, `durum=devam|tamam`,
+  `sira=guncel|yeni|populer|az`, `donem=gunluk|haftalik|aylik|tum`, `sayfa`) ve `SeriesBrowserFromUrl`
+  ile geri okunur; Suspense yedeği varsayılan liste olduğu için statik HTML'de de seriler var.
+  `/tur/<slug>` aynı bileşeni türe göre süzülmüş seriyle ve adres okumadan kullanır (tamamen statik).
+  Tür adresi `genreHref(ad)` = `/tur/` + `slugify(ad)`.
 - Okuma geçmişi localStorage'da; bileşenler `useAllProgress()` (`src/lib/progress.ts`) ile okur.
   Kullananlar: ana sayfadaki "Okumaya devam et" rafı ve `/kutuphane` (`Library.tsx`), seri sayfasındaki
   "Devam et" düğmesi ve okundu işaretli bölüm listesi (`SeriesActions.tsx`). Hesap sistemi gelince
@@ -218,6 +227,9 @@ yalnızca async fonksiyon dışa aktarabilir.
   popüler listesinden grafikler kaldırıldı
 - Panel: tür yönetimi (Türler sayfası, formda çipli tür seçimi)
 - Çeviri kaynağı kutusu: panel → Kaynaklar, seri formunda isteğe bağlı kaynak seçimi
+- Keşif: tür sayfaları (`/tur`, `/tur/<slug>`), başlıkta Türler menüsü, türlü altbilgi; Keşfet'te sıralama
+  (son güncellenen, yeni eklenen, popüler + dönem, A-Z), yazara göre arama, sayfalama; kartlarda yazar;
+  Popüler'de "Tümü" sekmesi
 - Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
   favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
@@ -230,7 +242,7 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Kullanıcı hesapları (Auth.js / Better Auth): kütüphane/takip listesi, yeni bölüm bildirimi,
   cihazlar arası okuma geçmişi, puanlama
 - Topluluk: bölüm yorumları (spoiler gizleme, moderasyon), bölüm sonu tepkileri
-- Keşif: tür sayfaları (`/tur/...`), benzer seriler, arama sıralaması, yayın takvimi, RSS
+- Keşif: benzer seriler, yayın takvimi, RSS, seri tipi (webtoon/manga/manhwa) filtresi
 - Panel: zamanlanmış yayın, taslak bölümler, ZIP ile toplu yükleme, bölüm bazlı istatistik
 - Altyapı: hata takibi (Sentry), analitik, Playwright uçtan uca testleri
 - Yukarıdaki prerendering uyarıları

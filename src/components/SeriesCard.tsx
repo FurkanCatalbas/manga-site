@@ -39,6 +39,7 @@ export function SeriesCard({ series, chapters = 2 }: { series: SeriesSummary; ch
           {series.title}
         </Link>
       </h3>
+      {series.author && <p className="mt-0.5 line-clamp-1 text-xs text-muted">{series.author}</p>}
       {chapters > 0 && latest.length > 0 && (
         <ul className="mt-2 space-y-1">
           {latest.map((c) => (

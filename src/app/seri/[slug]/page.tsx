@@ -7,7 +7,7 @@ import { ChapterList, ReadButtons } from "@/components/SeriesActions";
 import { SourceNotice } from "@/components/SourceNotice";
 import { getSeriesSource } from "@/lib/fansubs";
 import { JsonLd } from "@/components/JsonLd";
-import { getAllGenres, getPopular, getSeries, getSeriesList } from "@/lib/data";
+import { genreHref, getAllGenres, getPopular, getSeries, getSeriesList } from "@/lib/data";
 import { absoluteUrl, PLACEHOLDER_SLUG, SITE_NAME } from "@/lib/site";
 
 export async function generateStaticParams() {
@@ -129,7 +129,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
               {series.genres.map((g) => (
                 <Link
                   key={g}
-                  href={`/ara?tur=${encodeURIComponent(g)}`}
+                  href={genreHref(g)}
                   className="rounded-full border border-white/10 px-3 py-1 text-sm text-fg/85 transition-colors hover:border-accent/50 hover:text-accent"
                 >
                   {g}

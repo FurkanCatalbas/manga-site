@@ -16,6 +16,7 @@ const TABS = [
   { id: "gunluk", label: "Günlük" },
   { id: "haftalik", label: "Haftalık" },
   { id: "aylik", label: "Aylık" },
+  { id: "tum", label: "Tümü" },
 ] as const;
 type Period = (typeof TABS)[number]["id"];
 
@@ -23,6 +24,7 @@ const EMPTY: Record<Period, string> = {
   gunluk: "Bugün henüz okunma yok.",
   haftalik: "Bu hafta henüz okunma yok.",
   aylik: "Bu ay henüz okunma yok.",
+  tum: "Henüz okunma yok.",
 };
 
 export function PopularTabs({ data }: { data: Record<Period, PopularItem[]> }) {
@@ -31,7 +33,7 @@ export function PopularTabs({ data }: { data: Record<Period, PopularItem[]> }) {
 
   return (
     <section className="panel p-4 sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-2">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-2 gap-y-3">
         <h2 className="text-lg font-bold">Popüler</h2>
         <div role="tablist" aria-label="Dönem" className="flex rounded-full bg-white/[0.05] p-1 text-xs font-semibold">
           {TABS.map((t) => (

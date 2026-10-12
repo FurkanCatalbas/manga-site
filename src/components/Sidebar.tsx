@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PopularTabs, type PopularItem } from "@/components/PopularTabs";
-import type { Period, PopularEntry } from "@/lib/data";
+import { genreHref, type Period, type PopularEntry } from "@/lib/data";
 
 /** Popüler verisini istemciye sadece gereken alanlarla aktarır. */
 export function PopularList({ data }: { data: Record<Period, PopularEntry[]> }) {
@@ -27,7 +27,7 @@ export function GenreList({ genres }: { genres: string[] }) {
         {genres.map((g) => (
           <Link
             key={g}
-            href={`/ara?tur=${encodeURIComponent(g)}`}
+            href={genreHref(g)}
             className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm transition-colors hover:border-accent/50 hover:text-accent"
           >
             {g}

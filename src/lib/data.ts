@@ -7,7 +7,8 @@ import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/db";
 import { chapters as chaptersTable, series as seriesTable, seriesViewsDaily } from "@/db/schema";
-import type { Chapter, ChapterInfo, Page, Series, SeriesSummary } from "@/lib/series";
+import { slugify } from "@/lib/slug";
+import type { Chapter, ChapterInfo, Page, Period, PeriodViews, Series, SeriesSummary } from "@/lib/series";
 
 export * from "@/lib/series";
 
@@ -46,7 +47,7 @@ export async function getSeriesList(): Promise<SeriesSummary[]> {
     .as("ranked");
 
   const [rows, latest] = await Promise.all([
-    db.select({ id: seriesTable.id, ...seriesColumns }).from(seriesTable).orderBy(asc(seriesTable.title)),
+    db.select({ id: seriesTable.id, ...seriesColumns, addedAt: seriesTable.createdAt }).from(seriesTable).orderBy(asc(seriesTable.title)),
     db.select().from(ranked).where(lte(ranked.rank, 3)).orderBy(asc(ranked.seriesId), asc(ranked.rank)),
   ]);
 
@@ -56,10 +57,11 @@ export async function getSeriesList(): Promise<SeriesSummary[]> {
     bySeries.get(c.seriesId)!.push(c);
   }
 
-  return rows.map(({ id, ...s }) => {
+  return rows.map(({ id, addedAt, ...s }) => {
     const cs = bySeries.get(id) ?? [];
     return {
       ...s,
+      addedAt: iso(addedAt),
       chapterCount: cs[0]?.total ?? 0,
       firstChapter: cs[0]?.first ?? null,
       latestChapters: cs.map((c) => ({ number: c.number, title: c.title, publishedAt: iso(c.publishedAt) })),
@@ -149,8 +151,7 @@ export async function getRecentlyUpdated(): Promise<SeriesSummary[]> {
   );
 }
 
-export type Period = "gunluk" | "haftalik" | "aylik";
-const PERIOD_DAYS: Record<Period, number> = { gunluk: 1, haftalik: 7, aylik: 30 };
+const PERIOD_DAYS = { gunluk: 1, haftalik: 7, aylik: 30 } as const;
 
 export type PopularEntry = {
   series: SeriesSummary;
@@ -165,8 +166,8 @@ function istanbulDay(offset: number) {
   return d.toISOString().slice(0, 10);
 }
 
-/** Günlük, haftalık ve aylık en çok okunan seriler. */
-export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry[]>> {
+/** Her serinin bugünkü, son 7 ve son 30 gündeki okunması ve toplam okunması; slug'a göre. */
+export async function getPeriodViews(): Promise<Record<string, PeriodViews>> {
   "use cache";
   cacheTag("series", "views");
   cacheLife("minutes");
@@ -180,24 +181,29 @@ export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry
       .where(gte(seriesViewsDaily.day, istanbulDay(29))),
   ]);
 
-  // slug -> (gün -> okunma)
-  const counts = new Map<string, Map<string, number>>();
+  const result: Record<string, PeriodViews> = {};
+  for (const s of all) result[s.slug] = { gunluk: 0, haftalik: 0, aylik: 0, tum: s.views };
+  // Günler bugünden geriye: bugün tüm dönemlere, 7 günden eskisi yalnızca aylığa girer
+  const since = Object.fromEntries(
+    Object.entries(PERIOD_DAYS).map(([p, days]) => [p, istanbulDay(days - 1)]),
+  ) as Record<keyof typeof PERIOD_DAYS, string>;
   for (const r of rows) {
-    if (!counts.has(r.slug)) counts.set(r.slug, new Map());
-    counts.get(r.slug)!.set(r.day, r.views);
+    const v = result[r.slug];
+    if (!v) continue;
+    for (const p of Object.keys(PERIOD_DAYS) as (keyof typeof PERIOD_DAYS)[]) {
+      if (r.day >= since[p]) v[p] += r.views;
+    }
   }
+  return result;
+}
 
+/** Günlük, haftalık, aylık ve tüm zamanların en çok okunan serileri. */
+export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry[]>> {
+  const [all, views] = await Promise.all([getSeriesList(), getPeriodViews()]);
   const result = {} as Record<Period, PopularEntry[]>;
-  for (const period of Object.keys(PERIOD_DAYS) as Period[]) {
-    const days = Array.from({ length: PERIOD_DAYS[period] }, (_, i) => istanbulDay(i));
+  for (const period of ["gunluk", "haftalik", "aylik", "tum"] as const) {
     result[period] = all
-      .map((s) => {
-        const c = counts.get(s.slug) ?? new Map<string, number>();
-        return {
-          series: s,
-          views: days.reduce((sum, d) => sum + (c.get(d) ?? 0), 0),
-        };
-      })
+      .map((s) => ({ series: s, views: views[s.slug]?.[period] ?? 0 }))
       .filter((e) => e.views > 0)
       .sort((a, b) => b.views - a.views)
       .slice(0, limit);
@@ -206,6 +212,32 @@ export async function getPopular(limit = 5): Promise<Record<Period, PopularEntry
 }
 
 export async function getAllGenres(): Promise<string[]> {
-  const all = await getSeriesList();
-  return [...new Set(all.flatMap((s) => s.genres))].sort((a, b) => a.localeCompare(b, "tr"));
+  return (await getGenres()).map((g) => g.name);
+}
+
+export type GenreSummary = { name: string; slug: string; count: number };
+
+/**
+ * Serilerde geçen türler, adlarına göre sıralı; her biri sayfa adresi ve seri sayısıyla.
+ * Aynı adrese düşen yazımlar ("korku", "Korku") tek tür sayılır; en çok kullanılan yazım gösterilir.
+ */
+export async function getGenres(): Promise<GenreSummary[]> {
+  const bySlug = new Map<string, { names: Map<string, number>; series: Set<string> }>();
+  for (const s of await getSeriesList()) {
+    for (const name of s.genres) {
+      const slug = slugify(name);
+      if (!slug) continue;
+      const g = bySlug.get(slug) ?? { names: new Map(), series: new Set() };
+      g.names.set(name, (g.names.get(name) ?? 0) + 1);
+      g.series.add(s.slug);
+      bySlug.set(slug, g);
+    }
+  }
+  return [...bySlug]
+    .map(([slug, g]) => ({
+      name: [...g.names].sort((a, b) => b[1] - a[1])[0][0],
+      slug,
+      count: g.series.size,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
 }
