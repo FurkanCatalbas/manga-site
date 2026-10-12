@@ -35,11 +35,14 @@ Yeni kod da bu dile ve üsluba uymalı.
   Yeni düğme ve kutularda bunları kullan, yeni stil icat etme.
 - İnce kenarlar `ring-white/[0.06–0.15]` ya da `border-white/[0.06–0.08]`, köşeler `rounded-xl`/`2xl`,
   başlıklar `font-display` (Dela Gothic One) ya da `font-bold tracking-tight`.
-- **Marka:** yazı logosu `webto` + gradyanlı **`oku`** ("webtoon oku"); işaret gözlük (okumak).
-  Tek kaynak `src/lib/brand.ts` (`MARK_VARIANT`: halka/dolu/harf, şu an "halka"). Site logosu
-  `src/components/Brand.tsx`; sekme/uygulama ikonları ve manifest ikonları `npm run icons` ile üretilir
-  (`src/app/icon.svg`, `favicon.ico`, `apple-icon.png`, `public/icons/*`). Paylaşım görseli
-  `src/app/opengraph-image.tsx`, yazı tipleri `assets/fonts` (OFL).
+- **Marka:** yazı logosu `webt` + **beyaz "o"** + **mor "o"** + `ku` (mordan pembeye). Ortadaki "oo"
+  bir köprüyle gözlüğe dönüşür: sol cam `webto`'nun, sağ cam `oku`'nun "o"su ("webtoon oku").
+  Gözlük ikonu da aynı renklerde (sol beyaz, sağ mor). Tek kaynak `src/lib/brand.ts`: ikon çizimi
+  (`MARK_VARIANT`), renkler, köprü geometrisi (Dela Gothic "o" ölçülerine göre em cinsinden).
+  Site logosu `src/components/Brand.tsx` (başlıkta sadece yazı; gözlük zaten yazının içinde).
+  Sekme/telefon ikonları ve manifest ikonları `npm run icons` ile üretilir (`src/app/icon.svg`,
+  `favicon.ico`, `apple-icon.png`, `public/icons/*`). Paylaşım görseli `src/app/opengraph-image.tsx`,
+  yazı tipleri `assets/fonts` (OFL).
 - İkonlar `src/components/icons.tsx` (satır içi SVG, kütüphane yok).
 - Mobilde yatay kayan raflar için `no-scrollbar -mx-4 px-4 overflow-x-auto snap-x`.
 - Popüler listesinde grafik/çizgi istenmiyor (kullanıcı kaldırttı).
@@ -189,8 +192,8 @@ Seri ekleme/düzenleme/silme ve bölüm yükleme. İşlemler `src/app/admin/acti
   sinematik ve kaydırılabilir hero, "Okumaya devam et" rafı, Kütüphane sayfası (`/kutuphane`),
   seri sayfasında "Devam et" ve okundu işaretli sıralanabilir bölüm listesi, çipli Keşfet filtreleri;
   popüler listesinden grafikler kaldırıldı
-- Marka: "webto**oku**" yazı logosu, gözlük işareti, favicon/iPhone/Android ikonları, uygulama
-  manifesti, yeni paylaşım görseli
+- Marka: "oo"su gözlüğe dönüşen yazı logosu (beyaz + mor cam), iki renkli gözlük ikonu,
+  favicon/iPhone/Android ikonları, uygulama manifesti, yeni paylaşım görseli
 
 ## Sıradakiler (önerilmiş, henüz yapılmadı)
 

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="wk-g" gradientUnits="userSpaceOnUse" x1="4" y1="20" x2="60" y2="48">
-      <stop offset="0" stop-color="#ff4f8b"/>
+    <linearGradient id="wk-b" gradientUnits="userSpaceOnUse" x1="29" y1="0" x2="35" y2="0">
+      <stop offset="0" stop-color="#eef0f6"/>
       <stop offset="1" stop-color="#8b5cf6"/>
     </linearGradient>
     <radialGradient id="wk-glow" cx=".5" cy=".2" r=".8">
@@ -11,11 +11,11 @@
   </defs>
   <rect width="64" height="64" rx="14" fill="#0a0b10"/><rect width="64" height="64" rx="14" fill="url(#wk-glow)"/>
   <g transform="translate(32 32) scale(0.86) translate(-32 -32)">
-    <g fill="none" stroke="url(#wk-g)" stroke-width="5" stroke-linecap="round">
-      <circle cx="19" cy="34" r="10.5"/>
-      <circle cx="45" cy="34" r="10.5"/>
-      <path d="M29.5 32.5 Q32 28 34.5 32.5"/>
-      <path d="M8.8 31 L5.5 25.5"/>
-      <path d="M55.2 31 L58.5 25.5"/>
+    <g fill="none" stroke-width="5" stroke-linecap="round">
+      <circle cx="19" cy="34" r="10.5" stroke="#eef0f6"/>
+      <path d="M8.8 31 L5.5 25.5" stroke="#eef0f6"/>
+      <circle cx="45" cy="34" r="10.5" stroke="#8b5cf6"/>
+      <path d="M55.2 31 L58.5 25.5" stroke="#8b5cf6"/>
+      <path d="M29.5 32.5 Q32 28 34.5 32.5" stroke="url(#wk-b)"/>
     </g></g>
 </svg>
