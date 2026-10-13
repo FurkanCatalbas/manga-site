@@ -82,6 +82,7 @@ Yeni kod da bu dile ve üsluba uymalı.
   - R2 için kendi alan adı: `https://cdn.webtooku.com.tr` (`R2_PUBLIC_URL` bu olmalı; eski `r2.dev` adresinden geçiş yapıldı)
 - `SITE_URL`: isteğe bağlı; yoksa Vercel üretim adresi, o da yoksa localhost
 - `VIEW_SALT`: isteğe bağlı; okunma sayacındaki IP özetlerinin tuzu
+- `GOOGLE_SITE_VERIFICATION`: isteğe bağlı; Google Search Console HTML etiketi doğrulama değeri
 - `CONTACT_EMAIL`: yasal sayfalardaki başvuru adresi (varsayılan `iletisim@webtooku.com.tr`)
 - Hesaplar: `BETTER_AUTH_SECRET` (yoksa hesap/yorum/tepki kapalı), `GOOGLE_CLIENT_ID/SECRET`, `RESEND_API_KEY`
   + `EMAIL_FROM` (e-postayla kayıt; yoksa yalnızca Google), isteğe bağlı `DISCORD_CLIENT_ID/SECRET`.
@@ -223,6 +224,8 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   `CommunityTabs`. Panel → "Forum ve sohbet" (`/admin/forum`): şikâyetler, sabitle/kilitle/sil, sohbet silme, engel.
 - Panel → Yorumlar (`/admin/yorumlar`): şikâyet edilenler, son yorumlar, silme, şikâyeti kapatma, engelleme
   (engel oturumları da kapatır).
+- **0. bölüm:** bölüm numarası 0 olabilir (`insertChapter`, yükleme, okunma sayacı, panel formları, Toplu al).
+  Bölüm numarasını `if (chapter)` gibi doğruluk kontrolüyle değil `!= null` ile denetle.
 - Yasal sayfalar: `/gizlilik` (KVKK aydınlatma), `/kullanim-kosullari`, `/topluluk-kurallari` (`LegalPage.tsx`);
   altbilgide bağlantılar. Yeni bir kişisel veri işlenirse gizlilik metnini güncelle.
 - Test: `AUTH_DEV_EMAIL=1` + `BETTER_AUTH_SECRET` ile e-posta kaydı doğrulamasız çalışır; Playwright ile
@@ -309,8 +312,8 @@ yayınlar. Yer imi şifre taşımaz; yayın panel oturumuyla. Kaynak seri → we
 localStorage'da (`webtooku:kaynak-seri`). React `javascript:` href'ini engellediği için adres ref ile yazılır.
 
 **Toplu al** (`BulkImport.tsx`, aynı sayfanın altında): görsel adresi bölüm ve sayfa numarasıyla ilerleyen
-siteler için (`…/96238/<bölüm>/0001.webp`, `…/Chapter_<bölüm>/split_000.webp`). Tek görsel bağlantısından
-kalıp çıkarılır (dosyanın üstündeki klasör bölüm, dosya adındaki son sayı sayfa; sıfır dolgusu korunur).
+siteler için (`…/96238/<bölüm>/0001.webp`, `…/Chapter_<bölüm>/split_000.webp`, mangaruhu `…/<Seri>/bolum-<bölüm>/001.webp`).
+Tek görsel bağlantısından kalıp çıkarılır (dosyanın üstündeki klasördeki sayı bölüm, önündeki rakamsız ek korunur; dosya adındaki son sayı sayfa; sıfır dolgusu korunur).
 Her bölümde sayfalar 0'dan (yoksa 1'den) açılmayan ilk görsele kadar tarayıcıda `measureImage` ile denenir;
 arada tek sayfa eksikse bölüm yarım yayınlanmaz. Sitede olan bölümler (`GET /api/admin/bolum?seri=`) atlanır,
 diğerleri `createChapter` ile doğrudan yayınlanır. Son bölüm boşsa art arda 3 bölüm bulunamayınca durur.
@@ -412,6 +415,8 @@ yalnızca async fonksiyon dışa aktarabilir.
 - Topluluk: takip et + yeni bölüm bildirimi, okuma geçmişinin hesaba taşınması, forumda beğeni/alıntı, bildirim
   merkezi, sohbette çevrimiçi sayısı, kullanıcı seviyeleri
 - Keşif: yayın takvimi, RSS, seri tipi (webtoon/manga/manhwa) filtresi
+- Toplu al: görsel adresi düzenli artmayan sitelerde bölüm sayfasına gidip görselleri sunucuda okuma
+  (okutoon'daki `getOkutoonChapters` gibi, site başına okuyucu seçicisiyle)
 - Panel: zamanlanmış yayın, taslak bölümler, ZIP ile toplu yükleme, bölüm bazlı istatistik
 - Altyapı: hata takibi (Sentry), analitik, Playwright uçtan uca testleri
 - Yukarıdaki prerendering uyarıları

@@ -169,13 +169,13 @@ async function Profile({ params }: { params: Promise<{ username: string }> }) {
               <Section title="Son yorumları">
                 <ul className="grid gap-3">
                   {p.recentComments.map((c, i) => {
-                    const href = c.chapter ? `/seri/${c.slug}/bolum/${c.chapter}` : `/seri/${c.slug}`;
+                    const href = c.chapter != null ? `/seri/${c.slug}/bolum/${c.chapter}` : `/seri/${c.slug}`;
                     return (
                       <li key={i} className="panel p-4">
                         <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
                           <Link href={`${href}#yorumlar-bolumu`} className="font-semibold hover:text-accent">
                             {c.seriesTitle}
-                            {c.chapter ? ` · ${c.chapter}. bölüm` : ""}
+                            {c.chapter != null ? ` · ${c.chapter}. bölüm` : ""}
                           </Link>
                           <TimeAgo iso={c.createdAt} className="text-xs text-muted" />
                         </p>

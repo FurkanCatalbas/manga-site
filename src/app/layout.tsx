@@ -29,7 +29,11 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   keywords: SITE_KEYWORDS,
   // Arama motoru doğrulamaları (Bing Webmaster; ayrıca public/BingSiteAuth.xml)
-  verification: { other: { "msvalidate.01": "A245B1C9684597A61885E2CA85A48C49" } },
+  // Google Search Console: HTML etiketi yöntemindeki content değeri (yoksa etiket eklenmez; DNS doğrulaması da olur)
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: { "msvalidate.01": "A245B1C9684597A61885E2CA85A48C49" },
+  },
   applicationName: SITE_NAME,
   openGraph: { type: "website", siteName: SITE_NAME, locale: "tr_TR", url: "/" },
   twitter: { card: "summary_large_image" },

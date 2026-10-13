@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   }
 
   const { slug, chapter } = await request.json().catch(() => ({}));
-  if (typeof slug !== "string" || !SLUG_PATTERN.test(slug) || !Number.isInteger(chapter) || chapter < 1) {
+  if (typeof slug !== "string" || !SLUG_PATTERN.test(slug) || !Number.isInteger(chapter) || chapter < 0) {
     return new Response(null, { status: 400 });
   }
 

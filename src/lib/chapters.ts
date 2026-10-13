@@ -30,7 +30,7 @@ const isSize = (v: unknown) =>
 export async function insertChapter(
   input: ChapterInput,
 ): Promise<{ ok: string } | { error: string; conflict?: true }> {
-  if (!Number.isInteger(input.number) || input.number < 1) return { error: "Bölüm numarası 1 veya daha büyük olmalı." };
+  if (!Number.isInteger(input.number) || input.number < 0) return { error: "Bölüm numarası 0 veya daha büyük olmalı." };
   if (!Array.isArray(input.pages) || input.pages.length === 0) return { error: "En az bir sayfa yükle." };
   if (!input.pages.every(isImageSrc)) return { error: "Sayfa bağlantıları https:// ile başlamalı." };
 

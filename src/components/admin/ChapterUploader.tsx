@@ -145,7 +145,7 @@ export function ChapterUploader({ slug, nextNumber }: { slug: string; nextNumber
           <input
             id="ch-number"
             type="number"
-            min={1}
+            min={0}
             value={number}
             onChange={(e) => setNumber(Number(e.target.value))}
             className={field}

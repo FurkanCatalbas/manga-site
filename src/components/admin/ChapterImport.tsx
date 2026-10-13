@@ -89,8 +89,9 @@ export function ChapterImport({ seriesList }: { seriesList: { slug: string; titl
       setOriginal(d.p);
       const known = readMap()[d.s] ?? (seriesList.some((s) => s.slug === d.s) ? d.s : "");
       setSlug(known);
-      const n = Number(d.n);
-      if (Number.isInteger(n) && n > 0) setNumber(n);
+      // Boş numara 0. bölüm sayılmasın (Number("") === 0)
+      const n = String(d.n ?? "").trim() ? Number(d.n) : NaN;
+      if (Number.isInteger(n) && n >= 0) setNumber(n);
     }
     setReady(true);
     /* eslint-enable react-hooks/set-state-in-effect */
@@ -209,7 +210,7 @@ export function ChapterImport({ seriesList }: { seriesList: { slug: string; titl
             <input
               id="imp-number"
               type="number"
-              min={1}
+              min={0}
               value={number}
               onChange={(e) => setNumber(Number(e.target.value))}
               className={field}

@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   } else {
     const chapter = Number(form.get("chapter"));
     const index = Number(form.get("index"));
-    if (!Number.isInteger(chapter) || chapter < 1 || !Number.isInteger(index) || index < 1) {
+    if (!Number.isInteger(chapter) || chapter < 0 || !Number.isInteger(index) || index < 1) {
       return fail(400, "Geçersiz bölüm veya sayfa numarası.");
     }
     key = `series/${slug}/${chapter}/${String(index).padStart(3, "0")}-${rand}.${ext}`;

@@ -6,7 +6,7 @@ import { Comments } from "./Comments";
 import { Reactions } from "./Reactions";
 
 const loginHref = (path: string) => `/giris?geri=${encodeURIComponent(path)}`;
-const pathOf = (slug: string, chapter?: number) => (chapter ? `/seri/${slug}/bolum/${chapter}` : `/seri/${slug}`);
+const pathOf = (slug: string, chapter?: number) => (chapter != null ? `/seri/${slug}/bolum/${chapter}` : `/seri/${slug}`);
 
 export async function CommentsSection({ slug, chapter, preview }: { slug: string; chapter?: number; preview?: number }) {
   if (!authProviders.enabled) return null;
@@ -18,7 +18,7 @@ export async function CommentsSection({ slug, chapter, preview }: { slug: string
       refScope={{ slug, chapter: chapter ?? null }}
       initial={page}
       loginHref={loginHref(`${pathOf(slug, chapter)}#yorumlar-bolumu`)}
-      title={chapter ? "Bölüm yorumları" : "Yorumlar"}
+      title={chapter != null ? "Bölüm yorumları" : "Yorumlar"}
       preview={preview}
     />
   );

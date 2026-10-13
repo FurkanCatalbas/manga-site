@@ -73,7 +73,7 @@ async function load() {
 type Row = NonNullable<Awaited<ReturnType<typeof load>>>["latest"][number];
 
 function CommentRow({ c, extra }: { c: Row; extra?: React.ReactNode }) {
-  const where = c.chapter ? `/seri/${c.slug}/bolum/${c.chapter}` : `/seri/${c.slug}`;
+  const where = c.chapter != null ? `/seri/${c.slug}/bolum/${c.chapter}` : `/seri/${c.slug}`;
   return (
     <li className="grid gap-2 border-b border-line py-4">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
@@ -82,7 +82,7 @@ function CommentRow({ c, extra }: { c: Row; extra?: React.ReactNode }) {
         {c.banned && <span className="rounded bg-accent/15 px-1.5 text-xs font-bold text-accent">engelli</span>}
         <Link href={`${where}#yorumlar-bolumu`} className="text-muted underline-offset-4 hover:underline">
           {c.seriesTitle}
-          {c.chapter ? ` · ${c.chapter}. bölüm` : ""}
+          {c.chapter != null ? ` · ${c.chapter}. bölüm` : ""}
         </Link>
         <span className="text-muted">{formatDate(new Date(c.createdAt).toISOString())}</span>
       </div>

@@ -23,8 +23,8 @@ type Template = {
 
 /**
  * Sabit kalıplı görsel adresinden bölüm/sayfa adresi üretir:
- * `…/96238/1/0001.webp` ya da `…/74242/Chapter_1/split_000.webp`.
- * Dosyanın bir üstündeki klasör bölüm numarası, dosya adındaki son sayı sayfa numarasıdır (sıfır dolgusu korunur).
+ * `…/96238/1/0001.webp`, `…/74242/Chapter_1/split_000.webp` ya da `…/Seri-Adi/bolum-1/001.webp` (mangaruhu).
+ * Dosyanın bir üstündeki klasördeki sayı bölüm numarası (önündeki `chapter_`, `bolum-` gibi ek korunur), dosya adındaki son sayı sayfa numarasıdır (sıfır dolgusu korunur).
  * okutoon: `om-cdn.okutoon.com/chapters/<seri-no>/<bölüm-kimliği>/<seri>_bolum-<N>_<sayfa>.webp` ya da
  * `…/<seri>-<N>-<sayfa>.webp` (biçim seriden seriye değişir; dosya adındaki son iki sayı bölüm ve sayfadır).
  */
@@ -44,7 +44,7 @@ function parseTemplate(sample: string): Template | null {
         `${u.origin}/chapters/${seriesId}/${id}/${prefix}${ch}${sep}${String(p).padStart(page.length, "0")}${ext}`,
     };
   }
-  const m = u.pathname.match(/^(.*\/(?:chapter[-_]?)?)(\d+)(\/[^/]*?)(\d+)(\.[a-z]+)$/i);
+  const m = u.pathname.match(/^(.*\/[^/\d]*)(\d+)(\/[^/]*?)(\d+)(\.[a-z]+)$/i);
   if (!m) return null;
   const [, head, chapter, mid, page, ext] = m;
   return {
@@ -98,7 +98,7 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
   function changeSample(v: string) {
     setSample(v);
     const t = parseTemplate(v.trim());
-    if (t && t.chapter > 0) setFrom(t.chapter);
+    if (t) setFrom(t.chapter);
   }
 
   async function run() {
@@ -106,8 +106,8 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
     setRows([]);
     if (!template) return setError("Görsel bağlantısı …/<bölüm>/<sayfa>.webp biçiminde olmalı.");
     if (!slug) return setError("Seri seç.");
-    if (!Number.isInteger(from) || from < 1 || (to.trim() && !(Number.isInteger(Number(to)) && Number(to) >= from))) {
-      return setError("Bölüm aralığı 1 veya daha büyük olmalı ve küçükten büyüğe ilerlemeli.");
+    if (!Number.isInteger(from) || from < 0 || (to.trim() && !(Number.isInteger(Number(to)) && Number(to) >= from))) {
+      return setError("Bölüm aralığı 0 veya daha büyük olmalı ve küçükten büyüğe ilerlemeli.");
     }
 
     stopRef.current = false;
@@ -193,10 +193,11 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
       <div>
         <h2 className="text-lg font-bold">Toplu al (sabit adresli siteler)</h2>
         <p className="mt-1 text-sm text-muted">
-          Görsel adresi bölüm ve sayfa numarasıyla ilerliyorsa (ör. <code>…/96238/1/0001.webp</code>) kaynak sayfayı
+          Görsel adresi bölüm ve sayfa numarasıyla ilerliyorsa (ör. <code>…/96238/1/0001.webp</code>,{" "}
+          <code>cdn.mangaruhu.com/…/bolum-1/001.webp</code>) kaynak sayfayı
           açmadan bölümleri sırayla bulup yayınlar. okutoon görsel bağlantısı
           (<code>om-cdn.okutoon.com/chapters/…_bolum-1_001.webp</code> ya da <code>…-1-001.webp</code>) verilirse bölüm listesi okutoon&apos;daki
-          seri sayfasından okunur. Sitede zaten olan bölümler atlanır.
+          seri sayfasından okunur. Sitede zaten olan bölümler atlanır. 0. bölüm de alınacaksa İlk bölüm&apos;e 0 yaz.
         </p>
       </div>
       <div>
@@ -216,7 +217,7 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
           <p className="mt-1 text-xs break-all text-muted">
             {template.okutoon
               ? `okutoon serisi: ${template.okutoon} (bölüm listesi okutoon.com/${template.okutoon} sayfasından okunur)`
-              : `Örnek: ${template.url(from || 1, 1)}`}
+              : `Örnek: ${template.url(Number.isInteger(from) && from >= 0 ? from : 1, 1)}`}
           </p>
         )}
       </div>
@@ -243,7 +244,7 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
           <input
             id="bulk-from"
             type="number"
-            min={1}
+            min={0}
             value={from}
             onChange={(e) => setFrom(Number(e.target.value))}
             disabled={running}
@@ -255,7 +256,7 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
           <input
             id="bulk-to"
             type="number"
-            min={1}
+            min={0}
             value={to}
             onChange={(e) => setTo(e.target.value)}
             placeholder="sonuna kadar"
