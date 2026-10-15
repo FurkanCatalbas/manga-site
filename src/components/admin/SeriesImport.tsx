@@ -33,7 +33,7 @@ const SOURCE_SCRIPT = String.raw`async (o) => {
   f.style.display = 'none';
   document.documentElement.appendChild(f);
   const clean = f.contentWindow || window;
-  const done = () => { f.remove(); setTimeout(() => ui.remove(), 10000); };
+  const done = () => setTimeout(() => { f.remove(); ui.remove(); }, 10000);
   const fail = (t) => { say(t); try { clean.alert('webtooku: ' + t); } catch (_) {} done(); };
   const re = /^(.*\/(?:bolum|chapter|ch)[-_]?)(\d+)(\/?)$/i;
   let m = location.pathname.match(re);
@@ -224,8 +224,11 @@ export function SeriesImport({ seriesList }: { seriesList: { slug: string; title
     }
     setWaiting(true);
     const source = window.opener as Window;
+    // Yer imi paneli kaynak sayfadaki gizli iframe'den açar ama mesajları sayfanın kendisi yollar: ikisi de kabul edilir.
+    // parent şimdi okunur, çünkü iframe iş bitince kaldırılır.
+    const senders = [source, source.parent];
     function onMessage(e: MessageEvent) {
-      if (e.source !== source || !e.data || typeof e.data !== "object") return;
+      if (!senders.includes(e.source as Window) || !e.data || typeof e.data !== "object") return;
       if (e.data.type === "webtooku-ilerleme") setProgress(String(e.data.text ?? ""));
       if (e.data.type === "webtooku-seri") {
         const d = e.data.data as Payload;

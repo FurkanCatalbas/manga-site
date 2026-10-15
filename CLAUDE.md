@@ -342,7 +342,8 @@ Bölüm aralığı `prompt` ile değil kaynak sayfaya eklenen kutudan sorulur: p
 plana düşer ve Chrome arka plandaki sekmenin `prompt`'unu hemen kapatır (null döner, "İptal edildi"). Panel kutudaki
 "Başlat" tıklamasında açılır (açılır pencere izni o tıklamadan gelir).
 Reklamlı siteler `window.open`/`alert`'i ele geçirebildiği için bunlar gizli bir iframe'in temiz
-`contentWindow`'undan çağrılır (panelin `opener`'ı o iframe olabilir; mesaj iki pencerede de dinlenir). Panel
+`contentWindow`'undan çağrılır. Panelin `opener`'ı o iframe olur ama veri mesajlarını sayfanın kendisi yollar; panel
+`opener` ve `opener.parent`'tan gelen mesajı kabul eder (`hazir` iki pencerede de dinlenir). Panel
 `webtooku-hazir`'ı veri gelene kadar saniyede bir yollar; kaynak, toplama bitince 20 sn içinde yanıt alamazsa
 "panelde giriş yap" der. Açık uçlu aralık (`12-`) sayfadaki son bölüm + 3'e kadar gider; art arda 3 bölüm
 404/yönlendirme/görselsiz olursa (sayfada bağlantısı olan bölümler hariç) durur. İstekler arasında 400 ms beklenir.
