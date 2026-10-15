@@ -150,6 +150,8 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
 - Meta `keywords`: genel liste `SITE_KEYWORDS`, seride ad/diğer adlar + "oku/türkçe" + türler, bölümde
   "X 12. bölüm" kalıpları. Google kullanmaz; asıl etki başlık/açıklama/metinden.
 - Ana sayfada `WebSite` (+ `/ara?q=` SearchAction) ve `Organization` JSON-LD (site adı ve logo).
+- Seri sayfasında tek `h1` var (masaüstü başlığı `role="heading"` olan `p`). Bölüm listesinin altında `SeriesAbout`:
+  "X Türkçe oku" başlıklı, adlar/türler/bölüm sayısı ve ilk/son bölüm bağlantılarıyla kısa metin.
 - Site haritasında seri sayfalarına kapak görseli (`images`) eklenir.
 - Bölüm sayfasında okuyucu çubuğundaki satır `h1`; okuyucunun altında `ChapterAbout` (seri bilgisi, Paylaş,
   son 6 bölüm, kısa metin). Okuyucu `children` ile alır, gezinti düğmelerinin altına koyar.

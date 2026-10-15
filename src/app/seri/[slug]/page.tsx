@@ -16,7 +16,7 @@ import { getListsWithSeries } from "@/lib/listeler";
 import { getRatingSummary } from "@/lib/puan";
 import { resolveScope } from "@/lib/topluluk";
 import { JsonLd } from "@/components/JsonLd";
-import { genreHref, getAllGenres, getPopular, getSeries, getSeriesList, getSimilarSeries, type Series } from "@/lib/data";
+import { formatDate, genreHref, getAllGenres, getPopular, getSeries, getSeriesList, getSimilarSeries, type Series } from "@/lib/data";
 import { absoluteUrl, PLACEHOLDER_SLUG, SITE_KEYWORDS, SITE_NAME, SITE_PROMISE } from "@/lib/site";
 
 export async function generateStaticParams() {
@@ -136,9 +136,10 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="hidden font-display text-4xl leading-[1.05] tracking-tight sm:block lg:text-5xl">
+            {/* Sayfada tek h1 kalsın diye masaüstü başlığı yalnızca erişilebilirlikte başlık sayılır */}
+            <p role="heading" aria-level={1} className="hidden font-display text-4xl leading-[1.05] tracking-tight sm:block lg:text-5xl">
               {series.title}
-            </h1>
+            </p>
             {series.titleAlt && <p className="mt-2 hidden text-muted sm:block">{series.titleAlt}</p>}
 
             <div className="flex flex-wrap items-center gap-2 text-sm sm:mt-5">
@@ -196,6 +197,7 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
       <div className="mx-auto mt-4 grid max-w-7xl gap-10 px-4 lg:grid-cols-[1fr_320px]">
         <section className="min-w-0">
           <ChapterList slug={series.slug} chapters={series.chapters} />
+          <SeriesAbout series={series} names={names} />
           {rating && (
             <div id="puan-bolumu" className="mt-14 scroll-mt-24">
               <h2 className="mb-4 text-xl font-bold tracking-tight sm:text-2xl">Puan</h2>
@@ -239,5 +241,50 @@ export default async function SeriesPage(props: PageProps<"/seri/[slug]">) {
         </aside>
       </div>
     </div>
+  );
+}
+
+/**
+ * Seriye özgü kısa tanıtım metni: "X Türkçe oku" aramaları için adları, türleri, bölüm sayısını ve
+ * ilk/son bölüm bağlantılarını düz yazıyla verir (sayfada yalnızca kart ve liste olunca metin çok az kalıyor).
+ */
+function SeriesAbout({ series, names }: { series: Series; names: string[] }) {
+  const first = series.chapters[0];
+  const latest = series.chapters.at(-1);
+  const chapterHref = (n: number) => `/seri/${series.slug}/bolum/${n}`;
+  const genres = series.genres.slice(0, 4).join(", ").toLocaleLowerCase("tr");
+  return (
+    <section className="mt-14">
+      <h2 className="mb-3 text-xl font-bold tracking-tight sm:text-2xl">{series.title} Türkçe oku</h2>
+      <div className="max-w-prose space-y-3 text-sm leading-relaxed text-fg/75">
+        <p>
+          <strong className="text-fg/90">{series.title}</strong>
+          {names.length > 0 && <> ({names.slice(0, 3).join(", ")})</>}
+          {genres && <> {genres} türünde bir seri.</>} webtooku&apos;da tüm bölümleri Türkçe olarak{" "}
+          {SITE_PROMISE} okuyabilirsin.
+        </p>
+        {first && latest ? (
+          <p>
+            Şu ana kadar {series.chapters.length} bölüm yayınlandı ve seri{" "}
+            {series.status === "Tamamlandı" ? "tamamlandı" : "devam ediyor"}. Baştan başlamak için{" "}
+            <Link href={chapterHref(first.number)} className="font-semibold text-accent hover:underline">
+              {series.title} {first.number}. bölüm
+            </Link>
+            {latest.number !== first.number && (
+              <>
+                , kaldığın yerden devam etmek için en son yayınlanan{" "}
+                <Link href={chapterHref(latest.number)} className="font-semibold text-accent hover:underline">
+                  {latest.number}. bölüm
+                </Link>{" "}
+                ({formatDate(latest.publishedAt)})
+              </>
+            )}
+            .
+          </p>
+        ) : (
+          <p>Bu serinin bölümleri yakında eklenecek.</p>
+        )}
+      </div>
+    </section>
   );
 }
