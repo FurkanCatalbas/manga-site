@@ -23,7 +23,7 @@ type Template = {
 
 /**
  * Sabit kalıplı görsel adresinden bölüm/sayfa adresi üretir:
- * `…/96238/1/0001.webp`, `…/74242/Chapter_1/split_000.webp` ya da `…/Seri-Adi/bolum-1/001.webp` (mangaruhu).
+ * `…/96238/1/0001.webp`, `…/74242/Chapter_1/split_000.webp` ya da `…/Seri-Adi/bolum-001/001.jpg` (mangaruhu).
  * Dosyanın bir üstündeki klasördeki sayı bölüm numarası (önündeki `chapter_`, `bolum-` gibi ek korunur), dosya adındaki son sayı sayfa numarasıdır (sıfır dolgusu korunur).
  * okutoon: `om-cdn.okutoon.com/chapters/<seri-no>/<bölüm-kimliği>/<seri>_bolum-<N>_<sayfa>.webp` ya da
  * `…/<seri>-<N>-<sayfa>.webp` (biçim seriden seriye değişir; dosya adındaki son iki sayı bölüm ve sayfadır).
@@ -47,9 +47,12 @@ function parseTemplate(sample: string): Template | null {
   const m = u.pathname.match(/^(.*\/[^/\d]*)(\d+)(\/[^/]*?)(\d+)(\.[a-z]+)$/i);
   if (!m) return null;
   const [, head, chapter, mid, page, ext] = m;
+  // bolum-001 gibi sıfır dolgulu bölüm numaralarında dolgu korunur (bolum-1 kaynakta yok)
+  const chapterWidth = chapter.startsWith("0") ? chapter.length : 0;
   return {
     chapter: Number(chapter),
-    url: (ch, p) => `${u.origin}${head}${ch}${mid}${String(p).padStart(page.length, "0")}${ext}${u.search}`,
+    url: (ch, p) =>
+      `${u.origin}${head}${String(ch).padStart(chapterWidth, "0")}${mid}${String(p).padStart(page.length, "0")}${ext}${u.search}`,
   };
 }
 
@@ -194,7 +197,7 @@ export function BulkImport({ seriesList }: { seriesList: { slug: string; title: 
         <h2 className="text-lg font-bold">Toplu al (sabit adresli siteler)</h2>
         <p className="mt-1 text-sm text-muted">
           Görsel adresi bölüm ve sayfa numarasıyla ilerliyorsa (ör. <code>…/96238/1/0001.webp</code>,{" "}
-          <code>cdn.mangaruhu.com/…/bolum-1/001.webp</code>) kaynak sayfayı
+          <code>cdn.mangaruhu.com/…/bolum-001/001.jpg</code>) kaynak sayfayı
           açmadan bölümleri sırayla bulup yayınlar. okutoon görsel bağlantısı
           (<code>om-cdn.okutoon.com/chapters/…_bolum-1_001.webp</code> ya da <code>…-1-001.webp</code>) verilirse bölüm listesi okutoon&apos;daki
           seri sayfasından okunur. Sitede zaten olan bölümler atlanır. 0. bölüm de alınacaksa İlk bölüm&apos;e 0 yaz.
