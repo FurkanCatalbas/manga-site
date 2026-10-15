@@ -87,7 +87,8 @@ export function ChapterImport({ seriesList }: { seriesList: { slug: string; titl
     setData(d);
     if (d) {
       setOriginal(d.p);
-      const known = readMap()[d.s] ?? (seriesList.some((s) => s.slug === d.s) ? d.s : "");
+      const map = readMap();
+      const known = Object.hasOwn(map, d.s) ? String(map[d.s]) : seriesList.some((s) => s.slug === d.s) ? d.s : "";
       setSlug(known);
       // Boş numara 0. bölüm sayılmasın (Number("") === 0)
       const n = String(d.n ?? "").trim() ? Number(d.n) : NaN;

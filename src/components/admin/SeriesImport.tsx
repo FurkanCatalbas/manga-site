@@ -27,6 +27,14 @@ const SOURCE_SCRIPT = String.raw`async (o) => {
   const ui = document.createElement('div');
   ui.style.cssText = 'position:fixed;z-index:2147483647;top:12px;right:12px;max-width:340px;padding:12px 16px;border-radius:12px;background:#15121c;color:#fff;font:600 14px/1.4 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.5)';
   const say = (t) => { ui.textContent = 'webtooku: ' + t; };
+  document.documentElement.appendChild(ui);
+  // Reklamlı siteler window.open/alert/prompt'u değiştirebiliyor; temiz kopyaları boş bir iframe'den alınır
+  const f = document.createElement('iframe');
+  f.style.display = 'none';
+  document.documentElement.appendChild(f);
+  const clean = f.contentWindow || window;
+  const done = () => { f.remove(); setTimeout(() => ui.remove(), 10000); };
+  const fail = (t) => { say(t); try { clean.alert('webtooku: ' + t); } catch (_) {} done(); };
   const re = /^(.*\/(?:bolum|chapter|ch)[-_]?)(\d+)(\/?)$/i;
   let m = location.pathname.match(re);
   const known = new Map();
@@ -37,28 +45,34 @@ const SOURCE_SCRIPT = String.raw`async (o) => {
       if (k[1] === m[1]) known.set(+k[2], a.href);
     }
   }
-  if (!m) { alert('Bu sayfada bölüm adresi bulunamadı. Serinin bir bölümünü açıp tekrar dene.'); return; }
+  if (!m) return fail('Bu sayfada bölüm adresi (…/bolum-1/) bulunamadı. Serinin bir bölümünü açıp tekrar dene.');
   const [, prefix, cur, tail] = m;
   const width = cur.startsWith('0') ? cur.length : 0;
   const urlOf = (n) => known.get(n) || location.origin + prefix + String(n).padStart(width, '0') + tail;
   const nums = [...known.keys()];
   const from = location.pathname.match(re) ? +cur : Math.min(...nums);
   const max = Math.max(from, ...nums);
-  const w = window.open(o.origin + '/admin/al#toplu');
-  if (!w) { alert('Açılır pencere engellendi; bu siteye açılır pencere izni verip tekrar dene.'); return; }
-  const answer = prompt('Hangi bölümler alınsın? Örnek: 1-50 ya da 12- (sonuna kadar)', from + '-' + (max > from ? max : ''));
-  if (answer === null) { w.close(); return; }
-  const r = answer.trim().match(/^(\d+)\s*(?:-\s*(\d*))?$/);
-  if (!r) { alert('Aralık anlaşılamadı: ' + answer); w.close(); return; }
-  const first = +r[1];
-  const last = r[2] === undefined ? first : r[2] === '' ? first + 2000 : +r[2];
+  let w = null;
+  try { w = clean.open(o.origin + '/admin/al#toplu'); } catch (_) {}
+  if (!w) { try { w = window.open(o.origin + '/admin/al#toplu'); } catch (_) {} }
+  if (!w) return fail('Panel açılamadı: açılır pencere engellendi. Adres çubuğundaki simgeden bu siteye açılır pencere izni verip tekrar dene.');
+  // Panel hazır olunca açan pencereye (iframe ya da sayfa) haber verir; ikisi de dinlenir
   let ready = false;
-  const panelReady = new Promise((res) => addEventListener('message', (e) => {
-    if (e.source === w && e.origin === o.origin && e.data && e.data.type === 'webtooku-hazir') { ready = true; res(); }
-  }));
+  const panelReady = new Promise((res) => {
+    const on = (e) => { if (e.source === w && e.origin === o.origin && e.data && e.data.type === 'webtooku-hazir') { ready = true; res(); } };
+    addEventListener('message', on);
+    if (clean !== window) clean.addEventListener('message', on);
+  });
+  const ask = (q, d) => { try { return clean.prompt(q, d); } catch (_) { return prompt(q, d); } };
+  const answer = ask('Hangi bölümler alınsın? Örnek: 1-50 ya da 12- (sonuna kadar)', from + '-' + (max > from ? max : ''));
+  if (answer === null) { w.close(); say('İptal edildi.'); return done(); }
+  const r = answer.trim().match(/^(\d+)\s*(?:-\s*(\d*))?$/);
+  if (!r) { w.close(); return fail('Aralık anlaşılamadı: ' + answer); }
+  const first = +r[1];
+  // Açık uçlu aralık sayfadaki son bölümün biraz ötesine kadar gider
+  const last = r[2] === undefined ? first : r[2] === '' ? Math.max(first, max) + 3 : +r[2];
   const tell = (t) => { say(t); if (ready) w.postMessage({ type: 'webtooku-ilerleme', text: t }, o.origin); };
-  document.body.appendChild(ui);
-  const bad = (i) => { const c = i.closest(o.comments); return !!c && c !== document.body && c !== document.documentElement; };
+  const bad = (i) => { const c = i.closest(o.comments); return !!c && c !== i.ownerDocument.body && c !== i.ownerDocument.documentElement; };
   // Okuyucuda görünmeyen görseller (bazı siteler araya gizli sahte görsel koyuyor) alınmaz
   const hidden = (i) => {
     for (let e = i; e && e.nodeType === 1; e = e.parentElement) {
@@ -91,14 +105,18 @@ const SOURCE_SCRIPT = String.raw`async (o) => {
     return out;
   };
   const chapters = [];
+  // Art arda bulunamayan ya da görselsiz bölüm sayısı; 3 olunca durulur (bazı siteler olmayan bölüme 200 döner)
   let missing = 0;
   let stop = '';
   for (let n = first; n <= last && !stop; n++) {
+    if (n > first) await new Promise((res) => setTimeout(res, 400));
     const u = urlOf(n);
     tell(n + '. bölüm okunuyor… (' + chapters.filter((c) => c.p.length).length + ' bölüm bulundu)');
     let res;
     try { res = await fetch(u, { credentials: 'include' }); } catch (_) { stop = n + '. bölüm açılamadı (bağlantı hatası).'; break; }
-    if (res.status === 404 || res.status === 410) {
+    // Olmayan bölüm başka sayfaya (seri sayfası, ana sayfa) yönlendirilebiliyor
+    const moved = res.redirected && !re.test(new URL(res.url).pathname);
+    if (res.status === 404 || res.status === 410 || moved) {
       if (++missing >= 3) break;
       continue;
     }
@@ -108,17 +126,21 @@ const SOURCE_SCRIPT = String.raw`async (o) => {
       break;
     }
     if (!res.ok) { chapters.push({ n, u, p: [], e: 'kaynak ' + res.status + ' döndü' }); continue; }
-    missing = 0;
     const p = pick(new DOMParser().parseFromString(html, 'text/html'), u);
+    if (p.length) missing = 0;
+    else if (++missing >= 3 && !known.has(n)) break;
     chapters.push(p.length ? { n, u, p } : { n, u, p: [], e: 'sayfada görsel yok (kilitli ya da şifreli olabilir)' });
   }
+  // Sondaki görselsiz bölümler (olmayan bölümler için gelen boş sayfalar) listeye alınmaz
+  while (chapters.length && !chapters[chapters.length - 1].p.length && !known.has(chapters[chapters.length - 1].n)) chapters.pop();
   const found = chapters.filter((c) => c.p.length).length;
   say(found + ' bölüm bulundu, panele gönderiliyor…');
-  await panelReady;
+  const ok = await Promise.race([panelReady.then(() => true), new Promise((res) => setTimeout(() => res(false), 20000))]);
+  if (!ok || w.closed) return fail('Panel yanıt vermedi. Panel sekmesinde giriş yapmış olduğundan emin ol, sonra yer imine tekrar tıkla.');
   const seg = prefix.split('/').filter(Boolean);
   w.postMessage({ type: 'webtooku-seri', stop, data: { s: seg.length > 1 ? seg[seg.length - 2] : '', src: location.origin + prefix, chapters } }, o.origin);
   say(found + ' bölüm panele gönderildi.' + (stop ? ' ' + stop : ''));
-  setTimeout(() => ui.remove(), 8000);
+  done();
 }`;
 
 function bookmarklet(origin: string) {
@@ -167,8 +189,13 @@ export function SeriesImport({ seriesList }: { seriesList: { slug: string; title
   // Yer imi paneli #toplu ile açar; veri sunucuya gitmez, açan sekmeden postMessage ile gelir
   useEffect(() => {
     linkRef.current?.setAttribute("href", bookmarklet(location.origin));
-    if (location.hash !== "#toplu" || !window.opener) return;
-    /* eslint-disable-next-line react-hooks/set-state-in-effect -- yalnızca tarayıcıda bilinebilir */
+    if (location.hash !== "#toplu") return;
+    if (!window.opener) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- yalnızca tarayıcıda bilinebilir */
+      setError("Kaynak sekmeyle bağlantı kurulamadı. Bu sekmeyi kapatıp kaynak sitede yer imine tekrar tıkla.");
+      history.replaceState(null, "", location.pathname);
+      return;
+    }
     setWaiting(true);
     const source = window.opener as Window;
     function onMessage(e: MessageEvent) {
@@ -182,15 +209,24 @@ export function SeriesImport({ seriesList }: { seriesList: { slug: string; title
           .map((c) => ({ n: c.n, u: String(c.u ?? ""), p: c.p.filter((x) => isImageLink(String(x?.[0] ?? ""))), e: c.e }));
         setData({ s: String(d.s ?? ""), src: String(d.src ?? ""), chapters });
         setStopNote(String(e.data.stop ?? ""));
-        const known = readMap()[d.s] ?? (seriesList.some((s) => s.slug === d.s) ? d.s : "");
+        const s = String(d.s ?? "");
+        const map = readMap();
+        const known = Object.hasOwn(map, s) ? String(map[s]) : seriesList.some((x) => x.slug === s) ? s : "";
         setSlug(known);
         setWaiting(false);
+        clearInterval(ping);
         history.replaceState(null, "", location.pathname);
       }
     }
     addEventListener("message", onMessage);
-    source.postMessage({ type: "webtooku-hazir" }, "*");
-    return () => removeEventListener("message", onMessage);
+    // Kaynak sekme dinlemeye geç başlayabilir; veri gelene kadar ara ara haber verilir
+    const hello = () => source.postMessage({ type: "webtooku-hazir" }, "*");
+    hello();
+    const ping = setInterval(hello, 1000);
+    return () => {
+      clearInterval(ping);
+      removeEventListener("message", onMessage);
+    };
   }, [seriesList]);
 
   // Seri seçilince sitede olan bölümler okunur; olmayan ve görseli bulunan bölümler işaretlenir
@@ -300,7 +336,15 @@ export function SeriesImport({ seriesList }: { seriesList: { slug: string; title
       </div>
     );
   }
-  if (!data) return install;
+  if (!data)
+    return error ? (
+      <div className="grid gap-3">
+        <p role="alert" className="font-semibold text-accent">{error}</p>
+        {install}
+      </div>
+    ) : (
+      install
+    );
 
   const withImages = data.chapters.filter((c) => c.p.length);
   return (
