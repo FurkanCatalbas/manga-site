@@ -338,7 +338,10 @@ Panelde sitede olan bölümler işaretsiz, "baştan/sondan çıkar" ile her böl
 `measureImage` ile denenip `createChapter` ile yayınlanır. Kilitli (VIP) bölümler ve görseli sayfada şifreli gelen siteler
 (paradoxscans: `InitMangaEncryptedChapter`) "görsel yok" döner; bunlar çözülmez, tek bölüm yer imiyle alınır. Doğrulama
 sayfası gelirse yer imi durur. Yer imi kodu değişince kullanıcı yeniden sürüklemeli.
-Reklamlı siteler `window.open`/`alert`/`prompt`'u ele geçirebildiği için bunlar gizli bir iframe'in temiz
+Bölüm aralığı `prompt` ile değil kaynak sayfaya eklenen kutudan sorulur: panel sekmesi açılınca kaynak sekme arka
+plana düşer ve Chrome arka plandaki sekmenin `prompt`'unu hemen kapatır (null döner, "İptal edildi"). Panel kutudaki
+"Başlat" tıklamasında açılır (açılır pencere izni o tıklamadan gelir).
+Reklamlı siteler `window.open`/`alert`'i ele geçirebildiği için bunlar gizli bir iframe'in temiz
 `contentWindow`'undan çağrılır (panelin `opener`'ı o iframe olabilir; mesaj iki pencerede de dinlenir). Panel
 `webtooku-hazir`'ı veri gelene kadar saniyede bir yollar; kaynak, toplama bitince 20 sn içinde yanıt alamazsa
 "panelde giriş yap" der. Açık uçlu aralık (`12-`) sayfadaki son bölüm + 3'e kadar gider; art arda 3 bölüm

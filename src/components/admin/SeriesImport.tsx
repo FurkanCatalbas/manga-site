@@ -52,9 +52,40 @@ const SOURCE_SCRIPT = String.raw`async (o) => {
   const nums = [...known.keys()];
   const from = location.pathname.match(re) ? +cur : Math.min(...nums);
   const max = Math.max(from, ...nums);
-  let w = null;
-  try { w = clean.open(o.origin + '/admin/al#toplu'); } catch (_) {}
-  if (!w) { try { w = window.open(o.origin + '/admin/al#toplu'); } catch (_) {} }
+  // Aralık prompt yerine sayfadaki kutudan sorulur: panel sekmesi açılınca bu sekme arka plana düşer ve Chrome
+  // arka plandaki sekmenin prompt'unu hemen kapatır. Panel "Başlat" tıklamasıyla açılır (açılır pencere izni).
+  const choice = await new Promise((res) => {
+    ui.textContent = '';
+    const t = document.createElement('div');
+    t.textContent = 'webtooku: hangi bölümler alınsın? Örnek: 1-50 ya da 12- (sonuna kadar)';
+    const inp = document.createElement('input');
+    inp.value = from + '-' + (max > from ? max : '');
+    inp.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin:8px 0;padding:6px 8px;border:1px solid #555;border-radius:8px;background:#fff;color:#000;font:600 14px system-ui,sans-serif';
+    const go = document.createElement('button');
+    const no = document.createElement('button');
+    go.textContent = 'Başlat';
+    no.textContent = 'Vazgeç';
+    for (const b of [go, no]) b.style.cssText = 'margin-right:8px;padding:6px 14px;border:0;border-radius:8px;background:#3a3445;color:#fff;font:600 14px system-ui,sans-serif;cursor:pointer';
+    go.style.background = '#e2468f';
+    const start = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const r = inp.value.trim().match(/^(\d+)\s*(?:-\s*(\d*))?$/);
+      if (!r) { t.textContent = 'webtooku: aralık anlaşılamadı. Örnek: 1-50'; return; }
+      let w = null;
+      try { w = clean.open(o.origin + '/admin/al#toplu'); } catch (_) {}
+      if (!w) { try { w = window.open(o.origin + '/admin/al#toplu'); } catch (_) {} }
+      res({ r, w });
+    };
+    go.addEventListener('click', start);
+    inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') start(e); });
+    no.addEventListener('click', (e) => { e.stopPropagation(); res(null); });
+    ui.append(t, inp, go, no);
+    inp.focus();
+    inp.select();
+  });
+  if (!choice) { say('İptal edildi.'); return done(); }
+  const { r, w } = choice;
   if (!w) return fail('Panel açılamadı: açılır pencere engellendi. Adres çubuğundaki simgeden bu siteye açılır pencere izni verip tekrar dene.');
   // Panel hazır olunca açan pencereye (iframe ya da sayfa) haber verir; ikisi de dinlenir
   let ready = false;
@@ -63,11 +94,6 @@ const SOURCE_SCRIPT = String.raw`async (o) => {
     addEventListener('message', on);
     if (clean !== window) clean.addEventListener('message', on);
   });
-  const ask = (q, d) => { try { return clean.prompt(q, d); } catch (_) { return prompt(q, d); } };
-  const answer = ask('Hangi bölümler alınsın? Örnek: 1-50 ya da 12- (sonuna kadar)', from + '-' + (max > from ? max : ''));
-  if (answer === null) { w.close(); say('İptal edildi.'); return done(); }
-  const r = answer.trim().match(/^(\d+)\s*(?:-\s*(\d*))?$/);
-  if (!r) { w.close(); return fail('Aralık anlaşılamadı: ' + answer); }
   const first = +r[1];
   // Açık uçlu aralık sayfadaki son bölümün biraz ötesine kadar gider
   const last = r[2] === undefined ? first : r[2] === '' ? Math.max(first, max) + 3 : +r[2];
@@ -310,7 +336,10 @@ export function SeriesImport({ seriesList }: { seriesList: { slug: string; title
       <ol className="list-decimal space-y-1 pl-5 text-sm text-muted">
         <li>Aşağıdaki düğmeyi yer imleri çubuğuna sürükle.</li>
         <li>Kaynak sitede serinin herhangi bir bölümünü ya da seri sayfasını aç, yer imine tıkla.</li>
-        <li>Hangi bölümlerin alınacağını yaz (ör. <code>1-50</code>). Panel yeni sekmede açılır, bölümler gelince yayınlarsın.</li>
+        <li>
+          Sağ üstte çıkan kutuya hangi bölümlerin alınacağını yaz (ör. <code>1-50</code>), &quot;Başlat&quot;a bas. Panel
+          yeni sekmede açılır; kaynak sekme bölümleri okurken açık kalsın, bölümler gelince yayınlarsın.
+        </li>
       </ol>
       <div>
         <a
