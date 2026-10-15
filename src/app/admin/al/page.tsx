@@ -2,6 +2,7 @@ import { asc } from "drizzle-orm";
 import { Suspense } from "react";
 import { BulkImport } from "@/components/admin/BulkImport";
 import { ChapterImport } from "@/components/admin/ChapterImport";
+import { SeriesImport } from "@/components/admin/SeriesImport";
 import { db } from "@/db";
 import { series } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
@@ -29,6 +30,7 @@ async function Import() {
         </p>
       </div>
       <ChapterImport seriesList={list} />
+      <SeriesImport seriesList={list} />
       <BulkImport seriesList={list} />
     </div>
   );

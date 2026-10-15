@@ -326,6 +326,19 @@ edilmez. `getOkutoonChapters` (server action, yalnızca `okutoon.com/<seri>`'ye 
 `data-chapter-number` + `data-progress-id` eşlemesini okur; ondalık bölümler atlanır, son bölüm boşsa listedeki
 en büyük numaraya kadar gider. okutoon sayfa yapısı değişirse ya da Cloudflare sunucu isteğini engellerse burası bozulur.
 
+**Seri yer imi** (`SeriesImport.tsx`, "webtooku'ya seri gönder"): görsel adresi sırayla artmayan siteler
+(webtoonhatti → `cdn-2.webtoon-oku.net/oku/manga_<id>/<hash>/01.jpg`, mangaruhu yeni bölümler → rastgele dosya adı) için.
+Kaynak sitede bölüm ya da seri sayfasında çalışır: adresten `…/bolum-<N>/` kalıbını (sıfır dolgusu korunur) ve sayfadaki
+bölüm bağlantılarını çıkarır, sorulan aralıktaki bölüm sayfalarını kullanıcının tarayıcısında aynı siteden `fetch` ile okur
+(sunucu Cloudflare doğrulamasına takılır; tarayıcı oturumu takılmaz), `DOMParser` ile görselleri seçer. Önce mangaruhu
+`img[data-imc-order]`, yoksa `READER`; yorum (`COMMENTS`), reklam (`ADS`) ve **gizli** görseller (`display:none`/`visibility:hidden`,
+webtoonhatti araya sahte görsel koyuyor) atılır; görsellerin %80'i tek sunucudaysa başka sunucudakiler (afiş) atılır.
+Panel `/admin/al#toplu` ile açılır, açan sekmeye `webtooku-hazir` yollar, veri `postMessage` ile gelir (sunucuya gitmez).
+Panelde sitede olan bölümler işaretsiz, "baştan/sondan çıkar" ile her bölümden sabit sayıda sayfa atılır, sayfalar
+`measureImage` ile denenip `createChapter` ile yayınlanır. Kilitli (VIP) bölümler ve görseli sayfada şifreli gelen siteler
+(paradoxscans: `InitMangaEncryptedChapter`) "görsel yok" döner; bunlar çözülmez, tek bölüm yer imiyle alınır. Doğrulama
+sayfası gelirse yer imi durur. Yer imi kodu değişince kullanıcı yeniden sürüklemeli.
+
 ### Dışarıdan bölüm yayınlama: `/api/admin/bolum`
 
 `Authorization: Bearer <ADMIN_PASSWORD>` (ya da panel oturumu) ister. `GET ?seri=<slug>` serideki bölüm

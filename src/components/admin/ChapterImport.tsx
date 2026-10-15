@@ -10,7 +10,7 @@ import { isImageLink, measureImage } from "./upload";
 type Payload = { u: string; s: string; n: string; p: [string, number, number][] };
 
 // Kaynak sitedeki seri adresi → webtooku seri adresi (bir kez seçilince hatırlanır)
-const MAP_KEY = "webtooku:kaynak-seri";
+export const MAP_KEY = "webtooku:kaynak-seri";
 
 /**
  * Kaynak sitede çalışan yer imi. Önce bilinen okuyucu kutuları (`READER`) aranır. Bulunamazsa sayfadaki
@@ -18,9 +18,9 @@ const MAP_KEY = "webtooku:kaynak-seri";
  * kutu okuyucu sayılır; kutu dışındaki görseller (yorumlar, kenar çubuğu) alınmaz. Toplanan liste bu sayfa
  * adresin # kısmında (sunucuya gitmez) veriyle yeni sekmede açılır.
  */
-const READER =
+export const READER =
   "img.reader-page,#chapter-content img,#readerarea img,.reading-content img,.chapter-content img,.wp-manga-chapter-img,.container-chapter-reader img,#chapter-reader img";
-const COMMENTS =
+export const COMMENTS =
   "[id*=comment],[class*=comment],[id*=disqus],[class*=disqus],[id*=yorum],[class*=yorum],[class*=reply],[class*=avatar]";
 
 function bookmarklet(origin: string) {
@@ -56,7 +56,7 @@ function readHash(): Payload | null {
   }
 }
 
-function readMap(): Record<string, string> {
+export function readMap(): Record<string, string> {
   try {
     return JSON.parse(localStorage.getItem(MAP_KEY) ?? "{}");
   } catch {
