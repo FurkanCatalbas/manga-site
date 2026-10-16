@@ -102,7 +102,7 @@ export default async function ChapterPage(props: PageProps<"/seri/[slug]/bolum/[
         <ReactionsSection slug={series.slug} chapter={chapter.number} />
         <CommentsSection slug={series.slug} chapter={chapter.number} preview={3} />
       </div>
-      <ChapterAbout series={series} chapter={chapter.number} />
+      <ChapterAbout series={series} chapter={chapter.number} pageCount={chapter.pages.length} />
     </Reader>
     </>
   );

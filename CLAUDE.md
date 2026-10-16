@@ -154,7 +154,10 @@ Tipler `src/lib/series.ts` içinde; bu dosya veritabanı içermez, istemci bile�
   "X Türkçe oku" başlıklı, adlar/türler/bölüm sayısı ve ilk/son bölüm bağlantılarıyla kısa metin.
 - Site haritasında seri sayfalarına kapak görseli (`images`) eklenir.
 - Bölüm sayfasında okuyucu çubuğundaki satır `h1`; okuyucunun altında `ChapterAbout` (seri bilgisi, Paylaş,
-  son 6 bölüm, kısa metin). Okuyucu `children` ile alır, gezinti düğmelerinin altına koyar.
+  bölümün 5 önü/5 arkası + son bölüm listesi, bölüme özgü metin: sayfa sayısı, eklenme tarihi, "X 7. bölüm" /
+  "X 9. bölüm" bağlantıları). Bölüm sayfaları yalnızca görsel olduğu için kopya sayılmasınlar diye; ortak kalıp
+  metin ekleme, bölüme özgü bilgi ekle. Sayfa görsellerinin `alt`'ı "X 8. bölüm sayfa 3".
+  Okuyucu `children` ile alır, gezinti düğmelerinin altına koyar.
 - Paylaşım görselleri (og:image, 1200×630): `/paylasim/<slug>` ve `/paylasim/<slug>/<no>` (route handler,
   `src/lib/share-image.tsx`). Kapak sunucuda indirilip `sharp` ile JPEG'e çevrilir (satori WebP okuyamaz);
   açılmazsa kapaksız çizilir. Türkçe harfler için Onest latin-ext dosyaları (`assets/fonts`); yazı tipleri

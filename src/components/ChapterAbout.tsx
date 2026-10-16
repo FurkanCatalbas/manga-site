@@ -6,12 +6,23 @@ import { TimeAgo } from "@/components/TimeAgo";
 import { genreHref, type Series } from "@/lib/series";
 import { absoluteUrl, SITE_NAME } from "@/lib/site";
 
-const LATEST = 6;
+// Bölümün önünde ve arkasında listelenen bölüm sayısı: her bölüm komşularından bağlantı alır,
+// arama motorları seri sayfasına uğramadan da tüm bölümlere ulaşır
+const AROUND = 5;
 
-export function ChapterAbout({ series, chapter }: { series: Series; chapter: number }) {
+const dateFormat = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" });
+
+export function ChapterAbout({ series, chapter, pageCount }: { series: Series; chapter: number; pageCount: number }) {
   const seriesHref = `/seri/${series.slug}`;
   const names = [series.titleAlt, ...series.altTitles].filter(Boolean);
-  const latest = series.chapters.slice(-LATEST).reverse();
+  const idx = series.chapters.findIndex((c) => c.number === chapter);
+  const current = series.chapters[idx];
+  const prev = series.chapters[idx - 1];
+  const next = series.chapters[idx + 1];
+  const last = series.chapters.at(-1);
+  const nearby = series.chapters.slice(Math.max(0, idx - AROUND), idx + AROUND + 1).reverse();
+  if (last && !nearby.includes(last)) nearby.unshift(last);
+  const chapterHref = (n: number) => `${seriesHref}/bolum/${n}`;
 
   return (
     <section aria-label="Seri hakkında" className="mx-auto max-w-3xl px-4 pb-12">
@@ -63,12 +74,12 @@ export function ChapterAbout({ series, chapter }: { series: Series; chapter: num
         </div>
       </div>
 
-      <h2 className="mt-8 mb-3 text-lg font-bold">Son bölümler</h2>
+      <h2 className="mt-8 mb-3 text-lg font-bold">{series.title} bölümleri</h2>
       <ol className="grid gap-2">
-        {latest.map((c) => (
+        {nearby.map((c) => (
           <li key={c.number}>
             <Link
-              href={`${seriesHref}/bolum/${c.number}`}
+              href={chapterHref(c.number)}
               aria-current={c.number === chapter ? "page" : undefined}
               className={`flex items-center gap-3 rounded-xl px-4 py-2.5 ring-1 transition-colors ${
                 c.number === chapter
@@ -89,9 +100,24 @@ export function ChapterAbout({ series, chapter }: { series: Series; chapter: num
         ))}
       </ol>
 
+      {/* Her bölümde farklı metin: sayfalar yalnızca görselden ve ortak kalıptan oluşup birbirinin kopyası sayılmasın */}
       <p className="mt-6 text-xs leading-relaxed text-muted">
-        {series.title} {chapter}. bölümü {SITE_NAME}&apos;da Türkçe okuyorsun. Serinin tüm bölümleri
-        reklamsız, üyeliksiz ve ücretsiz; yeni bölümler eklendikçe burada.
+        {series.title} {chapter}. bölüm
+        {current && current.title.toLocaleLowerCase("tr") !== `${chapter}. bölüm` && <> (&quot;{current.title}&quot;)</>}
+        , {pageCount} sayfa olarak
+        {current && <> {dateFormat.format(new Date(current.publishedAt))} tarihinde</>} {SITE_NAME}&apos;ya eklendi.
+        {" "}Seride şu an {series.chapters.length} bölüm var.
+        {prev && (
+          <>
+            {" "}Önceki bölüm: <Link href={chapterHref(prev.number)} className="underline underline-offset-2 hover:text-accent">{series.title} {prev.number}. bölüm</Link>.
+          </>
+        )}
+        {next && (
+          <>
+            {" "}Sonraki bölüm: <Link href={chapterHref(next.number)} className="underline underline-offset-2 hover:text-accent">{series.title} {next.number}. bölüm</Link>.
+          </>
+        )}
+        {" "}{series.title} Türkçe tüm bölümleriyle reklamsız, üyeliksiz ve ücretsiz okunur.
       </p>
     </section>
   );

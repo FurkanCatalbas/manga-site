@@ -164,7 +164,9 @@ export function Reader(props: Props) {
           </Link>
           <h1 className="truncate text-xs font-normal text-muted">
             <span className="sr-only">{seriesTitle} </span>
-            {chapter}. bölüm: {chapterTitle}
+            {chapter}. bölüm
+            {/* Başlıksız bölümlerin adı zaten "12. bölüm"; iki kez yazılmasın */}
+            {chapterTitle && chapterTitle.toLocaleLowerCase("tr") !== `${chapter}. bölüm` && `: ${chapterTitle}`}
           </h1>
         </div>
         {/* Bölüm içindeki ilerleme */}
@@ -173,7 +175,7 @@ export function Reader(props: Props) {
         </div>
       </div>
 
-      <VerticalPages pages={pages} imgRefs={imgRefs} onVisible={setPage} />
+      <VerticalPages pages={pages} label={`${seriesTitle} ${chapter}. bölüm`} imgRefs={imgRefs} onVisible={setPage} />
 
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-6">
         <NavButton href={prev !== null ? chapterUrl(prev) : null}>Önceki bölüm</NavButton>
@@ -212,10 +214,13 @@ export function Reader(props: Props) {
 
 function VerticalPages({
   pages,
+  label,
   imgRefs,
   onVisible,
 }: {
   pages: Page[];
+  /** Görsel açıklamalarının başı ("Seri 8. bölüm"): Google Görseller'de bölüm aramasıyla eşleşir */
+  label: string;
   imgRefs: React.RefObject<(HTMLImageElement | null)[]>;
   onVisible: (i: number) => void;
 }) {
@@ -248,7 +253,7 @@ function VerticalPages({
           src={p.src}
           width={p.width}
           height={p.height}
-          alt={`Sayfa ${i + 1}`}
+          alt={`${label} sayfa ${i + 1}`}
           loading={i < 2 ? "eager" : "lazy"}
           decoding="async"
           className="h-auto w-full"
